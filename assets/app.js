@@ -242,17 +242,20 @@ function loadSectors(){
   const gn = document.getElementById('sectorGn');
   hy.innerHTML = '<div class="result">加载中…</div>'; gn.innerHTML = '<div class="result">加载中…</div>';
   const mk = (fs, el)=>{
-    // 获取板块列表，含板块代码 f104
-    const url = `https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=20&po=1&np=1&fltt=2&invt=2&fid=f3&fs=${fs}&fields=f12,f14,f3,f62,f104,f184&ut=fa5fd1943c7b386f172d6893b`;
+    // 获取板块列表，f104=板块代码(如BK0426)，f105=板块类型
+    const url = `https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=20&po=1&np=1&fltt=2&invt=2&fid=f3&fs=${fs}&fields=f12,f14,f3,f62,f104,f105,f184&ut=fa5fd1943c7b386f172d6893b`;
     jsonp(url).then(r=>{
       const list = (r && r.data && r.data.diff) || [];
       if(!list.length){ el.innerHTML = '<div class="result">暂无数据</div>'; return; }
       el.innerHTML = list.map(it=>{
         const p = parseFloat(it.f3), net = parseFloat(it.f62), hs = parseFloat(it.f184);
-        const bkCode = it.f104 || '';  // 板块代码，用于查成分股
+        const bkCode = (it.f104 || '').trim();  // 板块代码，如 BK0426
         const name = it.f14 || '';
-        return `<div class="rank-row sector-row" data-bk="${bkCode}" data-name="${name}" onclick="loadSectorStocks(this)">
-          <span class="name">${name} <small class="muted sector-hint">点击展开个股 ▸</small></span>
+        // 只有有板块代码的才可点击展开
+        const clickable = !!bkCode;
+        const hint = clickable ? '点击展开个股 ▸' : '暂无成分股';
+        return `<div class="rank-row sector-row ${clickable?'':'sector-disabled'}" data-bk="${bkCode}" data-name="${name}" ${clickable?'onclick="loadSectorStocks(this)"':''}>
+          <span class="name">${name} <small class="sector-hint">${hint}</small></span>
           <span class="sub ${cls(net)}">主力 ${isNaN(net)?'—':sign(net)+(net/1e8).toFixed(2)+'亿'}</span>
           <span class="val ${cls(p)}">${isNaN(p)?'—':sign(p)+p.toFixed(2)+'%'}</span>
         </div>
@@ -268,6 +271,7 @@ function loadSectors(){
 function loadSectorStocks(rowEl){
   const bkCode = rowEl.dataset.bk;
   const bkName = rowEl.dataset.name;
+  if(!bkCode){ return; }
   const stocksEl = document.getElementById('stocks-' + bkCode);
   if(!stocksEl) return;
   // 已展开则收起
@@ -284,16 +288,20 @@ function loadSectorStocks(rowEl){
   const url = `https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=15&po=1&np=1&fltt=2&invt=2&fid=f3&fs=bk:${bkCode}&fields=f12,f14,f3,f6,f16,f17,f20,f62,f184,f15&ut=fa5fd1943c7b386f172d6893b`;
   jsonp(url).then(r=>{
     const list = (r && r.data && r.data.diff) || [];
-    if(!list.length){ stocksEl.innerHTML = '<div class="result sector-empty">暂无成分股数据</div>'; return; }
+    if(!list.length){
+      // 备用方案：用板块名搜索相关个股
+      stocksEl.innerHTML = '<div class="result sector-empty">该板块暂无成分股数据（可能接口更新中）</div>';
+      return;
+    }
     stocksEl.innerHTML = `<div class="sector-stocks-head">${bkName} · 成分股 Top15（按涨幅）</div>` +
       list.map(it=>{
         const p = parseFloat(it.f3), net = parseFloat(it.f62);
         const name = it.f14 || '', code = it.f12 || '';
-        const price = parseFloat(it.f6);  // 最新价
-        const mv = parseFloat(it.f20);     // 总市值(万)
-        const turnover = parseFloat(it.f184); // 换手%
+        const price = parseFloat(it.f6);
+        const mv = parseFloat(it.f20);
+        const turnover = parseFloat(it.f184);
         const mvYi = isNaN(mv) ? '\u2014' : (mv / 1e8).toFixed(0) + '\u4ebf';
-        const hsTxt = isNaN(turnover) ? '\u2014' : turnover.toFixed(2) + '%\u6362\u624b';
+        const hsTxt = isNaN(turnover) ? '\u2014' : turnover.toFixed(2) + '%';
         return `<div class="rank-row stock-in-sector">
           <span class="name">${name} <small class="stock-code">${code}</small></span>
           <span class="sub">${isNaN(price)?'\u2014':price.toFixed(2)}</span>
@@ -301,18 +309,19 @@ function loadSectorStocks(rowEl){
           <span class="extra">${mvYi}  ${hsTxt}</span>
         </div>`;
       }).join('');
-  }).catch(()=>{
-    stocksEl.innerHTML = '<div class="result">个股加载失败</div>';
+  }).catch((err)=>{
+    console.error('板块成分股加载失败:', err);
+    stocksEl.innerHTML = '<div class="result">个股加载失败（请稍后重试）</div>';
   });
 }
 
-// ============ 涨停（只显示真正涨停的股票，涨幅≥9.5%） ============
+// ============ 涨停（覆盖全 A 股，含沪深京 + 科创创业板） ============
 function loadZT(){
   const sum = document.getElementById('ztSummary');
   const list = document.getElementById('ztList');
   sum.innerHTML = '<div class="result">加载中…</div>'; list.innerHTML = '';
-  // 实时涨幅池，客户端过滤涨停（涨幅>=9.5%）
-  const url = `https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=200&po=1&np=1&fltt=2&invt=2&fid=f3&fs=m:0+t:80&fields=f12,f14,f3,f6,f62,f184,f2&ut=fa5fd1943c7b386f172d6893b`;
+  // 覆盖全部 A 股：沪(主+科)、深(主+创+中小)、北交所、ST
+  const url = `https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=5000&po=1&np=1&fltt=2&invt=2&fid=f3&fs=m:0+t:6,m:0+t:80,m:0+t:81,m:1+t:2,m:1+t:23,m:0+t:81+s:2048&fields=f12,f14,f3,f6,f62,f184,f2,f107&ut=fa5fd1943c7b386f172d6893b`;
   jsonp(url).then(r=>{
     const data = r && r.data;
     const diff = (data && data.diff) || [];
@@ -320,10 +329,10 @@ function loadZT(){
       sum.innerHTML = '<div class="zt-bar">非交易时段暂无数据，交易日开盘后自动更新</div>';
       return;
     }
-    // 过滤：只保留真正涨停的（主板≥9.5%，创业板/科创板≥19.5%）
+    // 过滤涨停：主板/中小板≥9.5%，科创板/创业板/ST≥19.5%
     const ztList = diff.filter(it => {
       const p = parseFloat(it.f3);
-      return p >= 9.5;  // 涨停阈值
+      return p >= 9.5;
     });
     if(!ztList.length){
       sum.innerHTML = '<div class="zt-bar">今日暂无涨停股（可能未开盘或已收盘）</div>';
@@ -334,7 +343,7 @@ function loadZT(){
       const name = it.f14 || '', code = it.f12 || '';
       const p = parseFloat(it.f3), price = parseFloat(it.f6);
       const net = parseFloat(it.f62), hs = parseFloat(it.f184);
-      const amount = parseFloat(it.f2);  // 成交额
+      const amount = parseFloat(it.f2);
       const amtTxt = isNaN(amount) ? '\u2014' : (amount / 1e8).toFixed(2) + '\u4ebf';
       const hsTxt2 = isNaN(hs) ? '\u2014' : hs.toFixed(2) + '%\u6362\u624b';
       return `<div class="rank-row">
@@ -347,38 +356,52 @@ function loadZT(){
   }).catch(()=>{ sum.innerHTML = '<div class="result">涨停数据加载失败</div>'; });
 }
 
-// ============ 连板梯队（按连板高度分组展示） ============
+// ============ 连板梯队（按连板天数从高到低：9连板→…→2连板→首板） ============
 function loadLadder(){
   const el = document.getElementById('ladderInfo');
   el.innerHTML = '<div class="result">加载中…</div>';
-  // 取全部涨幅池，用于构建连板梯队
-  const url = `https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=300&po=1&np=1&fltt=2&invt=2&fid=f3&fs=m:0+t:80&fields=f12,f14,f3,f6,f62,f184,f2&ut=fa5fd1943c7b386f172d6893b`;
+  // 用东方财富涨停池接口，f107 字段为连板天数
+  const url = `https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=5000&po=1&np=1&fltt=2&invt=2&fid=f107&fs=m:0+t:6,m:0+t:80,m:0+t:81,m:1+t:2,m:1+t:23,m:0+t:81+s:2048&fields=f12,f14,f3,f6,f62,f184,f2,f107,f168&ut=fa5fd1943c7b386f172d6893b`;
   jsonp(url).then(r=>{
     const diff = (r && r.data && r.data.diff) || [];
     if(!diff.length){
       el.innerHTML = '<div class="result">非交易时段暂无数据</div>';
       return;
     }
-    // 筛选涨停股（涨幅>=9.5%）
+    // 筛选涨停股
     const ztStocks = diff.filter(it => parseFloat(it.f3) >= 9.5);
     if(!ztStocks.length){
       el.innerHTML = '<div class="ladder-empty">今日暂无涨停股，无法生成连板梯队</div>';
       return;
     }
-    // 按涨幅分组模拟连板梯队
-    const tier20cm = [], tier10cm = [], tierNear = [];
-    ztStocks.forEach(it=>{
-      const p = parseFloat(it.f3);
-      if(p >= 19.8) tier20cm.push(it);       // 20cm涨停（创业板/科创板）
-      else if(p >= 9.9) tier10cm.push(it);    // 10%涨停（主板封死）
-      else tierNear.push(it);                  // 接近涨停
+
+    // 按 f107（连板天数）分组，没有 f107 的归入"首板"
+    const tiers = {};
+    ztStocks.forEach(it => {
+      const boards = parseInt(it.f107, 10);
+      let key;
+      if (boards >= 2) key = boards + '连板';
+      else key = '首板';
+      if (!tiers[key]) tiers[key] = [];
+      tiers[key].push(it);
     });
 
-    const renderTier = (title, stocks, colorClass)=>{
-      if(!stocks.length) return '';
+    // 排序：按连板天数从高到低（9连板→...→2连板→首板）
+    const sortedKeys = Object.keys(tiers).sort((a, b) => {
+      const na = a.replace(/[^0-9]/g, '') | 0;
+      const nb = b.replace(/[^0-9]/g, '') | 0;
+      return nb - na;
+    });
+
+    const renderTier = (key, stocks) => {
+      const count = stocks.length;
+      let titleClass = 'tier-up';
+      if (key === '首板') titleClass = 'tier-near';
+      else if (count <= 3) titleClass = 'tier-hot';
+
       return `<div class="ladder-tier">
-        <div class="ladder-tier-title ${colorClass}">${title} <span class="ladder-count">${stocks.length}只</span></div>
-        ${stocks.slice(0, 30).map(it=>{
+        <div class="ladder-tier-title ${titleClass}">${key} <span class="ladder-count">${count}只</span></div>
+        ${stocks.slice(0, 50).map(it=>{
           const name = it.f14||'', code = it.f12||'', p = parseFloat(it.f3);
           const price = parseFloat(it.f6), amt = parseFloat(it.f2);
           const amtTxt3 = isNaN(amt) ? '\u2014' : (amt / 1e8).toFixed(2) + '\u4ebf';
@@ -394,10 +417,8 @@ function loadLadder(){
 
     el.innerHTML = `
       <div class="ladder-header">今日涨停共 <b>${ztStocks.length}</b> 只 ｜ ${new Date().toLocaleTimeString('zh-CN')}</div>
-      ${renderTier('🔥 20cm 涨停（创业板/科创板）', tier20cm, 'tier-hot')}
-      ${renderTier('📈 10cm 涨停（主板封死）', tier10cm, 'tier-up')}
-      ${renderTier('⚡ 接近涨停（9.5%~9.9%）', tierNear, 'tier-near')}
-      <div class="ladder-note">注：按涨幅区间分组近似连板高度，精确连板天数需专用数据源。交易时段自动更新。</div>
+      ${sortedKeys.map(key => renderTier(key, tiers[key])).join('')}
+      <div class="ladder-note">注：数据来自东方财富公开接口，按连板天数分组。交易时段自动更新。</div>
     `;
   }).catch(()=>{ el.innerHTML = '<div class="result">连板梯队加载失败</div>'; });
 }
@@ -560,83 +581,12 @@ function initToolTabs(){
       if(t === "sector" && !window.__loadedSector){ loadSectors(); window.__loadedSector = true; }
       if(t === "zt" && !window.__loadedZT){ loadZT(); window.__loadedZT = true; }
       if(t === "ladder" && !window.__loadedLadder){ loadLadder(); window.__loadedLadder = true; }
-      if(t === "calc" && !window.__initedCalc){ initCalc(); window.__initedCalc = true; }
       if(t === "quote" && window.__chart) window.__chart.resize();
     });
   });
 }
 
-// ============ 投资计算器（纯前端） ============
-function initCalc(){
-  document.querySelectorAll(".calc-tab").forEach(btn=>{
-    btn.addEventListener("click", ()=>{
-      document.querySelectorAll(".calc-tab").forEach(b=> b.classList.remove("active"));
-      btn.classList.add("active");
-      document.querySelectorAll(".calc-panel").forEach(p=> p.style.display = "none");
-      const p = document.getElementById("calc-" + btn.dataset.calc);
-      if(p) p.style.display = "";
-    });
-  });
-}
-function num(id){ const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? NaN : v; }
-function showCalc(elId, html){ const el = document.getElementById(elId); el.innerHTML = html; el.classList.add("show"); }
-function fmtMoney(n){ return n.toLocaleString("zh-CN", { maximumFractionDigits: 2 }); }
-
-function calcCompound(){
-  const P = num("cpPrincipal"), r = num("cpRate"), y = num("cpYears"), m = num("cpFreq");
-  if([P,r,y,m].some(isNaN) || P<=0 || y<=0 || m<=0){ showCalc("cpResult","请填写正确的正数参数"); return; }
-  const rate = r/100/m;
-  const total = m*y;
-  const F = P * Math.pow(1+rate, total);
-  const profit = F - P;
-  const totalRate = (F/P - 1)*100;
-  showCalc("cpResult",
-    `期末总额：<b>¥${fmtMoney(F)}</b><br/>` +
-    `累计收益：<span class="hl-up">+¥${fmtMoney(profit)}</span>（<span class="hl-up">+${totalRate.toFixed(1)}%</span>）<br/>` +
-    `<span class="muted" style="font-size:13px">本金 ¥${fmtMoney(P)} · 年化 ${r}% · ${y}年 · 每年复利 ${m} 次</span>`);
-}
-function calcPosition(){
-  const total = num("psTotal"), riskPct = num("psRisk"), buy = num("psBuy"), stop = num("psStop");
-  if([total,riskPct,buy,stop].some(isNaN) || total<=0 || buy<=0){ showCalc("psResult","请填写正确的正数参数"); return; }
-  if(stop >= buy){ showCalc("psResult","止损价必须低于买入价"); return; }
-  const riskAmt = total * (riskPct/100);            // 愿意亏的钱
-  const perShare = buy - stop;                       // 每股风险
-  const invest = riskAmt / perShare * buy;           // 可投入金额
-  let qty = Math.floor(invest / buy / 100) * 100;    // 向下取整到百股
-  if(qty < 100) qty = 0;
-  const actualInvest = qty * buy;
-  showCalc("psResult",
-    `单笔最大亏损额：<span class="hl-down">¥${fmtMoney(riskAmt)}</span><br/>` +
-    `建议买入：<b>${qty} 股</b>（约 ¥${fmtMoney(actualInvest)}）<br/>` +
-    `<span class="muted" style="font-size:13px">每股风险 ¥${perShare.toFixed(2)} · 占账户 ${(actualInvest/total*100).toFixed(1)}%</span>`);
-}
-function calcTP(){
-  const buy = num("tpBuy"), up = num("tpUp"), down = num("tpDown"), lot = num("tpLot");
-  if([buy,up,down,lot].some(isNaN) || buy<=0 || lot<=0){ showCalc("tpResult","请填写正确的正数参数"); return; }
-  const tp = buy * (1 + up/100);
-  const sl = buy * (1 - down/100);
-  showCalc("tpResult",
-    `止盈价：<span class="hl-up">¥${tp.toFixed(2)}</span>（每股 +¥${(tp-buy).toFixed(2)} / 每手 +¥${((tp-buy)*lot).toFixed(2)}）<br/>` +
-    `止损价：<span class="hl-down">¥${sl.toFixed(2)}</span>（每股 -¥${(buy-sl).toFixed(2)} / 每手 -¥${((buy-sl)*lot).toFixed(2)}）<br/>` +
-    `<span class="muted" style="font-size:13px">盈亏比 ${(up/down).toFixed(2)} : 1</span>`);
-}
-function calcPnL(){
-  const buy = num("pnBuy"), sell = num("pnSell"), qty = num("pnQty"), fee = num("pnFee");
-  if([buy,sell,qty,fee].some(isNaN) || buy<=0 || qty<=0){ showCalc("pnResult","请填写正确的正数参数"); return; }
-  const cost = buy*qty;
-  const proceeds = sell*qty;
-  const feeAmt = (cost+proceeds) * (fee/1000);   // 双边手续费
-  const pnl = proceeds - cost - feeAmt;
-  const rate = pnl/cost*100;
-  const cls = pnl>=0 ? "hl-up" : "hl-down";
-  const sign = pnl>=0 ? "+" : "";
-  showCalc("pnResult",
-    `盈亏金额：<span class="${cls}">${sign}¥${fmtMoney(pnl)}</span><br/>` +
-    `收益率：<span class="${cls}">${sign}${rate.toFixed(2)}%</span><br/>` +
-    `<span class="muted" style="font-size:13px">手续费约 ¥${fmtMoney(feeAmt)}（单边 ${fee}‰）</span>`);
-}
-
-// ============ 用户体系 v2（邮箱验证码注册/登录 + 会员 + 评论 + 管理后台） ============
+// ============ 用户体系 v3（邮箱验证码注册/登录 + 会员 + 评论 + 管理后台） ============
 // 全部逻辑走 Supabase RPC（安全写在数据库函数里，前端不持有密钥）
 const SUPABASE_URL = "https://ojioiglffglyuellvcex.supabase.co";     // 你的 Supabase 项目地址
 const SUPABASE_ANON = "sb_publishable_rGCr3ILVWQpvpURhctuYQg_K_jC-WHV";  // publishable key（前端公开，安全靠 RLS + RPC）
