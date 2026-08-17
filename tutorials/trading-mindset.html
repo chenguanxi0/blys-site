@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>交易中必备的四种心态 · 白鹿原上交易笔记</title>
+  <link rel="stylesheet" href="../assets/styles.css" />
+  <style>
+    .tutorial { max-width:800px; margin:0 auto; padding:20px; }
+    .tutorial h1 { font-size:28px; margin-bottom:6px; }
+    .tutorial .sub { color:var(--muted); margin-bottom:30px; }
+    .tut-section { background:#fff; border-radius:12px; padding:24px; margin-bottom:20px;
+      box-shadow:0 1px 3px rgba(0,0,0,.06); border-left:4px solid var(--brand); }
+    .tut-section h2 { font-size:20px; margin-top:0; display:flex; align-items:center; gap:10px; }
+    .tut-section h3 { font-size:16px; margin:18px 0 8px; color:#333; }
+    .tut-section p, .tut-section li { line-height:1.8; color:#444; }
+    .tut-section ul { padding-left:20px; }
+    .tut-section li { margin-bottom:6px; }
+    .highlight-box { background:#f0f7ff; border-radius:8px; padding:16px; margin:14px 0;
+      border-left:4px solid #2563eb; }
+    .warn-box { background:#fff7ed; border-radius:8px; padding:16px; margin:14px 0;
+      border-left:4px solid #ea580c; }
+    .success-box { background:#f0fdf4; border-radius:8px; padding:16px; margin:14px 0;
+      border-left:4px solid #16a34a; }
+    .mindset-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:16px 0; }
+    .mindset-card { background:#fafafa; border-radius:12px; padding:20px;
+      border-top:4px solid var(--brand); transition:.2s; }
+    .mindset-card:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.08); }
+    .mindset-card .icon { font-size:32px; margin-bottom:8px; }
+    .mindset-card h3 { margin-top:0; font-size:17px; }
+    .scenario-box { background:#f8fafc; border-radius:8px; padding:14px; margin:10px 0; }
+    .scenario-box .wrong { color:#dc2626; }
+    .scenario-box .right { color:#16a34a; }
+    .loop-diagram { display:flex; align-items:center; justify-content:center; gap:8px;
+      flex-wrap:wrap; margin:20px 0; }
+    .loop-node { background:var(--brand); color:#fff; border-radius:50%; width:56px; height:56px;
+      display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; }
+    .loop-arrow { color:#94a3b8; font-size:20px; }
+    .selfcheck-list { list-style:none; padding:0; }
+    .selfcheck-list li { padding:12px 14px; border-radius:8px; margin-bottom:8px;
+      background:#fafafa; display:flex; align-items:flex-start; gap:10px; cursor:pointer;
+      transition:.2s; user-select:none; }
+    .selfcheck-list li.done { background:#f0fdf4; text-decoration:line-through; color:#888; }
+    .selfcheck-list li::before { content:"☐"; font-size:18px; flex-shrink:0; margin-top:2px; }
+    .selfcheck-list li.done::before { content:"☑"; color:#16a34a; }
+    .speed-cards { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:14px 0; }
+    .speed-card { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:16px; }
+    .speed-card h4 { margin:0 0 6px; font-size:14px; color:#1e40af; }
+    .speed-card p { font-size:13px; margin:0; color:#555; }
+    .mantra-card { background:linear-gradient(135deg,#1e3a5f,#0f172a); color:#fff;
+      border-radius:12px; padding:24px; margin:20px 0; text-align:center; }
+    .mantra-card p { color:#cbd5e1; font-size:15px; line-height:2; margin:6px 0; }
+    .back-link { display:inline-flex; align-items:center; gap:6px; color:var(--brand);
+      text-decoration:none; font-size:14px; margin-bottom:20px; }
+    .back-link:hover { text-decoration:underline; }
+    @media (max-width:600px) {
+      .mindset-grid,.speed-cards { grid-template-columns:1fr; }
+      .tut-section { padding:16px; }
+    }
+  </style>
+</head>
+<body>
+<div class="risk-bar">⚠️ 风险提示：本站所有内容仅为个人复盘与经验分享，不构成任何投资建议，市场有风险，投资需谨慎。</div>
+
+<header class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../index.html">
+      <span class="brand-logo">白</span>
+      <span class="brand-name">白鹿原上交易笔记</span>
+    </a>
+    <nav class="nav-links">
+      <a href="../index.html#tools">工具箱</a>
+      <a href="../index.html#diary">实盘日记</a>
+      <a href="../index.html#vipzone">会员专享</a>
+      <a href="../index.html#vip">会员课程</a>
+    </nav>
+  </div>
+</header>
+
+<main class="tutorial">
+  <a class="back-link" href="../index.html#vip">← 返回课程列表</a>
+
+  <h1>🧘 交易中必备的四种心态</h1>
+  <p class="sub">技术决定你能不能看懂市场，心态决定你能不能活到赚钱的那一天。约 12 分钟阅读</p>
+
+  <!-- 为什么心态决定生死 -->
+  <div class="tut-section">
+    <h2>💀 为什么心态决定生死</h2>
+    <p>很多学员不是看不懂盘面，而是看懂了管不住自己。短线交易里，<b>情绪是最大的杠杆，仓位是最大的风险，耐心是最大的本事。</b></p>
+    <div class="highlight-box">
+      <table style="width:100%;font-size:14px">
+        <tr><td><b>🛡️ 风险第一</b></td><td>每笔交易先想会亏多少，再想能赚多少。没有止损计划的开仓，都是赌博。</td></tr>
+        <tr><td><b>💪 仓位是底气</b></td><td>满仓一把梭，波动一来心态必崩。控仓不是胆小，是为了错的时候还能翻本。</td></tr>
+        <tr><td><b>⏳ 耐心是武器</b></td><td>市场每天都有涨停，但不是每天都属于你。等得起，才能打得准。</td></tr>
+        <tr><td><b>📈 稳定是复利</b></td><td>浮亏不慌、浮盈不飘，把每一次操作都变成程序化的执行，利润自然来。</td></tr>
+      </table>
+    </div>
+    <div class="warn-box" style="text-align:center;font-size:16px">
+      <strong>记住一句话：</strong>交易员的对手不是主力，不是游资，而是<strong>自己</strong>。先战胜自己，再谈战胜市场。
+    </div>
+  </div>
+
+  <!-- 四种心态详解 -->
+  <div class="tut-section">
+    <h2>⚔️ 四种心态详解</h2>
+    <p>下面这四种心态，不需要你一次性全部做到。先把其中两种练成肌肉记忆，你的账户就会发生质变。</p>
+
+    <!-- 止损 -->
+    <div class="mindset-card">
+      <div class="icon">⚔️</div>
+      <h3>止损不眨眼</h3>
+      <p><b>行情不对、立马撤退，止损是成本，扛单是负债</b></p>
+      <p style="font-size:13px;color:#666;margin-top:8px">止损不是认输，是买一份"不让自己死掉"的保险。短线里，小亏是做生意的成本，大亏是致命的负债。错了就砍，砍完就忘，下一笔再赚回来。</p>
+      <h4 style="margin-top:12px;font-size:14px">三种止损方式</h4>
+      <ul style="font-size:13px">
+        <li><b>比例止损：</b>单笔亏损不超过总资金的 2%–3%</li>
+        <li><b>技术止损：</b>跌破关键支撑位、趋势线或均线</li>
+        <li><b>时间止损：</b>买入后 2–3 天不动，说明逻辑失效</li>
+      </ul>
+      <h4 style="margin-top:12px;font-size:14px">🎯 实战场景</h4>
+      <div class="scenario-box">
+        <p class="wrong"><b>❌ 错误做法：</b>买入后跌了 5%，想着"再等等看"，结果跌到 20%，被迫割肉，下一波行情来了没本金。</p>
+        <p class="right"><b>✅ 正确做法：</b>开盘前定好止损位，跌破即走。这次亏 3%，下次赚 8%，长期就是正期望。</p>
+      </div>
+    </div>
+
+    <!-- 耐心等待 -->
+    <div class="mindset-card">
+      <div class="icon">🎯</div>
+      <h3>耐心等待的狙击手</h3>
+      <p><b>没有机会那就控仓，市场不缺机会，缺的是本金</b></p>
+      <p style="font-size:13px;color:#666;margin-top:8px">空仓不是无所事事，空仓是最主动的风险控制。市场 80% 的时间在震荡和下跌，真正属于你的机会只有 20%。没机会的时候守住本金，才有机会的时候重拳出击。</p>
+      <h4 style="margin-top:12px;font-size:14px">什么时候必须控仓？</h4>
+      <p style="font-size:13px">大盘情绪退潮、主线散乱、涨停家数骤减、自己状态不好、看不懂盘面时——<b>仓位直接降到 3 成以下，甚至空仓。</b></p>
+      <h4 style="margin-top:12px;font-size:14px">什么时候可以重仓？</h4>
+      <p style="font-size:13px">情绪主升、主线清晰、龙头有辨识度、大盘放量配合、你自己心态稳定——<b>才能上仓位。</b></p>
+      <div class="scenario-box">
+        <p class="wrong"><b>❌ 错误做法：</b>行情不好还满仓干，每天硬找票买，结果小亏积成大亏。</p>
+        <p class="right"><b>✅ 正确做法：</b>情绪混沌期只拿 2–3 成仓练手，主线明确后再加仓。保住本金，才有资格谈收益。</p>
+      </div>
+    </div>
+
+    <!-- 复盘 -->
+    <div class="mindset-card">
+      <div class="icon">🔍</div>
+      <h3>耐心复盘的人</h3>
+      <p><b>市场不会错，错的是自己的策略</b></p>
+      <p style="font-size:13px;color:#666;margin-top:8px">市场永远是对的，它用涨跌告诉你真相。亏钱了别怪主力、别怪消息、别怪运气，回到自己的交易记录里找漏洞：买点、仓位、情绪、执行力，到底是哪一环错了？</p>
+      <h4 style="margin-top:12px;font-size:14px">盘后复盘三步法</h4>
+      <ol style="font-size:13px">
+        <li><b>看大势：</b>今天情绪周期处于哪个阶段？</li>
+        <li><b>看模式：</b>哪些交易按计划做，哪些是冲动单？</li>
+        <li><b>写结论：</b>明天只做什么，绝对不做什么。</li>
+      </ol>
+      <div class="warn-box" style="font-size:13px">复盘不是为了后悔，是为了把"这次犯的错"变成"下次不犯的规则"。不复盘的人，永远在交同样的学费。</div>
+      <div class="scenario-box">
+        <p class="wrong"><b>❌ 错误做法：</b>收盘后刷群抱怨"又被主力割了"，第二天继续凭感觉买。</p>
+        <p class="right"><b>✅ 正确做法：</b>收盘后打开交易记录，把今天的错单标红，写一条新规则贴到电脑前。</p>
+      </div>
+    </div>
+
+    <!-- 情绪稳定 -->
+    <div class="mindset-card">
+      <div class="icon">🧘</div>
+      <h3>情绪稳定的人</h3>
+      <p><b>浮亏不慌，浮盈不飘，拼的不是技术而是心态</b></p>
+      <p style="font-size:13px;color:#666;margin-top:8px">浮亏时恐惧会让你乱割肉，浮盈时贪婪会让你把利润吐回去。真正的成熟交易员，不管账户是红是绿，动作都保持一致：按计划执行，让概率自己说话。</p>
+      <h4 style="margin-top:12px;font-size:14px">情绪稳定的三个标志</h4>
+      <ol style="font-size:13px">
+        <li>亏了不骂人不摔手机</li>
+        <li>赚了不膨胀不加仓</li>
+        <li>盘面极端波动时能停下来等一等</li>
+      </ol>
+      <h4 style="margin-top:12px;font-size:14px">如何训练情绪稳定</h4>
+      <p style="font-size:13px">固定交易时间、固定仓位规则、固定止盈止损。把决策交给规则，情绪就没了发挥的余地。</p>
+      <div class="scenario-box">
+        <p class="wrong"><b>❌ 错误做法：</b>连亏三天后重仓一把"翻本"，结果错上加错。</p>
+        <p class="right"><b>✅ 正确做法：</b>连亏三天先降到最小仓位，只做最有把握的票，把节奏找回来再慢慢加。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 闭环 -->
+  <div class="tut-section">
+    <h2>🔄 四种心态如何闭环</h2>
+    <p>这四种心态不是孤立的，它们形成一个保护你账户的闭环。少了哪一环，都会出问题。</p>
+    <div class="loop-diagram">
+      <div class="loop-node" title="止损不眨眼">⚔️</div>
+      <span class="loop-arrow">→</span>
+      <div class="loop-node" title="耐心等待">🎯</div>
+      <span class="loop-arrow">→</span>
+      <div class="loop-node" title="耐心复盘">🔍</div>
+      <span class="loop-arrow">→</span>
+      <div class="loop-node" title="情绪稳定">🧘</div>
+      <span class="loop-arrow">→</span>
+      <div class="loop-node" title="回到止损">⚔️</div>
+    </div>
+    <div class="success-box" style="text-align:center">
+      <strong>闭环逻辑：</strong>止损让你不死 → 空仓让你等得起 → 复盘让你越打越精 → 情绪稳定让你把前三点落到实处。<br/><br/>
+      <b>四者合一，才是完整交易体系。</b>
+    </div>
+  </div>
+
+  <!-- 每日自检 -->
+  <div class="tut-section">
+    <h2>☀️ 每日开盘前心态自检</h2>
+    <p>每天开盘前花 1 分钟过一遍这份清单，全部打钩再下单。这是保护你账户的第一道防线。</p>
+    <ul class="selfcheck-list" id="mindCheckList">
+      <li onclick="this.classList.toggle('done')">今天大盘情绪我判断清楚了，不是瞎买</li>
+      <li onclick="this.classList.toggle('done')">这笔交易有明确的止损位，跌破一定走</li>
+      <li onclick="this.classList.toggle('done')">当前仓位和大盘风险匹配，没有满仓硬上</li>
+      <li onclick="this.classList.toggle('done')">昨晚睡好了，精神状态在线，不赌气交易</li>
+      <li onclick="this.classList.toggle('done')">昨天亏的钱已经翻篇，今天不急着报仇</li>
+      <li onclick="this.classList.toggle('done')">买入计划写好：买多少、买什么、什么价格走</li>
+      <li onclick="this.classList.toggle('done')">就算今天没机会，我也能接受空仓</li>
+    </ul>
+    <p id="mindProgress" style="text-align:center;color:var(--brand);font-weight:700;margin-top:10px"></p>
+  </div>
+
+  <!-- 场景速查卡 -->
+  <div class="tut-section">
+    <h2>📋 实战场景速查卡</h2>
+    <p>盘面变化快，情绪一上来什么都忘了。把这六张卡存在手机里，关键时刻翻出来看。</p>
+    <div class="speed-cards">
+      <div class="speed-card">
+        <h4>01 买入后立刻下跌</h4>
+        <p>先看是否跌破止损位。跌破就走，没跌破按计划持有，不要提前 panic。</p>
+      </div>
+      <div class="speed-card">
+        <h4>02 踏空龙头股</h4>
+        <p>卖了拉板不焦虑，说明模式有效。追高风险更大，等下一个节奏点。</p>
+      </div>
+      <div class="speed-card">
+        <h4>03 连续亏损三天</h4>
+        <p>立刻降仓位到 2 成以下，只做最有把握的票。先止血，再谈赚。</p>
+      </div>
+      <div class="speed-card">
+        <h4>04 大涨后心态膨胀</h4>
+        <p>赚钱不是加仓理由。按仓位规则来，利润守得住才是真本事。</p>
+      </div>
+      <div class="speed-card">
+        <h4>05 早盘行情混乱</h4>
+        <p>看不清就等 10 点后再说。早盘冲动单，是大部分亏损的源头。</p>
+      </div>
+      <div class="speed-card">
+        <h4>06 持仓浮盈大幅回撤</h4>
+        <p>设置保本或移动止盈。浮盈变浮亏，比直接亏损更搞心态。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 心法口诀 -->
+  <div class="mantra-card">
+    <h2 style="color:#fff;margin-bottom:16px">📜 心法口诀卡（每天开盘前读一遍）</h2>
+    <p><b>错了就砍</b> — 止损是成本，扛单是负债。</p>
+    <p><b>没有机会</b> — 就控仓，市场不缺机会，缺的是本金。</p>
+    <p><b>市场永远对</b> — 错的是自己的策略，复盘找漏洞。</p>
+    <p><b>浮亏不慌 浮盈不飘</b> — 按计划执行。</p>
+    <p><b>先求不败 再求胜</b> — 风险第一。</p>
+    <p><b>仓位是底气</b> — 满仓必崩，留足余粮。</p>
+    <p><b>越慢越快</b> — 不要幻想每把都赚钱。</p>
+    <p><b>耐心是金</b> — 等得起，才打得准。</p>
+  </div>
+
+  <p style="text-align:center;margin:30px 0">
+    <a class="btn btn-ghost" href="market-overview.html">← 上一课：短线核心·市场大局观</a>
+  </p>
+</main>
+
+<footer class="footer">
+  <p>&copy; 2026 白鹿原上交易笔记 · blys.top ｜ 本内容为个人分享，不构成投资建议</p>
+</footer>
+
+<script>
+// 心态自检清单进度
+document.querySelectorAll('#mindCheckList li').forEach(function(li){
+  li.addEventListener('click', function(){
+    var done = document.querySelectorAll('#mindCheckList li.done').length;
+    var total = document.querySelectorAll('#mindCheckList li').length;
+    document.getElementById('mindProgress').textContent = '已完成 ' + done + ' / ' + total;
+  });
+});
+</script>
+</body>
+</html>
