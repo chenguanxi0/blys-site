@@ -257,7 +257,7 @@ function isMarketOpen(){
   return morning || afternoon;
 }
 const MARKET_HINT = '<div class="zt-bar" style="background:#f1f5f9;border-color:#e2e8f0;color:#475569">📴 当前为非交易时段，交易日 9:15–15:00 开盘后自动更新行情</div>';
-let marketStats = {};  // 累计各函数统计，分别更新
+let marketStats = {};  // 累计各函数统计，分别更新；空对象=未加载→显示占位符
 
 // 东方财富 clist 字段：f2=最新价, f3=涨跌幅%, f6=成交额(元), f62=主力净流入, f184=换手%, f107=连板天数
 function pickPrice(it){ return parseFloat(it.f2); }
@@ -302,7 +302,8 @@ function renderWatch(){
 // ============ 市场总览统计卡 ============
 function renderMarketStats(stats){
   const el = document.getElementById('marketStats'); if(!el) return;
-  if(!stats){
+  const loaded = stats && Object.keys(stats).length > 0;
+  if(!loaded){
     el.innerHTML = ['今日涨停','最高连板','上涨板块','非ST涨停'].map(t=>
       `<div class="stat-card"><b>—</b><label>${t}</label></div>`).join('');
     return;
@@ -318,6 +319,10 @@ function renderMarketStats(stats){
 function loadSectors(){
   const hy = document.getElementById('sectorHy');
   const gn = document.getElementById('sectorGn');
+  if(!isMarketOpen()){
+    hy.innerHTML = MARKET_HINT; gn.innerHTML = MARKET_HINT;
+    return;
+  }
   hy.innerHTML = '<div class="result">加载中…</div>'; gn.innerHTML = '<div class="result">加载中…</div>';
   const mk = (fs, el)=>{
     // 获取板块列表，f104=板块代码(如BK0426)，f105=板块类型
