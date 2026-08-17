@@ -602,7 +602,7 @@ async function fetchUser(){
   try {
     const d = await sbRpc("get_profile", { p_token: token });
     if (d && d.ok){
-      __user = { loggedIn: true, token, isVip: d.is_vip, isAdmin: d.is_admin, nickname: d.nickname, phone: d.phone, vipExpire: d.vip_expire };
+      __user = { loggedIn: true, token, isVip: d.is_vip, isAdmin: d.is_admin, nickname: d.nickname, email: d.email, vipExpire: d.vip_expire };
     } else {
       localStorage.removeItem(USER_TOKEN_KEY);
       __user = { loggedIn: false };
@@ -628,7 +628,7 @@ function renderUserStatus(){
   if (!el) return;
   if (__user.loggedIn){
     const tag = __user.isVip ? `⭐ 会员至 ${fmtDateStr(new Date(__user.vipExpire))}` : "普通用户";
-    let html = `<span class="vip-badge">${esc(__user.nickname || __user.phone || "用户")} · ${tag}</span>`;
+    let html = `<span class="vip-badge">${esc(__user.nickname || __user.email || "用户")} · ${tag}</span>`;
     if (__user.isAdmin) html += `<button class="vip-open" onclick="location.href='admin.html'">后台</button>`;
     html += `<button class="vip-logout" onclick="logoutUser()">退出</button>`;
     el.innerHTML = html;
@@ -650,48 +650,114 @@ function lockVipZones(){
 }
 
 // ---- 登录 / 注册弹窗 ----
-function openAuthModal(){ const m = document.getElementById("authModal"); if (m) m.classList.add("open"); }
+function openAuthModal(){ const m = document.getElementById("authModal"); if (m) m.classList.add("open"); switchAuth("login"); }
 function closeAuthModal(){ const m = document.getElementById("authModal"); if (m) m.classList.remove("open"); }
 document.addEventListener("click", (e)=>{
   const m = document.getElementById("authModal");
   if (m && m.classList.contains("open") && e.target === m) closeAuthModal();
 });
 
-async function sendOtp(){
+// 切换登录 / 注册 / 找回密码 三个视图
+function switchAuth(mode){
+  const tabs = { login: "authLogin", register: "authRegister", forgot: "authForgot" };
+  Object.values(tabs).forEach(id=>{ const el = document.getElementById(id); if (el) el.style.display = "none"; });
+  if (tabs[mode]){ const el = document.getElementById(tabs[mode]); if (el) el.style.display = "block"; }
+  document.querySelectorAll(".auth-tab").forEach(b=> b.classList.toggle("active", b.dataset.mode === mode));
+  // 清空各视图提示
+  ["authMsg","regMsg","fgMsg"].forEach(id=>{ const m = document.getElementById(id); if (m){ m.textContent = ""; m.className = "result"; } });
+}
+
+// ---- 登录（邮箱 + 密码，无需验证码） ----
+async function userLogin(){
   const email = (document.getElementById("authEmail").value || "").trim();
-  const phone = (document.getElementById("authPhone").value || "").trim();
-  const nick  = (document.getElementById("authNick").value || "").trim();
+  const pwd   = (document.getElementById("authPwd").value || "");
   const msg = document.getElementById("authMsg");
+  if (!email || !pwd){ msg.textContent = "请填写邮箱和密码"; return; }
+  msg.textContent = "登录中…";
+  try {
+    const d = await sbRpc("user_login", { p_email: email, p_password: pwd });
+    if (!d || !d.ok){ msg.textContent = (d && d.msg) || "登录失败"; return; }
+    localStorage.setItem(USER_TOKEN_KEY, d.token);
+    msg.className = "result"; msg.innerHTML = "✅ 登录成功！";
+    await fetchUser();
+    setTimeout(closeAuthModal, 700);
+  } catch(e){ msg.textContent = "网络错误，请重试"; }
+}
+
+// ---- 注册：第一步发验证码（仅注册需要） ----
+async function regSend(){
+  const email = (document.getElementById("regEmail").value || "").trim();
+  const pwd   = (document.getElementById("regPwd").value || "");
+  const msg = document.getElementById("regMsg");
   if (!email){ msg.textContent = "请填写邮箱"; return; }
+  if (pwd.length < 6){ msg.textContent = "密码至少 6 位"; return; }
   msg.textContent = "发送中…";
   try {
-    const d = await sbRpc("send_otp", { p_email: email, p_phone: phone, p_nickname: nick });
+    const d = await sbRpc("send_otp", { p_email: email, p_purpose: "register" });
     if (!d || !d.ok){ msg.textContent = (d && d.msg) || "发送失败"; return; }
     msg.className = "result";
     msg.innerHTML = d.demo_code
       ? `✅ 验证码已发送（演示模式）：<b>${d.demo_code}</b>`
       : "✅ 验证码已发送，请查收邮箱";
-    document.getElementById("authCodeRow").style.display = "block";
-    document.getElementById("authVerifyBtn").style.display = "inline-block";
-    document.getElementById("authSendBtn").style.display = "none";
+    document.getElementById("regCodeRow").style.display = "block";
+    document.getElementById("regSubmitBtn").style.display = "inline-block";
+    document.getElementById("regSendBtn").style.display = "none";
   } catch(e){ msg.textContent = "网络错误，请重试"; }
 }
 
-async function verifyOtp(){
-  const email = (document.getElementById("authEmail").value || "").trim();
-  const phone = (document.getElementById("authPhone").value || "").trim();
-  const nick  = (document.getElementById("authNick").value || "").trim();
-  const code  = (document.getElementById("authCode").value || "").trim();
-  const msg = document.getElementById("authMsg");
+// ---- 注册：第二步验证并创建账户 ----
+async function regSubmit(){
+  const email = (document.getElementById("regEmail").value || "").trim();
+  const pwd   = (document.getElementById("regPwd").value || "");
+  const nick  = (document.getElementById("regNick").value || "").trim();
+  const code  = (document.getElementById("regCode").value || "").trim();
+  const msg = document.getElementById("regMsg");
   if (!code){ msg.textContent = "请填写验证码"; return; }
-  msg.textContent = "验证中…";
+  msg.textContent = "注册中…";
   try {
-    const d = await sbRpc("verify_otp", { p_email: email, p_code: code, p_phone: phone, p_nickname: nick });
-    if (!d || !d.ok){ msg.textContent = (d && d.msg) || "验证失败"; return; }
+    const d = await sbRpc("register_user", { p_email: email, p_code: code, p_password: pwd, p_nickname: nick });
+    if (!d || !d.ok){ msg.textContent = (d && d.msg) || "注册失败"; return; }
     localStorage.setItem(USER_TOKEN_KEY, d.token);
-    msg.className = "result"; msg.innerHTML = "✅ 登录成功！";
+    msg.className = "result"; msg.innerHTML = "✅ 注册成功，已自动登录！";
     await fetchUser();
     setTimeout(closeAuthModal, 800);
+  } catch(e){ msg.textContent = "网络错误，请重试"; }
+}
+
+// ---- 找回密码：第一步发验证码 ----
+async function fgSend(){
+  const email = (document.getElementById("fgEmail").value || "").trim();
+  const msg = document.getElementById("fgMsg");
+  if (!email){ msg.textContent = "请填写邮箱"; return; }
+  msg.textContent = "发送中…";
+  try {
+    const d = await sbRpc("send_otp", { p_email: email, p_purpose: "reset" });
+    if (!d || !d.ok){ msg.textContent = (d && d.msg) || "发送失败"; return; }
+    msg.className = "result";
+    msg.innerHTML = d.demo_code
+      ? `✅ 验证码已发送（演示模式）：<b>${d.demo_code}</b>`
+      : "✅ 验证码已发送，请查收邮箱";
+    document.getElementById("fgCodeRow").style.display = "block";
+    document.getElementById("fgPwdRow").style.display = "block";
+    document.getElementById("fgSubmitBtn").style.display = "inline-block";
+    document.getElementById("fgSendBtn").style.display = "none";
+  } catch(e){ msg.textContent = "网络错误，请重试"; }
+}
+
+// ---- 找回密码：第二步重置 ----
+async function fgSubmit(){
+  const email = (document.getElementById("fgEmail").value || "").trim();
+  const code  = (document.getElementById("fgCode").value || "").trim();
+  const pwd   = (document.getElementById("fgPwd").value || "");
+  const msg = document.getElementById("fgMsg");
+  if (!code){ msg.textContent = "请填写验证码"; return; }
+  if (pwd.length < 6){ msg.textContent = "新密码至少 6 位"; return; }
+  msg.textContent = "重置中…";
+  try {
+    const d = await sbRpc("reset_password", { p_email: email, p_code: code, p_new_password: pwd });
+    if (!d || !d.ok){ msg.textContent = (d && d.msg) || "重置失败"; return; }
+    msg.className = "result"; msg.innerHTML = "✅ 密码已重置，请用新密码登录";
+    setTimeout(()=> switchAuth("login"), 1200);
   } catch(e){ msg.textContent = "网络错误，请重试"; }
 }
 
