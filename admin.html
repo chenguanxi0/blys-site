@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>管理后台 · 白鹿原上交易笔记</title>
+  <link rel="stylesheet" href="assets/styles.css" />
+  <style>
+    body { background:#f1f5f9; }
+    .admin { max-width:1000px; margin:0 auto; padding:30px 16px 60px; }
+    .admin h1 { font-size:24px; margin-bottom:6px; }
+    .admin .sub { color:var(--muted); margin-bottom:24px; }
+    .login-box { background:#fff; padding:24px; border-radius:12px; max-width:360px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+    .login-box input { width:100%; padding:10px; margin:10px 0; border:1px solid #d1d5db; border-radius:8px; }
+    .stat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:24px; }
+    .stat-card { background:#fff; border-radius:12px; padding:20px; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+    .stat-card .num { font-size:30px; font-weight:700; color:var(--brand); }
+    .stat-card .lbl { color:var(--muted); font-size:13px; margin-top:4px; }
+    .panel { background:#fff; border-radius:12px; padding:20px; margin-bottom:24px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+    .panel h2 { font-size:18px; margin-top:0; margin-bottom:14px; }
+    .admin-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .admin-table th,.admin-table td { border:1px solid #e5e7eb; padding:8px 10px; text-align:left; }
+    .admin-table th { background:#f9fafb; }
+    .admin-table button { padding:4px 10px; border:none; background:var(--brand); color:#fff; border-radius:6px; cursor:pointer; }
+    .admin-table button.danger { background:#dc2626; }
+    .comment-item { background:#f8fafc; border:1px solid #e5e7eb; border-radius:8px; padding:12px; margin-bottom:10px; }
+    .comment-head { display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px; }
+    .comment-time { color:var(--muted); }
+    .comment-body { font-size:14px; line-height:1.6; }
+    .comment-item button { margin-top:8px; padding:4px 10px; border:none; background:#dc2626; color:#fff; border-radius:6px; cursor:pointer; font-size:12px; }
+    .back-home { display:inline-block; margin-bottom:16px; color:var(--brand); }
+  </style>
+</head>
+<body>
+  <main class="admin">
+    <a class="back-home" href="index.html">← 返回站点首页</a>
+    <h1>🛡 管理后台</h1>
+    <p class="sub">用户管理 · 会员发放 · 评论管理 · 数据概览</p>
+
+    <div class="login-box" id="loginBox">
+      <label>管理员密码</label>
+      <input type="password" id="adminPw" placeholder="请输入管理后台密码" />
+      <button class="btn btn-primary btn-block" onclick="doAdminLogin()">登录</button>
+      <p id="adminMsg" class="result"></p>
+    </div>
+
+    <div id="dash" style="display:none">
+      <div class="stat-grid">
+        <div class="stat-card"><div class="num" id="statUsers">-</div><div class="lbl">注册用户</div></div>
+        <div class="stat-card"><div class="num" id="statVip">-</div><div class="lbl">会员数</div></div>
+        <div class="stat-card"><div class="num" id="statCmts">-</div><div class="lbl">评论数</div></div>
+      </div>
+
+      <div class="panel">
+        <h2>👥 用户列表</h2>
+        <div id="userList">加载中…</div>
+      </div>
+
+      <div class="panel">
+        <h2>💬 评论管理</h2>
+        <div id="commentList">加载中…</div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const SB_URL = "https://ojioiglffglyuellvcex.supabase.co";
+    const SB_ANON = "sb_publishable_rGCr3ILVWQpvpURhctuYQg_K_jC-WHV";
+    const ADMIN_TOKEN_KEY = "blys_admin_token";
+
+    async function sbRpc(fn, params){
+      const r = await fetch(SB_URL + "/rest/v1/rpc/" + fn, {
+        method:"POST",
+        headers:{ "Content-Type":"application/json", "apikey":SB_ANON, "Authorization":"Bearer "+SB_ANON },
+        body: JSON.stringify(params||{})
+      });
+      return r.json();
+    }
+    function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
+    function fmt(dt){ const d=new Date(dt); if(isNaN(d))return"-"; const p=n=>String(n).padStart(2,"0"); return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes()); }
+    function getTok(){ return localStorage.getItem(ADMIN_TOKEN_KEY); }
+
+    async function doAdminLogin(){
+      const pw = (document.getElementById('adminPw').value||'').trim();
+      const msg = document.getElementById('adminMsg');
+      if(!pw){ msg.textContent='请输入密码'; return; }
+      const d = await sbRpc('admin_login', { p_password: pw });
+      if(!d || !d.ok){ msg.textContent = (d&&d.msg)||'登录失败'; return; }
+      localStorage.setItem(ADMIN_TOKEN_KEY, d.admin_token);
+      document.getElementById('loginBox').style.display='none';
+      document.getElementById('dash').style.display='block';
+      loadAll();
+    }
+
+    async function loadAll(){ await loadStats(); await loadUsers(); await loadComments(); }
+
+    async function loadStats(){
+      const d = await sbRpc('admin_stats', { p_admin_token: getTok() });
+      if(d && d.ok){
+        document.getElementById('statUsers').textContent = d.users;
+        document.getElementById('statVip').textContent = d.vip;
+        document.getElementById('statCmts').textContent = d.comments;
+      }
+    }
+
+    async function loadUsers(){
+      const d = await sbRpc('admin_list_users', { p_admin_token: getTok() });
+      const box = document.getElementById('userList');
+      if(!d || !d.ok){ box.innerHTML = '<p>加载失败：' + (d&&d.msg) + '</p>'; return; }
+      if(!d.list.length){ box.innerHTML = '<p>暂无用户</p>'; return; }
+      box.innerHTML = '<table class="admin-table"><tr><th>昵称</th><th>手机</th><th>邮箱</th><th>会员</th><th>到期</th><th>操作</th></tr>' +
+        d.list.map(u=>`<tr><td>${esc(u.nickname||'')}</td><td>${esc(u.phone||'')}</td><td>${esc(u.email||'')}</td><td>${u.is_vip?'是':'否'}</td><td>${u.vip_expire?fmt(u.vip_expire):'-'}</td><td><button onclick="setVip('${esc(u.phone||'')}')">设会员</button></td></tr>`).join('') +
+        '</table>';
+    }
+
+    async function setVip(phone){
+      if(!phone){ alert('该用户未填手机号，无法设置会员'); return; }
+      const days = prompt('设置会员天数（正数=从当前/今天起延长 N 天；-1=取消会员）：', '30');
+      if(days === null) return;
+      const n = parseInt(days, 10);
+      if(isNaN(n)){ alert('请输入数字'); return; }
+      const d = await sbRpc('admin_set_vip', { p_admin_token: getTok(), p_phone: phone, p_days: n });
+      alert(d && d.ok ? '设置成功' : ('失败：' + (d&&d.msg)));
+      loadUsers();
+    }
+
+    async function loadComments(){
+      const arts = ['market-overview','trading-mindset'];
+      let all = [];
+      for(const a of arts){
+        const d = await sbRpc('list_comments', { p_article: a });
+        if(d && d.ok) all = all.concat(d.list.map(c=>({ ...c, article:a })));
+      }
+      const box = document.getElementById('commentList');
+      if(!all.length){ box.innerHTML = '<p>暂无评论</p>'; return; }
+      box.innerHTML = all.map(c=>`<div class="comment-item"><div class="comment-head"><b>${esc(c.nickname||'匿名')}</b><span class="comment-time">${fmt(c.created_at)} · ${c.article}</span></div><div class="comment-body">${esc(c.content)}</div><button onclick="delComment(${c.id})">删除</button></div>`).join('');
+    }
+
+    async function delComment(id){
+      if(!confirm('确认删除该评论？')) return;
+      const d = await sbRpc('admin_delete_comment', { p_admin_token: getTok(), p_id: id });
+      alert(d && d.ok ? '已删除' : '失败');
+      loadComments();
+    }
+
+    // 已登录则直接进
+    if(localStorage.getItem(ADMIN_TOKEN_KEY)){
+      document.getElementById('loginBox').style.display='none';
+      document.getElementById('dash').style.display='block';
+      loadAll();
+    }
+  </script>
+</body>
+</html>

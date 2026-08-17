@@ -279,6 +279,19 @@
   </p>
 </main>
 
+<!-- 评论区 -->
+<section class="tut-section" id="comments">
+  <h2>💬 评论区（登录后可见 / 可评论）</h2>
+  <div id="commentList"><p class="muted">加载评论…</p></div>
+  <div class="comment-form">
+    <textarea id="commentInput" rows="3" placeholder="登录后发表你的看法…"></textarea>
+    <div class="comment-form-row">
+      <span id="commentHint" class="muted"></span>
+      <button class="btn btn-primary" id="commentBtn" onclick="tutSubmit()">发表评论</button>
+    </div>
+  </div>
+</section>
+
 <footer class="footer">
   <p>&copy; 2026 白鹿原上交易笔记 · blys.top ｜ 本内容为个人分享，不构成投资建议</p>
 </footer>
@@ -292,6 +305,44 @@ document.querySelectorAll('#preCheckList li').forEach(function(li){
     document.getElementById('checkProgress').textContent = '已完成 ' + done + ' / ' + total;
   });
 });
+
+// ---- 评论系统 ----
+const TUT_SUPABASE_URL = "https://ojioiglffglyuellvcex.supabase.co";
+const TUT_SUPABASE_ANON = "sb_publishable_rGCr3ILVWQpvpURhctuYQg_K_jC-WHV";
+const TUT_ARTICLE = "market-overview";
+async function tutRpc(fn, params){
+  const r = await fetch(TUT_SUPABASE_URL + "/rest/v1/rpc/" + fn, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json", "apikey":TUT_SUPABASE_ANON, "Authorization":"Bearer "+TUT_SUPABASE_ANON },
+    body: JSON.stringify(params||{})
+  });
+  return r.json();
+}
+function tutEsc(s){ return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
+function tutFmt(dt){ const d=new Date(dt); if(isNaN(d))return""; const p=n=>String(n).padStart(2,"0"); return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes()); }
+async function tutLoad(){
+  const box=document.getElementById("commentList");
+  try{
+    const d=await tutRpc("list_comments",{p_article:TUT_ARTICLE});
+    if(d&&d.ok&&Array.isArray(d.list)){
+      if(d.list.length===0){ box.innerHTML='<p class="muted">还没有评论，来抢沙发～</p>'; return; }
+      box.innerHTML=d.list.map(c=>'<div class="comment-item"><div class="comment-head"><b>'+tutEsc(c.nickname||"匿名")+'</b><span class="comment-time">'+tutFmt(c.created_at)+'</span></div><div class="comment-body">'+tutEsc(c.content)+'</div></div>').join("");
+    }
+  }catch(e){ box.innerHTML='<p class="muted">评论加载失败</p>'; }
+}
+async function tutSubmit(){
+  const token=localStorage.getItem("blys_user_token");
+  if(!token){ document.getElementById("commentHint").textContent="请先在首页 blys.site 登录后再评论"; return; }
+  const ta=document.getElementById("commentInput");
+  const content=(ta.value||"").trim();
+  if(!content){ alert("写点什么再发吧"); return; }
+  const d=await tutRpc("add_comment",{p_token:token,p_article:TUT_ARTICLE,p_content:content});
+  if(!d||!d.ok){ alert((d&&d.msg)||"发送失败"); return; }
+  ta.value=""; document.getElementById("commentBtn").textContent="已发送 ✓";
+  tutLoad();
+  setTimeout(function(){ document.getElementById("commentBtn").textContent="发表评论"; },1500);
+}
+tutLoad();
 </script>
 </body>
 </html>

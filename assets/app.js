@@ -565,24 +565,16 @@ function initToolTabs(){
   });
 }
 
-// ============ 会员注册制（三模式：演示 / Node 后端 / Supabase 免费） ============
-// 模式优先级：Supabase > Node 后端 > 演示
-// 1) Supabase 免费：填下面两项即用，零服务器、零备案、真数据库（推荐先看效果）
-// 2) Node 后端：把 API_BASE 改成你的域名（如 https://api.blys.top）
-// 3) 都不填：自动进入演示模式，会员流程可体验，数据存本机
+// ============ 用户体系 v2（邮箱验证码注册/登录 + 会员 + 评论 + 管理后台） ============
+// 全部逻辑走 Supabase RPC（安全写在数据库函数里，前端不持有密钥）
 const SUPABASE_URL = "https://ojioiglffglyuellvcex.supabase.co";     // 你的 Supabase 项目地址
 const SUPABASE_ANON = "sb_publishable_rGCr3ILVWQpvpURhctuYQg_K_jC-WHV";  // publishable key（前端公开，安全靠 RLS + RPC）
 const USE_SUPABASE = /^https?:\/\//.test(SUPABASE_URL) && SUPABASE_ANON.length > 0;
 
-const API_BASE = "https://YOUR_SERVER_DOMAIN";  // Node 后端地址（有 Supabase 时可忽略）
-const USE_REMOTE = /^https?:\/\//.test(API_BASE) && !API_BASE.includes("YOUR_SERVER_DOMAIN") && !USE_SUPABASE;
+const USER_TOKEN_KEY = "blys_user_token";
+const ADMIN_TOKEN_KEY = "blys_admin_token";
 
-const VIP_TOKEN_KEY = "blys_vip_token";
-
-// 演示模式用激活码（仅演示，真实后端由后台生成）
-const DEMO_CODES = { "BLYS-VIP-7": 7, "BLYS-VIP-30": 30, "BLYS-VIP-90": 90, "BLYS-VIP-365": 365 };
-
-// 调用 Supabase RPC（安全逻辑写在数据库函数里，前端只传参数）
+// 调用 Supabase RPC
 async function sbRpc(fn, params){
   const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
     method: "POST",
@@ -592,69 +584,56 @@ async function sbRpc(fn, params){
   return r.json();
 }
 
-// 当前会员状态，页面加载时拉取
-let __vip = { isVip: false };
+// 简单 HTML 转义，防 XSS
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;" }[c])); }
+function fmtDateTime(dt){
+  const d = (typeof dt === "string") ? new Date(dt) : dt;
+  if (!(d instanceof Date) || isNaN(d)) return "";
+  const p = n => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
 
-async function fetchVip(){
-  const raw = localStorage.getItem(VIP_TOKEN_KEY);
-  if (!raw){ __vip = { isVip: false }; renderVIPStatus(); lockVipZones(); return; }
-  if (USE_SUPABASE){
-    try {
-      const d = await sbRpc("check_member", { p_token: raw });
-      if (d && d.is_vip){
-        __vip = { isVip: true, name: d.name, expire: d.expire * 1000 };
-      } else {
-        localStorage.removeItem(VIP_TOKEN_KEY);
-        __vip = { isVip: false };
-      }
-    } catch(e){ __vip = { isVip: false }; }
-  } else if (USE_REMOTE){
-    try {
-      const r = await fetch(API_BASE + "/api/member?token=" + encodeURIComponent(raw));
-      const d = await r.json();
-      if (d && d.isVip){
-        __vip = { isVip: true, name: d.name, expire: d.expire };
-      } else {
-        localStorage.removeItem(VIP_TOKEN_KEY);
-        __vip = { isVip: false };
-      }
-    } catch(e){
-      __vip = { isVip: false };   // 后端不可达时按游客显示，不打扰
+// 当前登录用户
+let __user = { loggedIn: false };
+
+async function fetchUser(){
+  const token = localStorage.getItem(USER_TOKEN_KEY);
+  if (!token){ __user = { loggedIn: false }; renderUserStatus(); lockVipZones(); return; }
+  try {
+    const d = await sbRpc("get_profile", { p_token: token });
+    if (d && d.ok){
+      __user = { loggedIn: true, token, isVip: d.is_vip, isAdmin: d.is_admin, nickname: d.nickname, phone: d.phone, vipExpire: d.vip_expire };
+    } else {
+      localStorage.removeItem(USER_TOKEN_KEY);
+      __user = { loggedIn: false };
     }
-  } else {
-    // 演示模式：本地读取会员记录
-    try {
-      const v = JSON.parse(raw);
-      if (v && v.expire > Date.now()){
-        __vip = { isVip: true, name: v.name, expire: v.expire };
-      } else {
-        localStorage.removeItem(VIP_TOKEN_KEY);
-        __vip = { isVip: false };
-      }
-    } catch(e){ __vip = { isVip: false }; }
-  }
-  renderVIPStatus();
+  } catch(e){ __user = { loggedIn: false }; }
+  renderUserStatus();
   lockVipZones();
 }
 
-function isVIP(){ return __vip.isVip; }
+function isVIP(){ return __user.loggedIn && __user.isVip; }
+function isAdmin(){ return __user.loggedIn && __user.isAdmin; }
 
-function logoutVIP(){
-  localStorage.removeItem(VIP_TOKEN_KEY);
-  __vip = { isVip: false };
-  renderVIPStatus();
+function logoutUser(){
+  localStorage.removeItem(USER_TOKEN_KEY);
+  __user = { loggedIn: false };
+  renderUserStatus();
   lockVipZones();
 }
 
-// 渲染右上角会员状态
-function renderVIPStatus(){
+// 渲染右上角用户状态
+function renderUserStatus(){
   const el = document.getElementById("vipStatus");
   if (!el) return;
-  if (__vip.isVip){
-    el.innerHTML = `<span class="vip-badge">⭐ ${__vip.name} · 至 ${fmtDateStr(new Date(__vip.expire))}</span>`
-                 + `<button class="vip-logout" onclick="logoutVIP()">退出</button>`;
+  if (__user.loggedIn){
+    const tag = __user.isVip ? `⭐ 会员至 ${fmtDateStr(new Date(__user.vipExpire))}` : "普通用户";
+    let html = `<span class="vip-badge">${esc(__user.nickname || __user.phone || "用户")} · ${tag}</span>`;
+    if (__user.isAdmin) html += `<button class="vip-open" onclick="location.href='admin.html'">后台</button>`;
+    html += `<button class="vip-logout" onclick="logoutUser()">退出</button>`;
+    el.innerHTML = html;
   } else {
-    el.innerHTML = `<button class="vip-open" onclick="openVipModal()">开通会员</button>`;
+    el.innerHTML = `<button class="vip-open" onclick="openAuthModal()">登录/注册</button>`;
   }
 }
 
@@ -670,78 +649,115 @@ function lockVipZones(){
   });
 }
 
-// 打开 / 关闭激活弹窗
-function openVipModal(){
-  const m = document.getElementById("vipModal");
-  if (m) m.classList.add("open");
-}
-function closeVipModal(){
-  const m = document.getElementById("vipModal");
-  if (m) m.classList.remove("open");
-}
-// 点击遮罩空白处关闭
+// ---- 登录 / 注册弹窗 ----
+function openAuthModal(){ const m = document.getElementById("authModal"); if (m) m.classList.add("open"); }
+function closeAuthModal(){ const m = document.getElementById("authModal"); if (m) m.classList.remove("open"); }
 document.addEventListener("click", (e)=>{
-  const m = document.getElementById("vipModal");
-  if (m && m.classList.contains("open") && e.target === m) closeVipModal();
+  const m = document.getElementById("authModal");
+  if (m && m.classList.contains("open") && e.target === m) closeAuthModal();
 });
 
-// 激活提交：远程模式调后端，演示模式本地校验
-async function doActivate(){
-  const name = (document.getElementById("vipName").value || "").trim();
-  const code = (document.getElementById("vipCode").value || "").trim().toUpperCase().replace(/\s+/g, "");
-  const msg = document.getElementById("vipMsg");
-  if (!name){ msg.textContent = "请填写昵称"; return; }
-  if (!code){ msg.textContent = "请填写激活码"; return; }
-  msg.textContent = "验证中…";
-  if (USE_SUPABASE){
-    try {
-      const d = await sbRpc("activate_member", { p_name: name, p_code: code });
-      if (!d || !d.ok){ msg.textContent = (d && d.msg) || "激活失败"; return; }
-      localStorage.setItem(VIP_TOKEN_KEY, d.token);
-      msg.className = "result";
-      msg.innerHTML = `✅ 激活成功！会员有效期至 <b>${fmtDateStr(new Date(d.expire * 1000))}</b>　<span class="demo-tag">Supabase 真库</span>`;
-      await fetchVip();
-      setTimeout(closeVipModal, 1200);
-    } catch(e){
-      msg.textContent = "连接 Supabase 失败，请确认项目地址与 anon key 是否已配置";
-    }
-  } else if (USE_REMOTE){
-    try {
-      const r = await fetch(API_BASE + "/api/activate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, code })
-      });
-      const d = await r.json();
-      if (!d.ok){ msg.textContent = d.msg || "激活失败"; return; }
-      localStorage.setItem(VIP_TOKEN_KEY, d.token);
-      msg.className = "result";
-      msg.innerHTML = `✅ 激活成功！会员有效期至 <b>${fmtDateStr(new Date(d.expire))}</b>`;
-      await fetchVip();
-      setTimeout(closeVipModal, 1200);
-    } catch(e){
-      msg.textContent = "连接后端失败，请确认后端地址是否已配置";
-    }
-  } else {
-    // 演示模式
-    const days = DEMO_CODES[code];
-    if (days == null){ msg.textContent = "激活码无效，请检查后重试"; return; }
-    const expire = Date.now() + days * 86400000;
-    localStorage.setItem(VIP_TOKEN_KEY, JSON.stringify({ name, code, expire }));
+async function sendOtp(){
+  const email = (document.getElementById("authEmail").value || "").trim();
+  const phone = (document.getElementById("authPhone").value || "").trim();
+  const nick  = (document.getElementById("authNick").value || "").trim();
+  const msg = document.getElementById("authMsg");
+  if (!email){ msg.textContent = "请填写邮箱"; return; }
+  msg.textContent = "发送中…";
+  try {
+    const d = await sbRpc("send_otp", { p_email: email, p_phone: phone, p_nickname: nick });
+    if (!d || !d.ok){ msg.textContent = (d && d.msg) || "发送失败"; return; }
     msg.className = "result";
-    msg.innerHTML = `✅ 激活成功！会员有效期至 <b>${fmtDateStr(new Date(expire))}</b>　<span class="demo-tag">演示模式·数据存本地</span>`;
-    await fetchVip();
-    setTimeout(closeVipModal, 1500);
-  }
+    msg.innerHTML = d.demo_code
+      ? `✅ 验证码已发送（演示模式）：<b>${d.demo_code}</b>`
+      : "✅ 验证码已发送，请查收邮箱";
+    document.getElementById("authCodeRow").style.display = "block";
+    document.getElementById("authVerifyBtn").style.display = "inline-block";
+    document.getElementById("authSendBtn").style.display = "none";
+  } catch(e){ msg.textContent = "网络错误，请重试"; }
 }
 
-// 会员专属内容点击门：会员放行，游客弹窗
+async function verifyOtp(){
+  const email = (document.getElementById("authEmail").value || "").trim();
+  const phone = (document.getElementById("authPhone").value || "").trim();
+  const nick  = (document.getElementById("authNick").value || "").trim();
+  const code  = (document.getElementById("authCode").value || "").trim();
+  const msg = document.getElementById("authMsg");
+  if (!code){ msg.textContent = "请填写验证码"; return; }
+  msg.textContent = "验证中…";
+  try {
+    const d = await sbRpc("verify_otp", { p_email: email, p_code: code, p_phone: phone, p_nickname: nick });
+    if (!d || !d.ok){ msg.textContent = (d && d.msg) || "验证失败"; return; }
+    localStorage.setItem(USER_TOKEN_KEY, d.token);
+    msg.className = "result"; msg.innerHTML = "✅ 登录成功！";
+    await fetchUser();
+    setTimeout(closeAuthModal, 800);
+  } catch(e){ msg.textContent = "网络错误，请重试"; }
+}
+
+// ---- 激活码兑换（已登录用户） ----
+function openRedeemModal(){
+  if (!__user.loggedIn){ openAuthModal(); return; }
+  const m = document.getElementById("redeemModal"); if (m) m.classList.add("open");
+}
+function closeRedeemModal(){
+  const m = document.getElementById("redeemModal"); if (m) m.classList.remove("open");
+}
+document.addEventListener("click", (e)=>{
+  const m = document.getElementById("redeemModal");
+  if (m && m.classList.contains("open") && e.target === m) closeRedeemModal();
+});
+async function doRedeem(){
+  const code = (document.getElementById("redeemCode").value || "").trim().toUpperCase();
+  const msg = document.getElementById("redeemMsg");
+  if (!code){ msg.textContent = "请填写激活码"; return; }
+  msg.textContent = "兑换中…";
+  try {
+    const d = await sbRpc("redeem_code", { p_token: __user.token, p_code: code });
+    if (!d || !d.ok){ msg.textContent = (d && d.msg) || "兑换失败"; return; }
+    msg.className = "result";
+    msg.innerHTML = `✅ 激活成功！会员至 ${fmtDateStr(new Date(d.vip_expire))}`;
+    await fetchUser();
+    setTimeout(closeRedeemModal, 1200);
+  } catch(e){ msg.textContent = "网络错误"; }
+}
+
+// 会员专属内容点击门：会员放行，否则引导登录/兑换
 function vipGate(label){
-  if (isVIP()){
-    alert("会员已解锁：" + label + "（视频 / 文档加载中，支付与内容接入待配置）");
-  } else {
-    openVipModal();
-  }
+  if (isVIP()){ alert("会员已解锁：" + label); }
+  else if (__user.loggedIn){ openRedeemModal(); }
+  else { openAuthModal(); }
+}
+
+// ---- 评论系统（教程页调用） ----
+async function loadComments(article){
+  const box = document.getElementById("commentList");
+  if (!box) return;
+  box.innerHTML = '<p class="muted">加载评论…</p>';
+  try {
+    const d = await sbRpc("list_comments", { p_article: article });
+    if (d && d.ok && Array.isArray(d.list)){
+      if (d.list.length === 0){ box.innerHTML = '<p class="muted">还没有评论，来抢沙发～</p>'; return; }
+      box.innerHTML = d.list.map(c => `<div class="comment-item">
+        <div class="comment-head"><b>${esc(c.nickname || "匿名")}</b><span class="comment-time">${fmtDateTime(c.created_at)}</span></div>
+        <div class="comment-body">${esc(c.content)}</div></div>`).join("");
+    } else { box.innerHTML = '<p class="muted">评论加载失败</p>'; }
+  } catch(e){ box.innerHTML = '<p class="muted">评论加载失败</p>'; }
+}
+async function submitComment(article){
+  if (!__user.loggedIn){ openAuthModal(); return; }
+  const ta = document.getElementById("commentInput");
+  const content = (ta.value || "").trim();
+  if (!content){ alert("写点什么再发吧"); return; }
+  const btn = document.getElementById("commentBtn");
+  try {
+    const d = await sbRpc("add_comment", { p_token: __user.token, p_article: article, p_content: content });
+    if (!d || !d.ok){ alert((d && d.msg) || "发送失败"); return; }
+    ta.value = "";
+    if (btn) btn.textContent = "已发送 ✓";
+    loadComments(article);
+    setTimeout(()=>{ if (btn) btn.textContent = "发表评论"; }, 1500);
+  } catch(e){ alert("网络错误"); }
 }
 
 // ============ 导航 & 初始化 ============
@@ -751,16 +767,4 @@ document.getElementById("navToggle").addEventListener("click", ()=> {
 });
 initToolTabs();
 renderDiary();
-fetchVip();
-
-// 演示模式提示：未接入真实后端时，在弹窗里展示可立即体验的激活码
-(function renderVipDemoNote(){
-  const el = document.getElementById("vipDemoNote");
-  if (!el) return;
-  if (USE_SUPABASE || USE_REMOTE){
-    el.style.display = "none";
-  } else {
-    const codes = Object.keys(DEMO_CODES).map(c=> `<code>${c}</code>`).join(" ");
-    el.innerHTML = `<b>演示模式</b>：可直接用以下激活码体验完整会员流程（数据仅存本机，接入真实后端后即切换为真实数据库）。<br/>${codes}`;
-  }
-})();
+fetchUser();

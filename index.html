@@ -151,7 +151,7 @@
         <div class="vip-lock">🔒</div>
         <h3>会员专享内容</h3>
         <p>盘中提示 · 每周复盘 · 专属战法，输入激活码即可解锁</p>
-        <button class="btn btn-primary" onclick="openVipModal()">开通会员解锁</button>
+        <button class="btn btn-primary" onclick="openRedeemModal()">登录/兑换解锁</button>
       </div>
     </div>
   </section>
@@ -231,23 +231,47 @@
   <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
   <script src="assets/app.js"></script>
 
-  <!-- 会员激活弹窗 -->
-  <div class="modal-mask" id="vipModal">
+  <!-- 登录 / 注册弹窗 -->
+  <div class="modal-mask" id="authModal">
     <div class="modal">
-      <button class="modal-close" onclick="closeVipModal()" aria-label="关闭">×</button>
-      <h3>开通会员</h3>
-      <p class="muted">输入博主发放的激活码，即可成为会员并解锁专享内容。会员有有效期，到期前请续费。</p>
+      <button class="modal-close" onclick="closeAuthModal()" aria-label="关闭">×</button>
+      <h3>登录 / 注册</h3>
+      <p class="muted">用邮箱接收验证码，手机号作为唯一身份。已有账户直接登录，新邮箱自动注册。</p>
+      <div class="form-row">
+        <label>邮箱</label>
+        <input id="authEmail" type="email" placeholder="you@example.com" />
+      </div>
+      <div class="form-row">
+        <label>手机号</label>
+        <input id="authPhone" type="text" placeholder="11 位手机号（唯一）" />
+      </div>
       <div class="form-row">
         <label>昵称</label>
-        <input id="vipName" type="text" placeholder="怎么称呼你" />
+        <input id="authNick" type="text" placeholder="怎么称呼你（选填）" />
       </div>
+      <div class="form-row" id="authCodeRow" style="display:none">
+        <label>验证码</label>
+        <input id="authCode" type="text" placeholder="6 位验证码" />
+      </div>
+      <div id="authMsg" class="result"></div>
+      <button class="btn btn-primary btn-block" id="authSendBtn" onclick="sendOtp()">获取验证码</button>
+      <button class="btn btn-primary btn-block" id="authVerifyBtn" style="display:none" onclick="verifyOtp()">验证并登录</button>
+      <p class="muted" style="margin-top:12px;text-align:center">登录即表示同意成为本站用户，内容仅作交流分享。</p>
+    </div>
+  </div>
+
+  <!-- 激活码兑换弹窗（已登录用户） -->
+  <div class="modal-mask" id="redeemModal">
+    <div class="modal">
+      <button class="modal-close" onclick="closeRedeemModal()" aria-label="关闭">×</button>
+      <h3>兑换会员激活码</h3>
+      <p class="muted">输入博主发放的激活码，会员有效期将绑定到你的账户（按手机号确认）。</p>
       <div class="form-row">
         <label>激活码</label>
-        <input id="vipCode" type="text" placeholder="如 BLYS-VIP-30" style="text-transform:uppercase" />
+        <input id="redeemCode" type="text" placeholder="如 BLYS-VIP-30" style="text-transform:uppercase" />
       </div>
-      <div id="vipMsg" class="result"></div>
-      <button class="btn btn-primary btn-block" onclick="doActivate()">激活会员</button>
-      <div id="vipDemoNote" class="vip-demo-note"></div>
+      <div id="redeemMsg" class="result"></div>
+      <button class="btn btn-primary btn-block" onclick="doRedeem()">兑换</button>
       <p class="muted" style="margin-top:12px;text-align:center">没有激活码？关注小红书 <b>@白鹿原上</b> 或加企微获取。</p>
     </div>
   </div>
