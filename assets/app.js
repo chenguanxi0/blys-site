@@ -63,6 +63,16 @@ function loadQuote(){
   if(mode === 'trends'){ loadTrends(secid); } else { loadKline(toTencent(secid)); }
 }
 
+// 由股票代码直接查询（供星标"查看行情"调用）
+function loadQuoteByCode(code){
+  if(!code) return;
+  document.getElementById('quoteInput').value = code;
+  // 切换到行情 Tab
+  document.querySelectorAll('.tool-tab').forEach(b=> b.classList.toggle('active', b.dataset.tab === 'quote'));
+  document.querySelectorAll('.tool-panel').forEach(p=> p.style.display = (p.id === 'panel-quote') ? '' : 'none');
+  loadQuote();
+}
+
 // 切换 日K / 分时
 function switchChart(mode){
   document.querySelectorAll('.chart-tab').forEach(b=> b.classList.toggle('active', b.dataset.chart === mode));
@@ -236,6 +246,74 @@ function renderTrends(r, secid){
   });
 }
 
+// ============ 市场工具：非交易时段判断 + 数值防御 + 星标 ============
+function isMarketOpen(){
+  const d = new Date();
+  const day = d.getDay();
+  if(day === 0 || day === 6) return false;          // 周末休市
+  const t = d.getHours()*60 + d.getMinutes();
+  const morning   = t >= 9*60+15 && t <= 11*60+30;  // 9:15-11:30
+  const afternoon = t >= 13*60    && t <= 15*60;     // 13:00-15:00
+  return morning || afternoon;
+}
+const MARKET_HINT = '<div class="zt-bar" style="background:#f1f5f9;border-color:#e2e8f0;color:#475569">📴 当前为非交易时段，交易日 9:15–15:00 开盘后自动更新行情</div>';
+let marketStats = {};  // 累计各函数统计，分别更新
+
+// 东方财富 clist 字段：f2=最新价, f3=涨跌幅%, f6=成交额(元), f62=主力净流入, f184=换手%, f107=连板天数
+function pickPrice(it){ return parseFloat(it.f2); }
+function pickAmount(it){ return parseFloat(it.f6) || parseFloat(it.f21) || 0; }  // 成交额兜底
+function fmtYi(v){ if(!v || isNaN(v)) return '—'; return (v/1e8).toFixed(2) + '亿'; }
+
+// ============ 重点观察（星标，存 localStorage） ============
+const WATCH_KEY = 'blys_watchlist';
+function getWatch(){ try { return JSON.parse(localStorage.getItem(WATCH_KEY) || '[]'); } catch(e){ return []; } }
+function isWatched(code){ return getWatch().some(s => s.code === code); }
+function toggleWatch(code, name){
+  let list = getWatch();
+  const i = list.findIndex(s => s.code === code);
+  const nowOn = i < 0;
+  if(nowOn) list.push({ code, name: name || '' }); else list.splice(i, 1);
+  localStorage.setItem(WATCH_KEY, JSON.stringify(list));
+  document.querySelectorAll('.star-btn[data-code="'+code+'"]').forEach(b=>{
+    b.classList.toggle('on', nowOn);
+    b.textContent = nowOn ? '★' : '☆';
+  });
+  return nowOn;
+}
+function starHtml(code, name){
+  const on = isWatched(code);
+  const nm = (name||'').replace(/'/g, "\\'");
+  return `<span class="star-btn ${on?'on':''}" data-code="${code}" data-name="${nm}" onclick="toggleWatch('${code}','${nm}')" title="加入重点观察">${on?'★':'☆'}</span>`;
+}
+function renderWatch(){
+  const el = document.getElementById('watchList'); if(!el) return;
+  const list = getWatch();
+  if(!list.length){ el.innerHTML = '<div class="result">还没有星标股票，点击行情列表里的 ☆ 即可加入重点观察</div>'; return; }
+  el.innerHTML = list.map(s=>{
+    const nm = (s.name||'').replace(/'/g, "\\'");
+    return `<div class="rank-row watch-item">
+      <span class="star-btn on" data-code="${s.code}" data-name="${nm}" onclick="toggleWatch('${s.code}','${nm}')">★</span>
+      <span class="name">${s.name||'—'} <small class="stock-code">${s.code}</small></span>
+      <span class="sub"><a href="javascript:void(0)" onclick="loadQuoteByCode('${s.code}')">查看行情</a></span>
+    </div>`;
+  }).join('');
+}
+
+// ============ 市场总览统计卡 ============
+function renderMarketStats(stats){
+  const el = document.getElementById('marketStats'); if(!el) return;
+  if(!stats){
+    el.innerHTML = ['今日涨停','最高连板','上涨板块','非ST涨停'].map(t=>
+      `<div class="stat-card"><b>—</b><label>${t}</label></div>`).join('');
+    return;
+  }
+  el.innerHTML = `
+    <div class="stat-card"><b>${stats.zt||0}</b><label>今日涨停(家)</label></div>
+    <div class="stat-card"><b>${stats.maxBoard||0}</b><label>最高连板</label></div>
+    <div class="stat-card"><b>${stats.upSector||0}</b><label>上涨板块</label></div>
+    <div class="stat-card"><b>${stats.strong||0}</b><label>非ST涨停</label></div>`;
+}
+
 // ============ 板块涨幅榜（点击展开个股排名） ============
 function loadSectors(){
   const hy = document.getElementById('sectorHy');
@@ -247,6 +325,10 @@ function loadSectors(){
     jsonp(url).then(r=>{
       const list = (r && r.data && r.data.diff) || [];
       if(!list.length){ el.innerHTML = '<div class="result">暂无数据</div>'; return; }
+      // 统计上涨板块数（行业+概念分别统计后累加）
+      const up = list.filter(it => parseFloat(it.f3) > 0).length;
+      marketStats.upSector = (marketStats.upSector || 0) + up;
+      renderMarketStats(marketStats);
       el.innerHTML = list.map(it=>{
         const p = parseFloat(it.f3), net = parseFloat(it.f62), hs = parseFloat(it.f184);
         const bkCode = (it.f104 || '').trim();  // 板块代码，如 BK0426
@@ -303,6 +385,7 @@ function loadSectorStocks(rowEl){
         const mvYi = isNaN(mv) ? '\u2014' : (mv / 1e8).toFixed(0) + '\u4ebf';
         const hsTxt = isNaN(turnover) ? '\u2014' : turnover.toFixed(2) + '%';
         return `<div class="rank-row stock-in-sector">
+          ${starHtml(code, name)}
           <span class="name">${name} <small class="stock-code">${code}</small></span>
           <span class="sub">${isNaN(price)?'\u2014':price.toFixed(2)}</span>
           <span class="val ${cls(p)}">${isNaN(p)?'\u2014':sign(p)+p.toFixed(2)+'%'}</span>
@@ -315,110 +398,115 @@ function loadSectorStocks(rowEl){
   });
 }
 
-// ============ 涨停（覆盖全 A 股，含沪深京 + 科创创业板） ============
+// ============ 涨停（东方财富涨停板标签池 m:0+t:81+s:2048，精准只含涨停股） ============
 function loadZT(){
   const sum = document.getElementById('ztSummary');
   const list = document.getElementById('ztList');
+  if(!isMarketOpen()){
+    sum.innerHTML = MARKET_HINT;
+    list.innerHTML = '<div class="result">📴 非交易时段不展示涨停数据</div>';
+    return;
+  }
   sum.innerHTML = '<div class="result">加载中…</div>'; list.innerHTML = '';
-  // 覆盖全部 A 股：沪(主+科)、深(主+创+中小)、北交所、ST
-  const url = `https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=5000&po=1&np=1&fltt=2&invt=2&fid=f3&fs=m:0+t:6,m:0+t:80,m:0+t:81,m:1+t:2,m:1+t:23,m:0+t:81+s:2048&fields=f12,f14,f3,f6,f62,f184,f2,f107&ut=fa5fd1943c7b386f172d6893b`;
+  const url = `https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=600&po=1&np=1&fltt=2&invt=2&fid=f3&fs=m:0+t:81+s:2048&fields=f12,f14,f3,f6,f62,f184,f107&ut=fa5fd1943c7b386f172d6893b`;
   jsonp(url).then(r=>{
-    const data = r && r.data;
-    const diff = (data && data.diff) || [];
-    if(!data || !diff.length){
-      sum.innerHTML = '<div class="zt-bar">非交易时段暂无数据，交易日开盘后自动更新</div>';
-      return;
-    }
-    // 过滤涨停：主板/中小板≥9.5%，科创板/创业板/ST≥19.5%
-    const ztList = diff.filter(it => {
-      const p = parseFloat(it.f3);
-      return p >= 9.5;
-    });
-    if(!ztList.length){
-      sum.innerHTML = '<div class="zt-bar">今日暂无涨停股（可能未开盘或已收盘）</div>';
-      return;
-    }
-    sum.innerHTML = `<div class="zt-bar">今日涨停 <b>${ztList.length}</b> 家 ｜ 更新于 ${new Date().toLocaleTimeString('zh-CN')}</div>`;
-    list.innerHTML = ztList.map(it=>{
-      const name = it.f14 || '', code = it.f12 || '';
-      const p = parseFloat(it.f3), price = parseFloat(it.f6);
-      const net = parseFloat(it.f62), hs = parseFloat(it.f184);
-      const amount = parseFloat(it.f2);
-      const amtTxt = isNaN(amount) ? '\u2014' : (amount / 1e8).toFixed(2) + '\u4ebf';
-      const hsTxt2 = isNaN(hs) ? '\u2014' : hs.toFixed(2) + '%\u6362\u624b';
-      return `<div class="rank-row">
-        <span class="name">${name} <small class="stock-code">${code}</small></span>
-        <span class="sub">${isNaN(price)?'\u2014':price.toFixed(2)}</span>
-        <span class="val ${cls(p)}">${isNaN(p)?'\u2014':sign(p)+p.toFixed(2)+'%'}</span>
-        <span class="extra">${amtTxt}  ${hsTxt2}</span>
-      </div>`;
-    }).join('');
+    const diff = (r && r.data && r.data.diff) || [];
+    if(!diff.length){ sum.innerHTML = '<div class="zt-bar">今日涨停数据为空（可能未开盘或已收盘）</div>'; return; }
+    const ztList = diff.map(it=>({
+      code: it.f12||'', name: it.f14||'',
+      p: parseFloat(it.f3), price: pickPrice(it), amt: pickAmount(it),
+      hs: parseFloat(it.f184), boards: parseInt(it.f107,10) || 1
+    })).filter(s=> !isNaN(s.p));
+    const strong = ztList.filter(s=> !/ST|退/.test(s.name)).length;
+    marketStats.zt = ztList.length;
+    marketStats.strong = strong;
+    renderMarketStats(marketStats);
+
+    const render = (filter)=>{
+      const arr = filter==='all' ? ztList
+        : filter==='first' ? ztList.filter(s=> s.boards<=1)
+        : ztList.filter(s=> s.boards >= parseInt(filter,10));
+      if(!arr.length){ list.innerHTML = '<div class="result">无符合条件的涨停股</div>'; return; }
+      list.innerHTML = arr.map(s=>`<div class="rank-row">
+        ${starHtml(s.code, s.name)}
+        <span class="name">${s.name} <small class="stock-code">${s.code}</small></span>
+        <span class="sub">${isNaN(s.price)?'—':s.price.toFixed(2)}</span>
+        <span class="val ${cls(s.p)}">${sign(s.p)+s.p.toFixed(2)}%</span>
+        <span class="extra">${fmtYi(s.amt)}  ${isNaN(s.hs)?'—':s.hs.toFixed(2)+'%换'}</span>
+      </div>`).join('');
+    };
+    sum.innerHTML = `<div class="zt-bar">今日涨停 <b>${ztList.length}</b> 家（非ST <b>${strong}</b> 家） ｜ 更新于 ${new Date().toLocaleTimeString('zh-CN')}
+      <select class="zt-filter" onchange="window.__ztFilter=this.value;window.__ztRender()">
+        <option value="all">全部连板</option>
+        <option value="3">≥3连板</option>
+        <option value="2">≥2连板</option>
+        <option value="first">仅首板</option>
+      </select></div>`;
+    window.__ztFilter = 'all';
+    window.__ztRender = ()=> render(window.__ztFilter);
+    window.__ztRender();
   }).catch(()=>{ sum.innerHTML = '<div class="result">涨停数据加载失败</div>'; });
 }
 
-// ============ 连板梯队（按连板天数从高到低：9连板→…→2连板→首板） ============
+// ============ 连板梯队（按连板天数从高到低：9连板→…→首板） ============
 function loadLadder(){
   const el = document.getElementById('ladderInfo');
+  if(!isMarketOpen()){
+    el.innerHTML = MARKET_HINT;
+    return;
+  }
   el.innerHTML = '<div class="result">加载中…</div>';
-  // 用东方财富涨停池接口，f107 字段为连板天数
-  const url = `https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=5000&po=1&np=1&fltt=2&invt=2&fid=f107&fs=m:0+t:6,m:0+t:80,m:0+t:81,m:1+t:2,m:1+t:23,m:0+t:81+s:2048&fields=f12,f14,f3,f6,f62,f184,f2,f107,f168&ut=fa5fd1943c7b386f172d6893b`;
+  // 东方财富涨停板标签池，f107=连板天数，f2=最新价，f6=成交额
+  const url = `https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=600&po=1&np=1&fltt=2&invt=2&fid=f107&fs=m:0+t:81+s:2048&fields=f12,f14,f3,f6,f62,f184,f107&ut=fa5fd1943c7b386f172d6893b`;
   jsonp(url).then(r=>{
     const diff = (r && r.data && r.data.diff) || [];
     if(!diff.length){
-      el.innerHTML = '<div class="result">非交易时段暂无数据</div>';
-      return;
-    }
-    // 筛选涨停股
-    const ztStocks = diff.filter(it => parseFloat(it.f3) >= 9.5);
-    if(!ztStocks.length){
       el.innerHTML = '<div class="ladder-empty">今日暂无涨停股，无法生成连板梯队</div>';
       return;
     }
-
-    // 按 f107（连板天数）分组，没有 f107 的归入"首板"
     const tiers = {};
-    ztStocks.forEach(it => {
-      const boards = parseInt(it.f107, 10);
-      let key;
-      if (boards >= 2) key = boards + '连板';
-      else key = '首板';
-      if (!tiers[key]) tiers[key] = [];
-      tiers[key].push(it);
+    let maxBoard = 1;
+    diff.forEach(it=>{
+      const boards = parseInt(it.f107, 10) || 1;
+      const p = parseFloat(it.f3);
+      if(isNaN(p)) return;
+      if(boards > maxBoard) maxBoard = boards;
+      const key = boards >= 2 ? boards + '连板' : '首板';
+      (tiers[key] = tiers[key] || []).push({
+        code: it.f12||'', name: it.f14||'',
+        p, price: pickPrice(it), amt: pickAmount(it)
+      });
     });
+    marketStats.maxBoard = maxBoard;
+    renderMarketStats(marketStats);
 
-    // 排序：按连板天数从高到低（9连板→...→2连板→首板）
-    const sortedKeys = Object.keys(tiers).sort((a, b) => {
-      const na = a.replace(/[^0-9]/g, '') | 0;
-      const nb = b.replace(/[^0-9]/g, '') | 0;
+    // 排序：连板天数从高到低（9连板→...→首板）
+    const sortedKeys = Object.keys(tiers).sort((a,b)=>{
+      const na = parseInt(a,10)||1, nb = parseInt(b,10)||1;
       return nb - na;
     });
 
-    const renderTier = (key, stocks) => {
+    const renderTier = (key, stocks)=>{
       const count = stocks.length;
       let titleClass = 'tier-up';
-      if (key === '首板') titleClass = 'tier-near';
-      else if (count <= 3) titleClass = 'tier-hot';
-
+      if(key === '首板') titleClass = 'tier-near';
+      else if(count <= 3) titleClass = 'tier-hot';
       return `<div class="ladder-tier">
         <div class="ladder-tier-title ${titleClass}">${key} <span class="ladder-count">${count}只</span></div>
-        ${stocks.slice(0, 50).map(it=>{
-          const name = it.f14||'', code = it.f12||'', p = parseFloat(it.f3);
-          const price = parseFloat(it.f6), amt = parseFloat(it.f2);
-          const amtTxt3 = isNaN(amt) ? '\u2014' : (amt / 1e8).toFixed(2) + '\u4ebf';
-          return `<div class="rank-row ladder-stock">
-            <span class="name">${name} <small class="stock-code">${code}</small></span>
-            <span class="sub">${isNaN(price)?'\u2014':price.toFixed(2)}</span>
-            <span class="val ${cls(p)}">${p.toFixed(2)}%</span>
-            <span class="extra">${amtTxt3}</span>
-          </div>`;
-        }).join('')}
+        ${stocks.map(s=>`<div class="rank-row ladder-stock">
+          ${starHtml(s.code, s.name)}
+          <span class="name">${s.name} <small class="stock-code">${s.code}</small></span>
+          <span class="sub">${isNaN(s.price)?'—':s.price.toFixed(2)}</span>
+          <span class="val ${cls(s.p)}">${s.p.toFixed(2)}%</span>
+          <span class="extra">${fmtYi(s.amt)}</span>
+        </div>`).join('')}
       </div>`;
     };
 
     el.innerHTML = `
-      <div class="ladder-header">今日涨停共 <b>${ztStocks.length}</b> 只 ｜ ${new Date().toLocaleTimeString('zh-CN')}</div>
+      <div class="ladder-header">今日涨停共 <b>${diff.length}</b> 只 ｜ 最高 <b>${maxBoard}</b> 连板 ｜ ${new Date().toLocaleTimeString('zh-CN')}</div>
       ${sortedKeys.map(key => renderTier(key, tiers[key])).join('')}
-      <div class="ladder-note">注：数据来自东方财富公开接口，按连板天数分组。交易时段自动更新。</div>
+      <div class="ladder-note">注：数据来自东方财富公开接口，按连板天数分组（9连板→首板）。交易时段自动更新。</div>
     `;
   }).catch(()=>{ el.innerHTML = '<div class="result">连板梯队加载失败</div>'; });
 }
@@ -581,6 +669,7 @@ function initToolTabs(){
       if(t === "sector" && !window.__loadedSector){ loadSectors(); window.__loadedSector = true; }
       if(t === "zt" && !window.__loadedZT){ loadZT(); window.__loadedZT = true; }
       if(t === "ladder" && !window.__loadedLadder){ loadLadder(); window.__loadedLadder = true; }
+      if(t === "watch"){ renderWatch(); }
       if(t === "quote" && window.__chart) window.__chart.resize();
     });
   });
