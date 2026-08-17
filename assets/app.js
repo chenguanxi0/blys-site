@@ -605,6 +605,16 @@ async function sbRpc(fn, params){
   return r.json();
 }
 
+// 调用 Supabase Edge Function（发邮件走这里，数据库出站被挡，改用 Edge Function）
+async function callEdge(fn, body){
+  const r = await fetch(`${SUPABASE_URL}/functions/v1/${fn}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON, "Authorization": "Bearer " + SUPABASE_ANON },
+    body: JSON.stringify(body || {})
+  });
+  return r.json();
+}
+
 // 简单 HTML 转义，防 XSS
 function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;" }[c])); }
 function fmtDateTime(dt){
@@ -714,12 +724,10 @@ async function regSend(){
   if (pwd.length < 6){ msg.textContent = "密码至少 6 位"; return; }
   msg.textContent = "发送中…";
   try {
-    const d = await sbRpc("send_otp", { p_email: email, p_purpose: "register" });
+    const d = await callEdge("send-otp", { email: email, purpose: "register" });
     if (!d || !d.ok){ msg.textContent = (d && d.msg) || "发送失败"; return; }
     msg.className = "result";
-    msg.innerHTML = d.demo_code
-      ? `✅ 验证码已发送（演示模式）：<b>${d.demo_code}</b>`
-      : "✅ 验证码已发送，请查收邮箱";
+    msg.innerHTML = "✅ 验证码已发送，请查收邮箱（若未收到请检查垃圾箱）";
     document.getElementById("regCodeRow").style.display = "block";
     document.getElementById("regSubmitBtn").style.display = "inline-block";
     document.getElementById("regSendBtn").style.display = "none";
@@ -752,12 +760,10 @@ async function fgSend(){
   if (!email){ msg.textContent = "请填写邮箱"; return; }
   msg.textContent = "发送中…";
   try {
-    const d = await sbRpc("send_otp", { p_email: email, p_purpose: "reset" });
+    const d = await callEdge("send-otp", { email: email, purpose: "reset" });
     if (!d || !d.ok){ msg.textContent = (d && d.msg) || "发送失败"; return; }
     msg.className = "result";
-    msg.innerHTML = d.demo_code
-      ? `✅ 验证码已发送（演示模式）：<b>${d.demo_code}</b>`
-      : "✅ 验证码已发送，请查收邮箱";
+    msg.innerHTML = "✅ 验证码已发送，请查收邮箱（若未收到请检查垃圾箱）";
     document.getElementById("fgCodeRow").style.display = "block";
     document.getElementById("fgPwdRow").style.display = "block";
     document.getElementById("fgSubmitBtn").style.display = "inline-block";
