@@ -503,8 +503,9 @@ function loadLadder(){
       </div>`;
     };
 
+    const totalTier = Object.values(tiers).reduce((a,b)=> a+b.length, 0);
     el.innerHTML = `
-      <div class="ladder-header">今日涨停共 <b>${diff.length}</b> 只 ｜ 最高 <b>${maxBoard}</b> 连板 ｜ ${new Date().toLocaleTimeString('zh-CN')}</div>
+      <div class="ladder-header">今日涨停共 <b>${totalTier}</b> 只 ｜ 最高 <b>${maxBoard}</b> 连板 ｜ ${new Date().toLocaleTimeString('zh-CN')}</div>
       ${sortedKeys.map(key => renderTier(key, tiers[key])).join('')}
       <div class="ladder-note">注：数据来自东方财富公开接口，按连板天数分组（9连板→首板）。交易时段自动更新。</div>
     `;
