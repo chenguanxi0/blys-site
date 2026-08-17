@@ -826,7 +826,44 @@ async function submitComment(article){
   } catch(e){ alert("网络错误"); }
 }
 
+// ============ 在线人数（前端模拟，基于时段+随机波动） ============
+(function(){
+  const el = document.getElementById("onlineCounter");
+  if (!el) return;
+  const numEl = document.getElementById("onlineNum");
+  // 基础人数：工作日白天高、夜间/周末低
+  const h = new Date().getHours();
+  const wd = [0,6].indexOf(new Date().getDay()) === -1; // 工作日
+  let base = wd ? (h >= 9 && h <= 21 ? 45 : 18) : (h >= 10 && h <= 22 ? 28 : 12);
+  // 从 localStorage 取偏移量（同设备稳定）
+  const key = "blys_visit_seed";
+  let seed = parseFloat(localStorage.getItem(key) || "0");
+  if (seed === 0){ seed = Math.random() * 20 - 10; localStorage.setItem(key, seed.toFixed(2)); }
+  base = Math.round(base + seed);
+  base = Math.max(3, base);
+
+  function show(n){
+    if (numEl) numEl.textContent = n;
+  }
+  show(base);
+  // 每 12~20 秒微调 ±1~3，模拟真实波动
+  setInterval(()=>{
+    base += Math.floor(Math.random() * 5) - 2; // -2 ~ +2
+    base = Math.max(3, base);
+    show(base);
+  }, 12000 + Math.random() * 8000);
+})();
+
 // ============ 导航 & 初始化 ============
+// 滚动时给导航加阴影
+(function(){
+  const nav = document.querySelector(".nav");
+  if (!nav) return;
+  const onScroll = () => { nav.classList.toggle("scrolled", window.scrollY > 20); };
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+})();
+
 document.getElementById("year").textContent = new Date().getFullYear();
 document.getElementById("navToggle").addEventListener("click", ()=> {
   document.getElementById("navLinks").classList.toggle("open");

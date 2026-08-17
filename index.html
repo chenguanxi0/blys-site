@@ -4,8 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>白鹿原上交易笔记 · 股票实盘记录与工具站</title>
-  <meta name="description" content="免费股票工具：实时行情、K线、板块涨幅榜、涨停连板、北向资金，每日实盘记录。blys.top" />
+  <meta name="description" content="免费股票工具：实时行情、K线、板块涨幅榜、涨停连板、北向资金，每日实盘记录。blys.site" />
   <link rel="stylesheet" href="assets/styles.css" />
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <link rel="apple-touch-icon" href="assets/favicon.png" />
 </head>
 <body>
   <!-- 风险提示条 -->
@@ -18,7 +20,7 @@
     <div class="nav-inner">
       <a class="brand" href="#home">
         <span class="brand-logo">白</span>
-        <span class="brand-name">白鹿原上交易笔记 <small>· blys.top</small></span>
+        <span class="brand-name">白鹿原上交易笔记 <small>· blys.site</small></span>
       </a>
       <div class="nav-right">
         <nav class="nav-links" id="navLinks">
@@ -29,6 +31,10 @@
           <a href="#about">关于</a>
         </nav>
         <div class="vip-status" id="vipStatus"></div>
+        <div class="online-counter" id="onlineCounter" title="当前在线访客">
+          <span class="online-dot"></span>
+          <span id="onlineNum">--</span> 在线
+        </div>
         <button class="nav-toggle" id="navToggle" aria-label="菜单">☰</button>
       </div>
     </div>
@@ -44,11 +50,9 @@
         <a class="btn btn-ghost" href="#tools">用工具箱</a>
       </div>
       <div class="hero-social">
-        网址：<strong style="color:var(--brand);font-size:18px">blys.top</strong><br/>
+        网址：<strong style="color:var(--brand);font-size:18px">blys.site</strong><br/>
         <span style="font-size:13px;color:var(--muted)">同作者在：</span>
-        <a href="#" class="chip">小红书 @白鹿原上</a>
-        <a href="#" class="chip">微信公众号 @你的号</a>
-        <a href="#" class="chip">企业微信（加群）</a>
+        <a href="https://www.xiaohongshu.com/user/profile/5c87094a00000000120101d8" target="_blank" rel="noopener" class="chip">小红书 @白鹿原上</a>
       </div>
     </div>
   </section>
@@ -210,21 +214,16 @@
     </div>
     <div class="about-grid">
       <div class="about-card">
-        <h4>加我微信 / 企微</h4>
-        <div class="qr-placeholder">微信二维码<br/>占位图</div>
-        <p class="muted">扫码进粉丝群，第一时间收到实盘更新。</p>
-      </div>
-      <div class="about-card">
         <h4>关注小红书</h4>
         <img src="assets/avatar.jpg" alt="白鹿原上" style="width:80px;height:80px;object-fit:cover;border-radius:50%;margin-bottom:8px" />
-        <p>每天短内容拆解一个知识点。</p>
-        <a class="btn btn-ghost btn-block" href="#">@白鹿原上</a>
+        <p>每天短内容拆解一个知识点，实盘记录与复盘分享。</p>
+        <a class="btn btn-primary btn-block" href="https://www.xiaohongshu.com/user/profile/5c87094a00000000120101d8" target="_blank" rel="noopener">@白鹿原上 →</a>
       </div>
     </div>
   </section>
 
   <footer class="footer">
-    <p>© <span id="year"></span> 白鹿原上交易笔记 · blys.top ｜ 本内容为个人分享，不构成投资建议</p>
+    <p>© <span id="year"></span> 白鹿原上交易笔记 · blys.site ｜ 本内容为个人分享，不构成投资建议</p>
   </footer>
 
   <script src="assets/data.js"></script>
@@ -318,7 +317,7 @@
       </div>
       <div id="redeemMsg" class="result"></div>
       <button class="btn btn-primary btn-block" onclick="doRedeem()">兑换</button>
-      <p class="muted" style="margin-top:12px;text-align:center">没有激活码？关注小红书 <b>@白鹿原上</b> 或加企微获取。</p>
+      <p class="muted" style="margin-top:12px;text-align:center">没有激活码？关注小红书 <b>@白鹿原上</b> 获取。</p>
     </div>
   </div>
 </body>
