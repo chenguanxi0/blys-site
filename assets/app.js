@@ -560,9 +560,80 @@ function initToolTabs(){
       if(t === "sector" && !window.__loadedSector){ loadSectors(); window.__loadedSector = true; }
       if(t === "zt" && !window.__loadedZT){ loadZT(); window.__loadedZT = true; }
       if(t === "ladder" && !window.__loadedLadder){ loadLadder(); window.__loadedLadder = true; }
+      if(t === "calc" && !window.__initedCalc){ initCalc(); window.__initedCalc = true; }
       if(t === "quote" && window.__chart) window.__chart.resize();
     });
   });
+}
+
+// ============ 投资计算器（纯前端） ============
+function initCalc(){
+  document.querySelectorAll(".calc-tab").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      document.querySelectorAll(".calc-tab").forEach(b=> b.classList.remove("active"));
+      btn.classList.add("active");
+      document.querySelectorAll(".calc-panel").forEach(p=> p.style.display = "none");
+      const p = document.getElementById("calc-" + btn.dataset.calc);
+      if(p) p.style.display = "";
+    });
+  });
+}
+function num(id){ const v = parseFloat(document.getElementById(id).value); return isNaN(v) ? NaN : v; }
+function showCalc(elId, html){ const el = document.getElementById(elId); el.innerHTML = html; el.classList.add("show"); }
+function fmtMoney(n){ return n.toLocaleString("zh-CN", { maximumFractionDigits: 2 }); }
+
+function calcCompound(){
+  const P = num("cpPrincipal"), r = num("cpRate"), y = num("cpYears"), m = num("cpFreq");
+  if([P,r,y,m].some(isNaN) || P<=0 || y<=0 || m<=0){ showCalc("cpResult","请填写正确的正数参数"); return; }
+  const rate = r/100/m;
+  const total = m*y;
+  const F = P * Math.pow(1+rate, total);
+  const profit = F - P;
+  const totalRate = (F/P - 1)*100;
+  showCalc("cpResult",
+    `期末总额：<b>¥${fmtMoney(F)}</b><br/>` +
+    `累计收益：<span class="hl-up">+¥${fmtMoney(profit)}</span>（<span class="hl-up">+${totalRate.toFixed(1)}%</span>）<br/>` +
+    `<span class="muted" style="font-size:13px">本金 ¥${fmtMoney(P)} · 年化 ${r}% · ${y}年 · 每年复利 ${m} 次</span>`);
+}
+function calcPosition(){
+  const total = num("psTotal"), riskPct = num("psRisk"), buy = num("psBuy"), stop = num("psStop");
+  if([total,riskPct,buy,stop].some(isNaN) || total<=0 || buy<=0){ showCalc("psResult","请填写正确的正数参数"); return; }
+  if(stop >= buy){ showCalc("psResult","止损价必须低于买入价"); return; }
+  const riskAmt = total * (riskPct/100);            // 愿意亏的钱
+  const perShare = buy - stop;                       // 每股风险
+  const invest = riskAmt / perShare * buy;           // 可投入金额
+  let qty = Math.floor(invest / buy / 100) * 100;    // 向下取整到百股
+  if(qty < 100) qty = 0;
+  const actualInvest = qty * buy;
+  showCalc("psResult",
+    `单笔最大亏损额：<span class="hl-down">¥${fmtMoney(riskAmt)}</span><br/>` +
+    `建议买入：<b>${qty} 股</b>（约 ¥${fmtMoney(actualInvest)}）<br/>` +
+    `<span class="muted" style="font-size:13px">每股风险 ¥${perShare.toFixed(2)} · 占账户 ${(actualInvest/total*100).toFixed(1)}%</span>`);
+}
+function calcTP(){
+  const buy = num("tpBuy"), up = num("tpUp"), down = num("tpDown"), lot = num("tpLot");
+  if([buy,up,down,lot].some(isNaN) || buy<=0 || lot<=0){ showCalc("tpResult","请填写正确的正数参数"); return; }
+  const tp = buy * (1 + up/100);
+  const sl = buy * (1 - down/100);
+  showCalc("tpResult",
+    `止盈价：<span class="hl-up">¥${tp.toFixed(2)}</span>（每股 +¥${(tp-buy).toFixed(2)} / 每手 +¥${((tp-buy)*lot).toFixed(2)}）<br/>` +
+    `止损价：<span class="hl-down">¥${sl.toFixed(2)}</span>（每股 -¥${(buy-sl).toFixed(2)} / 每手 -¥${((buy-sl)*lot).toFixed(2)}）<br/>` +
+    `<span class="muted" style="font-size:13px">盈亏比 ${(up/down).toFixed(2)} : 1</span>`);
+}
+function calcPnL(){
+  const buy = num("pnBuy"), sell = num("pnSell"), qty = num("pnQty"), fee = num("pnFee");
+  if([buy,sell,qty,fee].some(isNaN) || buy<=0 || qty<=0){ showCalc("pnResult","请填写正确的正数参数"); return; }
+  const cost = buy*qty;
+  const proceeds = sell*qty;
+  const feeAmt = (cost+proceeds) * (fee/1000);   // 双边手续费
+  const pnl = proceeds - cost - feeAmt;
+  const rate = pnl/cost*100;
+  const cls = pnl>=0 ? "hl-up" : "hl-down";
+  const sign = pnl>=0 ? "+" : "";
+  showCalc("pnResult",
+    `盈亏金额：<span class="${cls}">${sign}¥${fmtMoney(pnl)}</span><br/>` +
+    `收益率：<span class="${cls}">${sign}${rate.toFixed(2)}%</span><br/>` +
+    `<span class="muted" style="font-size:13px">手续费约 ¥${fmtMoney(feeAmt)}（单边 ${fee}‰）</span>`);
 }
 
 // ============ 用户体系 v2（邮箱验证码注册/登录 + 会员 + 评论 + 管理后台） ============

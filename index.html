@@ -69,6 +69,7 @@
       <button class="tool-tab" data-tab="sector">板块涨幅榜</button>
       <button class="tool-tab" data-tab="zt">涨停</button>
       <button class="tool-tab" data-tab="ladder">连板梯队</button>
+      <button class="tool-tab" data-tab="calc">投资计算器</button>
     </div>
 
     <!-- 行情 + K线 -->
@@ -108,6 +109,68 @@
     <!-- 连板梯队 -->
     <div class="tool-panel" id="panel-ladder" style="display:none">
       <div id="ladderInfo" class="ladder-info"><div class="result">点击加载…</div></div>
+    </div>
+
+    <!-- 投资计算器（纯前端，零依赖） -->
+    <div class="tool-panel" id="panel-calc" style="display:none">
+      <div class="calc-tabs">
+        <button class="calc-tab active" data-calc="compound">复利计算器</button>
+        <button class="calc-tab" data-calc="position">仓位计算器</button>
+        <button class="calc-tab" data-calc="tp">止盈止损</button>
+        <button class="calc-tab" data-calc="pnl">单笔盈亏</button>
+      </div>
+
+      <!-- 复利 -->
+      <div class="calc-panel" id="calc-compound">
+        <p class="muted" style="margin-bottom:14px">算算长期复利的威力：投入一笔钱，按年化收益滚动增长能变成多少。</p>
+        <div class="calc-grid">
+          <div class="form-row"><label>初始本金（元）</label><input id="cpPrincipal" type="number" placeholder="100000" /></div>
+          <div class="form-row"><label>年化收益率（%）</label><input id="cpRate" type="number" placeholder="15" /></div>
+          <div class="form-row"><label>投资年限（年）</label><input id="cpYears" type="number" placeholder="10" /></div>
+          <div class="form-row"><label>每年复利次数</label><input id="cpFreq" type="number" placeholder="1" value="1" /></div>
+        </div>
+        <button class="btn btn-primary" onclick="calcCompound()">计算</button>
+        <div id="cpResult" class="calc-result"></div>
+      </div>
+
+      <!-- 仓位 -->
+      <div class="calc-panel" id="calc-position" style="display:none">
+        <p class="muted" style="margin-bottom:14px">按「固定风险」模型算仓位：你愿意亏多少，就买多少，从源头控制回撤。</p>
+        <div class="calc-grid">
+          <div class="form-row"><label>账户总资金（元）</label><input id="psTotal" type="number" placeholder="100000" /></div>
+          <div class="form-row"><label>单笔可承受亏损（%）</label><input id="psRisk" type="number" placeholder="2" value="2" /></div>
+          <div class="form-row"><label>买入价（元）</label><input id="psBuy" type="number" placeholder="10" /></div>
+          <div class="form-row"><label>止损价（元）</label><input id="psStop" type="number" placeholder="9" /></div>
+        </div>
+        <button class="btn btn-primary" onclick="calcPosition()">计算</button>
+        <div id="psResult" class="calc-result"></div>
+      </div>
+
+      <!-- 止盈止损 -->
+      <div class="calc-panel" id="calc-tp" style="display:none">
+        <p class="muted" style="margin-bottom:14px">给定买入价，一键算出止盈价与止损价，以及每股的盈亏空间。</p>
+        <div class="calc-grid">
+          <div class="form-row"><label>买入价（元）</label><input id="tpBuy" type="number" placeholder="10" /></div>
+          <div class="form-row"><label>止盈幅度（%）</label><input id="tpUp" type="number" placeholder="20" value="20" /></div>
+          <div class="form-row"><label>止损幅度（%）</label><input id="tpDown" type="number" placeholder="8" value="8" /></div>
+          <div class="form-row"><label>每手股数（股）</label><input id="tpLot" type="number" placeholder="100" value="100" /></div>
+        </div>
+        <button class="btn btn-primary" onclick="calcTP()">计算</button>
+        <div id="tpResult" class="calc-result"></div>
+      </div>
+
+      <!-- 单笔盈亏 -->
+      <div class="calc-panel" id="calc-pnl" style="display:none">
+        <p class="muted" style="margin-bottom:14px">卖出后到底赚了多少？把手续费也算进去，看真实到手收益。</p>
+        <div class="calc-grid">
+          <div class="form-row"><label>买入价（元）</label><input id="pnBuy" type="number" placeholder="10" /></div>
+          <div class="form-row"><label>卖出价（元）</label><input id="pnSell" type="number" placeholder="11" /></div>
+          <div class="form-row"><label>数量（股）</label><input id="pnQty" type="number" placeholder="1000" /></div>
+          <div class="form-row"><label>单边手续费（‰）</label><input id="pnFee" type="number" placeholder="0.25" value="0.25" /></div>
+        </div>
+        <button class="btn btn-primary" onclick="calcPnL()">计算</button>
+        <div id="pnResult" class="calc-result"></div>
+      </div>
     </div>
   </section>
 
@@ -310,7 +373,7 @@
     <div class="modal">
       <button class="modal-close" onclick="closeRedeemModal()" aria-label="关闭">×</button>
       <h3>兑换会员激活码</h3>
-      <p class="muted">输入博主发放的激活码，会员有效期将绑定到你的账户（按手机号确认）。</p>
+      <p class="muted">输入博主发放的激活码，会员有效期将绑定到你的邮箱账户。</p>
       <div class="form-row">
         <label>激活码</label>
         <input id="redeemCode" type="text" placeholder="如 BLYS-VIP-30" style="text-transform:uppercase" />
