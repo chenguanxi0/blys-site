@@ -762,13 +762,14 @@ function renderUserStatus(){
 
 // 根据会员状态锁定 / 解锁会员专属区块
 function lockVipZones(){
-  const member = isVIP();
   document.querySelectorAll(".vip-zone").forEach(z=>{
-    z.classList.toggle("unlocked", member);
-    z.classList.toggle("is-locked", !member);
+    const isLoginGate = z.id === "vip";   // 会员课程：登录即可
+    const unlocked = isLoginGate ? __user.loggedIn : isVIP();
+    z.classList.toggle("unlocked", unlocked);
+    z.classList.toggle("is-locked", !unlocked);
   });
   document.querySelectorAll("[data-vip-course]").forEach(c=>{
-    c.classList.toggle("is-locked", !member);
+    c.classList.toggle("is-locked", !isVIP());
   });
 }
 
