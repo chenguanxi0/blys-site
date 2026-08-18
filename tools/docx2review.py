@@ -73,8 +73,11 @@ def render(blocks):
     for b in blocks:
         if b[0] == 'h2':
             if cover:
+                # 封面：跳过原 Word 报告的大标题 "A股每日复盘报告"，用页面左上角的 "每日复盘" 替代
                 out.append('<div class="rpt-cover">')
                 for line in cover:
+                    if line.strip() == 'A股每日复盘报告':
+                        continue
                     out.append(f'<p class="rpt-cover-line">{line}</p>')
                 out.append('</div>')
                 cover = []
@@ -122,6 +125,8 @@ def render(blocks):
     if cover:
         out.append('<div class="rpt-cover">')
         for line in cover:
+            if line.strip() == 'A股每日复盘报告':
+                continue
             out.append(f'<p class="rpt-cover-line">{line}</p>')
         out.append('</div>')
     if open_section:

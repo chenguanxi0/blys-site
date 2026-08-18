@@ -1132,43 +1132,15 @@ function loadReview(){
 }
 
 // ============ 完整复盘报告（加载训练好的自动化任务生成的 assets/review.html） ============
-function getReportDateText(){
-  const now = new Date();
-  const h = now.getHours();
-  // 16 点前展示的是昨日收盘后生成的报告；16 点自动化任务跑完后即为今日报告
-  const isToday = h >= 16;
-  const d = new Date(now);
-  if(!isToday) d.setDate(d.getDate()-1);
-  const m = d.getMonth()+1, day = d.getDate(), w = ['日','一','二','三','四','五','六'][d.getDay()];
-  return { isToday, label: `${m}月${day}日（星期${w}）`, dateStr: `${d.getFullYear()}-${String(m).padStart(2,'0')}-${String(day).padStart(2,'0')}` };
-}
-
 async function loadFullReport(){
   const box = document.getElementById('fullReport');
-  const status = document.getElementById('reportStatus');
   if(!box) return;
-
-  const { isToday, label } = getReportDateText();
-  if(status){
-    status.innerHTML = isToday
-      ? `<span class="rs-dot live"></span><span>当前展示：${label} 收盘复盘报告</span>`
-      : `<span class="rs-dot"></span><span>当前展示：${label} 收盘复盘报告（今日报告将于 16:00 收盘后更新）</span>`;
-  }
-
   try {
     // 加时间戳避免 16:00 更新后浏览器仍缓存旧报告
     const ts = Date.now();
     const r = await fetch(`assets/review.html?t=${ts}`, { cache: 'no-store' });
     if(!r.ok) throw new Error('报告文件不存在');
-    const html = await r.text();
-    box.innerHTML = html;
-    // 简单高亮当前报告日期到状态栏
-    const match = html.match(/(\d{4}-\d{2}-\d{2})\s+星期[一二三四五六日]/);
-    if(match && status){
-      status.innerHTML = isToday
-        ? `<span class="rs-dot live"></span><span>当前展示：${match[0]} 收盘复盘报告</span>`
-        : `<span class="rs-dot"></span><span>当前展示：${match[0]} 收盘复盘报告（今日报告将于 16:00 收盘后更新）</span>`;
-    }
+    box.innerHTML = await r.text();
   } catch(e){
     box.innerHTML = '<div class="rpt-loading">完整复盘报告暂未生成，每天 16:00 收盘后自动更新。</div>';
   }
