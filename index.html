@@ -86,38 +86,28 @@
   <!-- 隐藏占位：保证 app.js 初始化(renderDiary)不报错 -->
   <section id="diary" hidden><div id="diaryStats"></div><div id="diaryList"></div></section>
 
-  <!-- 会员课程（登录后可见） -->
-  <section class="section vip-zone" id="vip">
+  <!-- 会员课程 -->
+  <section class="section" id="vip">
     <div class="section-head">
       <h2>会员课程</h2>
       <p>从大局观到心态纪律，系统化提升你的短线能力。<em>（部分课程免费开放，高级内容需会员解锁）</em></p>
     </div>
-    <div class="vip-body">
-      <div class="cards">
-        <!-- 免费课：市场大局观 -->
-        <div class="card vip-card">
-          <span class="badge free">免费</span>
-          <h3>短线核心：市场大局观</h3>
-          <p>不盯单只票的涨跌，先看清「天时地利」。情绪周期四阶段、每日盘前检查清单、热点锁定四字诀。</p>
-          <p class="muted" style="font-size:12px">约 15 分钟 · 11 节</p>
-          <a class="btn btn-primary btn-block" href="tutorials/market-overview.html">开始学习</a>
-        </div>
-        <!-- 免费课：四种心态 -->
-        <div class="card vip-card">
-          <span class="badge free">免费</span>
-          <h3>交易中必备的四种心态</h3>
-          <p>止损不眨眼、耐心等待、复盘找漏洞、情绪稳定——四种心态闭环保护你的账户。</p>
-          <p class="muted" style="font-size:12px">约 12 分钟 · 5 节</p>
-          <a class="btn btn-primary btn-block" href="tutorials/trading-mindset.html">开始学习</a>
-        </div>
+    <div class="cards">
+      <!-- 免费课：市场大局观 -->
+      <div class="card vip-card">
+        <span class="badge free">免费</span>
+        <h3>短线核心：市场大局观</h3>
+        <p>不盯单只票的涨跌，先看清「天时地利」。情绪周期四阶段、每日盘前检查清单、热点锁定四字诀。</p>
+        <p class="muted" style="font-size:12px">约 15 分钟 · 11 节</p>
+        <a class="btn btn-primary btn-block" href="tutorials/market-overview.html">开始学习</a>
       </div>
-    </div>
-    <div class="vip-mask">
-      <div class="vip-mask-inner">
-        <div class="vip-lock">🔒</div>
-        <h3>课程预览</h3>
-        <p>注册并登录后即可免费查看两篇文章课程</p>
-        <button class="btn btn-primary" onclick="openAuthModal()">注册 / 登录</button>
+      <!-- 免费课：四种心态 -->
+      <div class="card vip-card">
+        <span class="badge free">免费</span>
+        <h3>交易中必备的四种心态</h3>
+        <p>止损不眨眼、耐心等待、复盘找漏洞、情绪稳定——四种心态闭环保护你的账户。</p>
+        <p class="muted" style="font-size:12px">约 12 分钟 · 5 节</p>
+        <a class="btn btn-primary btn-block" href="tutorials/trading-mindset.html">开始学习</a>
       </div>
     </div>
   </section>
