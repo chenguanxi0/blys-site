@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>聊天室 · 白鹿原上-交易笔记</title>
+  <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026081821" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23e23b3b'/%3E%3Cstop offset='100%25' stop-color='%23f87171'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='18' cy='18' r='17' fill='url(%23g)'/%3E%3Ctext x='18' y='23' text-anchor='middle' fill='white' font-family='-apple-system,PingFang SC,Microsoft YaHei,sans-serif' font-size='18' font-weight='700'%3E白%3C/text%3E%3C/svg%3E" />
+</head>
+<body>
+  <!-- 风险提示条 -->
+  <div class="risk-bar">
+    ⚠️ 风险提示：本站所有内容仅为个人复盘与经验分享，不构成任何投资建议，市场有风险，投资需谨慎。
+  </div>
+
+  <!-- 顶部导航 -->
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-logo">白</span>
+        <span class="brand-name">白鹿原上-交易笔记 <small>· blys.site</small></span>
+      </a>
+      <div class="nav-right">
+        <nav class="nav-links" id="navLinks">
+          <a href="diary.html">实盘日记</a>
+          <a href="daily.html">每日复盘</a>
+          <a href="chat.html" class="active">聊天室</a>
+          <a href="index.html#vipzone">会员专享</a>
+          <a href="index.html#vip">会员课程</a>
+          <a href="index.html#about">关于</a>
+        </nav>
+        <div class="vip-status" id="vipStatus"></div>
+        <div class="online-counter" id="onlineCounter" title="当前在线访客">
+          <span class="online-dot"></span>
+          <span id="onlineNum">--</span> 在线
+        </div>
+        <button class="nav-toggle" id="navToggle" aria-label="菜单">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="chat-page" style="max-width:800px; margin:0 auto; padding:24px 16px 80px;">
+    <div class="section-head" style="margin-bottom:16px;">
+      <h1>💬 聊天室</h1>
+      <p>和站友们交流观点、分享经验。<em>文明发言，禁止荐股与广告。</em></p>
+    </div>
+
+    <!-- 频道切换 -->
+    <div class="chat-tabs">
+      <button class="chat-tab active" data-room="public" onclick="switchChatRoom('public')">
+        🌐 注册用户群聊
+        <span class="chat-tab-sub">登录即可发言</span>
+      </button>
+      <button class="chat-tab" data-room="vip" onclick="switchChatRoom('vip')">
+        ⭐ 会员群聊
+        <span class="chat-tab-sub">VIP 专属</span>
+      </button>
+    </div>
+
+    <!-- 聊天窗口 -->
+    <div class="chat-box">
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-loading">加载消息中…</div>
+      </div>
+
+      <!-- 输入区 -->
+      <div class="chat-input-area" id="chatInputArea">
+        <div class="chat-login-mask" id="chatLoginMask">
+          <p>登录后即可参与群聊</p>
+          <button class="btn btn-primary" onclick="openAuthModal()">注册 / 登录</button>
+        </div>
+        <div class="chat-input-wrap" id="chatInputWrap" style="display:none;">
+          <input type="text" id="chatInput" class="chat-input" placeholder="文明发言，禁止荐股与广告…" maxlength="500" autocomplete="off" />
+          <button class="btn btn-primary" id="chatSendBtn" onclick="sendChatMessage()">发送</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIP 未解锁提示 -->
+    <div class="chat-vip-lock" id="chatVipLock" style="display:none;">
+      <div class="chat-vip-lock-inner">
+        <div class="vip-lock">🔒</div>
+        <h3>会员专属群聊</h3>
+        <p>只有激活会员才能进入会员群聊频道</p>
+        <button class="btn btn-primary" onclick="openRedeemModal()">激活会员</button>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer" style="margin-top:0;">
+    <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
+  </footer>
+
+  <!-- 登录/注册弹窗（动态注入） -->
+  <div id="authModal" class="modal-mask"></div>
+
+  <script src="assets/app.js?v=2026081821"></script>
+  <script>
+    // 聊天室页面初始化
+    let currentRoom = 'public';
+    let chatPollTimer = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initChatPage();
+    });
+
+    function initChatPage() {
+      // 确保登录弹窗存在
+      ensureAuthModal();
+      // 初始加载公共房间
+      switchChatRoom('public');
+      // 启动轮询
+      startChatPoll();
+      // Enter 发送
+      const input = document.getElementById('chatInput');
+      if (input) {
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
+        });
+      }
+    }
+
+    function switchChatRoom(room) {
+      currentRoom = room;
+      // 更新标签样式
+      document.querySelectorAll('.chat-tab').forEach(t => t.classList.toggle('active', t.dataset.room === room));
+
+      const vipLock = document.getElementById('chatVipLock');
+      const messagesBox = document.getElementById('chatMessages');
+      const inputArea = document.getElementById('chatInputArea');
+
+      // VIP 房间权限检查
+      if (room === 'vip') {
+        if (!__user.loggedIn || !__user.isVip) {
+          vipLock.style.display = 'flex';
+          messagesBox.style.display = 'none';
+          inputArea.style.display = 'none';
+          return;
+        }
+      }
+
+      vipLock.style.display = 'none';
+      messagesBox.style.display = 'block';
+      inputArea.style.display = 'block';
+
+      updateChatInputState();
+      loadChatMessages(room);
+    }
+
+    function updateChatInputState() {
+      const mask = document.getElementById('chatLoginMask');
+      const wrap = document.getElementById('chatInputWrap');
+      if (!mask || !wrap) return;
+      if (__user.loggedIn) {
+        mask.style.display = 'none';
+        wrap.style.display = 'flex';
+      } else {
+        mask.style.display = 'flex';
+        wrap.style.display = 'none';
+      }
+    }
+
+    async function loadChatMessages(room) {
+      const box = document.getElementById('chatMessages');
+      if (!box) return;
+      // 首次加载显示 loading，后续静默刷新
+      const isFirst = box.querySelector('.chat-loading') != null;
+      if (isFirst) box.innerHTML = '<div class="chat-loading">加载消息中…</div>';
+
+      try {
+        const d = await sbRpc('list_messages', { p_room: room, p_limit: 100 });
+        if (!d || !d.ok || !Array.isArray(d.list)) {
+          if (isFirst) box.innerHTML = '<div class="chat-empty">暂无消息，来做第一个发言的人吧～</div>';
+          return;
+        }
+        renderChatMessages(d.list, room);
+      } catch (e) {
+        if (isFirst) box.innerHTML = '<div class="chat-empty">消息加载失败，请稍后重试</div>';
+      }
+    }
+
+    function renderChatMessages(list, room) {
+      const box = document.getElementById('chatMessages');
+      if (!box) return;
+      if (list.length === 0) {
+        box.innerHTML = '<div class="chat-empty">暂无消息，来做第一个发言的人吧～</div>';
+        return;
+      }
+
+      const myEmail = (__user && __user.email) || '';
+      const html = list.map(m => {
+        const isMe = m.user_email === myEmail;
+        const time = m.created_at ? fmtDateTime(m.created_at) : '';
+        const name = esc(m.user_nickname || m.user_email?.split('@')[0] || '匿名');
+        return `<div class="chat-msg ${isMe ? 'chat-msg-me' : 'chat-msg-other'}">
+          <div class="chat-msg-avatar">${name.charAt(0).toUpperCase()}</div>
+          <div class="chat-msg-body">
+            <div class="chat-msg-meta">
+              <span class="chat-msg-name">${name}</span>
+              <span class="chat-msg-time">${time}</span>
+            </div>
+            <div class="chat-msg-text">${esc(m.content)}</div>
+          </div>
+        </div>`;
+      }).join('');
+
+      // 如果内容没变，不滚动（避免打断用户阅读）
+      const shouldScroll = box.scrollTop + box.clientHeight >= box.scrollHeight - 60;
+      box.innerHTML = html;
+      if (shouldScroll || isFirst) {
+        box.scrollTop = box.scrollHeight;
+      }
+    }
+
+    async function sendChatMessage() {
+      if (!__user.loggedIn) { openAuthModal(); return; }
+      if (currentRoom === 'vip' && !__user.isVip) { openRedeemModal(); return; }
+
+      const input = document.getElementById('chatInput');
+      const btn = document.getElementById('chatSendBtn');
+      const content = (input.value || '').trim();
+      if (!content) return;
+
+      // 简单内容过滤
+      if (content.length > 500) { alert('单条消息最多 500 字'); return; }
+
+      btn.disabled = true;
+      btn.textContent = '发送中…';
+      try {
+        const d = await sbRpc('send_message', {
+          p_token: __user.token,
+          p_room: currentRoom,
+          p_content: content
+        });
+        if (d && d.ok) {
+          input.value = '';
+          loadChatMessages(currentRoom);
+        } else {
+          alert((d && d.msg) || '发送失败');
+        }
+      } catch (e) {
+        alert('网络错误，发送失败');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '发送';
+      }
+    }
+
+    function startChatPoll() {
+      if (chatPollTimer) clearInterval(chatPollTimer);
+      chatPollTimer = setInterval(() => {
+        // VIP 房间未解锁时不轮询
+        if (currentRoom === 'vip' && (!__user.loggedIn || !__user.isVip)) return;
+        loadChatMessages(currentRoom);
+      }, 5000);
+    }
+
+    // 页面离开时清理轮询
+    window.addEventListener('beforeunload', () => {
+      if (chatPollTimer) clearInterval(chatPollTimer);
+    });
+  </script>
+</body>
+</html>
