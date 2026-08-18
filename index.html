@@ -86,6 +86,32 @@
   <!-- 隐藏占位：保证 app.js 初始化(renderDiary)不报错 -->
   <section id="diary" hidden><div id="diaryStats"></div><div id="diaryList"></div></section>
 
+  <!-- 会员课程 -->
+  <section class="section" id="vip">
+    <div class="section-head">
+      <h2>会员课程</h2>
+      <p>从大局观到心态纪律，系统化提升你的短线能力。<em>（部分课程免费开放，高级内容需会员解锁）</em></p>
+    </div>
+    <div class="cards">
+      <!-- 免费课：市场大局观 -->
+      <div class="card vip-card">
+        <span class="badge free">免费</span>
+        <h3>短线核心：市场大局观</h3>
+        <p>不盯单只票的涨跌，先看清「天时地利」。情绪周期四阶段、每日盘前检查清单、热点锁定四字诀。</p>
+        <p class="muted" style="font-size:12px">约 15 分钟 · 11 节</p>
+        <a class="btn btn-primary btn-block" href="tutorials/market-overview.html">开始学习</a>
+      </div>
+      <!-- 免费课：四种心态 -->
+      <div class="card vip-card">
+        <span class="badge free">免费</span>
+        <h3>交易中必备的四种心态</h3>
+        <p>止损不眨眼、耐心等待、复盘找漏洞、情绪稳定——四种心态闭环保护你的账户。</p>
+        <p class="muted" style="font-size:12px">约 12 分钟 · 5 节</p>
+        <a class="btn btn-primary btn-block" href="tutorials/trading-mindset.html">开始学习</a>
+      </div>
+    </div>
+  </section>
+
   <!-- 会员专享（默认对游客锁定，仅会员可见） -->
   <section class="section section-alt vip-zone" id="vipzone">
     <div class="section-head">
@@ -130,47 +156,7 @@
     </div>
   </section>
 
-  <!-- 会员课程 -->
-  <section class="section" id="vip">
-    <div class="section-head">
-      <h2>会员课程</h2>
-      <p>从大局观到心态纪律，系统化提升你的短线能力。<em>（部分课程免费开放，高级内容需会员解锁）</em></p>
-    </div>
-    <div class="cards">
-      <!-- 免费课：市场大局观 -->
-      <div class="card vip-card">
-        <span class="badge free">免费</span>
-        <h3>短线核心：市场大局观</h3>
-        <p>不盯单只票的涨跌，先看清「天时地利」。情绪周期四阶段、每日盘前检查清单、热点锁定四字诀。</p>
-        <p class="muted" style="font-size:12px">约 15 分钟 · 11 节</p>
-        <a class="btn btn-primary btn-block" href="tutorials/market-overview.html">开始学习</a>
-      </div>
-      <!-- 免费课：四种心态 -->
-      <div class="card vip-card">
-        <span class="badge free">免费</span>
-        <h3>交易中必备的四种心态</h3>
-        <p>止损不眨眼、耐心等待、复盘找漏洞、情绪稳定——四种心态闭环保护你的账户。</p>
-        <p class="muted" style="font-size:12px">约 12 分钟 · 5 节</p>
-        <a class="btn btn-primary btn-block" href="tutorials/trading-mindset.html">开始学习</a>
-      </div>
-      <!-- 会员课：复盘方法论 -->
-      <div class="card vip-card" data-vip-course>
-        <span class="badge pay">会员</span>
-        <h3>我的复盘方法论</h3>
-        <p>我是怎么从 5000 粉做到稳定盈利的：选股框架 + 仓位管理 + 实盘案例拆解。</p>
-        <button class="btn btn-ghost btn-block" onclick="vipGate('复盘方法论课程')">会员解锁</button>
-      </div>
-      <!-- 会员课：陪跑社群 -->
-      <div class="card vip-card" data-vip-course>
-        <span class="badge pay">599/季</span>
-        <h3>实盘陪跑社群</h3>
-        <p>每周直播复盘 + 私密社群，看我实时怎么操作与纠错。</p>
-        <button class="btn btn-primary btn-block" onclick="vipGate('实盘陪跑社群')">会员加入</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- 关于 / 引流 -->
+  <!-- 会员专享（默认对游客锁定，仅会员可见） -->
   <section class="section section-alt" id="about">
     <div class="section-head">
       <h2>👋 关于我</h2>
