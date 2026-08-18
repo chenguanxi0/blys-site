@@ -829,5 +829,135 @@ const DAILY_LOG = [
         "close": true
       }
     ]
+  },
+  {
+    "date": "2026-08-17",
+    "day": 16,
+    "total": 559501.52,
+    "dayPnl": 0.18,
+    "pos": 24.3,
+    "holdings": [
+      {
+        "name": "万邦医药",
+        "code": "301520",
+        "shares": 1600,
+        "mv": 136096.00,
+        "pnlPct": 0.726,
+        "cost": 84.447,
+        "cur": 85.060
+      }
+    ],
+    "note": "持仓截图(平安证券)，继续持仓万邦医药",
+    "valid": true,
+    "trades": []
+  },
+  {
+    "date": "2026-08-18",
+    "day": 17,
+    "total": 556933.05,
+    "dayPnl": -0.43,
+    "pos": 79.8,
+    "holdings": [
+      {
+        "name": "哈药股份",
+        "code": "600664",
+        "shares": 12500,
+        "mv": 114000.00,
+        "pnlPct": 0.530,
+        "cost": 9.072,
+        "cur": 9.120
+      },
+      {
+        "name": "京东方A",
+        "code": "000725",
+        "shares": 17500,
+        "mv": 113225.00,
+        "pnlPct": 1.709,
+        "cost": 6.361,
+        "cur": 6.470
+      },
+      {
+        "name": "药明康德",
+        "code": "603259",
+        "shares": 600,
+        "mv": 100308.00,
+        "pnlPct": 1.116,
+        "cost": 165.335,
+        "cur": 167.180
+      },
+      {
+        "name": "士兰微",
+        "code": "600460",
+        "shares": 1900,
+        "mv": 66272.00,
+        "pnlPct": 0.209,
+        "cost": 34.807,
+        "cur": 34.880
+      },
+      {
+        "name": "新洁能",
+        "code": "605111",
+        "shares": 800,
+        "mv": 50000.00,
+        "pnlPct": -0.257,
+        "cost": 63.663,
+        "cur": 63.500
+      },
+      {
+        "name": "万邦医药",
+        "code": "301520",
+        "shares": 0,
+        "mv": 0.00,
+        "pnlPct": -3.853,
+        "cost": 84.447,
+        "cur": 73.860
+      }
+    ],
+    "note": "持仓截图(平安证券)。清仓万邦医药，新买入哈药股份、京东方A、药明康德、士兰微、新洁能",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "万邦医药",
+        "code": "301520",
+        "shares": 1600,
+        "close": true
+      },
+      {
+        "action": "buy",
+        "name": "哈药股份",
+        "code": "600664",
+        "shares": 12500,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "京东方A",
+        "code": "000725",
+        "shares": 17500,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "药明康德",
+        "code": "603259",
+        "shares": 600,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "士兰微",
+        "code": "600460",
+        "shares": 1900,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "新洁能",
+        "code": "605111",
+        "shares": 800,
+        "open": true
+      }
+    ]
   }
 ];

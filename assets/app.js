@@ -558,7 +558,7 @@ function renderDiary(){
   const logs = (typeof DAILY_LOG !== "undefined" ? DAILY_LOG : []).slice().sort((a,b)=> a.date.localeCompare(b.date));
 
   const wan = (v)=> (v/10000).toFixed(2) + "万";
-  const yuan = (v)=> (v>=0?"+":"") + "¥" + Math.abs(v).toLocaleString("zh-CN",{maximumFractionDigits:0});
+  const yuan = (v)=> (v>=0?"+":"-") + "¥" + Math.abs(v).toLocaleString("zh-CN",{maximumFractionDigits:0});
   const pct = (v)=> (v>=0?"+":"") + v.toFixed(2) + "%";
   const clsD = (v)=> v>=0 ? "up" : "down";
   const dayAmt = (l)=> (!l.total || !l.dayPnl) ? 0 : l.total * l.dayPnl/100/(1 + l.dayPnl/100);
@@ -619,11 +619,9 @@ function renderDiary(){
     return `<div class="diary-card">
       <div class="diary-head">
         <span class="diary-date">${l.date}</span>
-        <span class="day-badge">第${l.day}天</span>
       </div>
       <div class="diary-meta">
         <span>总资产 <b>${wan(l.total||0)}</b></span>
-        <span>仓位 <b>${l.pos}%</b></span>
         <span>当日盈亏 <b class="${clsD(dAmt)}">${yuan(dAmt)}</b></span>
       </div>
       ${holdRows? `<div class="diary-hold"><table class="hold-table">
@@ -641,7 +639,7 @@ function renderDiary(){
       <button class="diary-tab ${mode==='all'?'active':''}" data-mode="all">全部</button>
     </div><div class="diary-groups">`;
   groups.forEach((g,i)=>{
-    const open = (i === 0);
+    const open = false;                      // 默认全部折叠
     html += `<div class="diary-group ${open?'open':''}">
       <button class="diary-group-head" type="button">
         <span class="dg-title">${g.label}</span>
@@ -756,7 +754,6 @@ function renderUserStatus(){
     const tag = __user.isVip ? `⭐ 会员至 ${fmtDateStr(new Date(__user.vipExpire))}` : "普通用户";
     let html = `<span class="vip-badge">${esc(__user.nickname || __user.email || "用户")} · ${tag}</span>`;
     if (__user.isAdmin) html += `<button class="vip-open" onclick="location.href='admin.html'">后台</button>`;
-    html += `<button class="vip-logout" onclick="logoutUser()">退出</button>`;
     el.innerHTML = html;
   } else {
     el.innerHTML = `<button class="vip-open" onclick="openAuthModal()">登录/注册</button>`;
@@ -993,8 +990,83 @@ document.getElementById("navToggle").addEventListener("click", ()=> {
 initToolTabs();
 renderDiary();
 fetchUser();
+loadHeroSnapshot();
 
 // ============ 每日复盘模块（情绪温度计 + 一句话结论 + 板块Top + 主入口） ============
+// 首页 Hero 数据快照（指数 + 涨停家数 + 跌停家数 + 情绪）
+function loadHeroSnapshot(){
+  const box = document.getElementById('heroSnapshot');
+  if(!box) return;
+  box.innerHTML = '<div class="snapshot-loading">加载今日盘面…</div>';
+
+  const emUrl = (secid)=> `https://push2.eastmoney.com/api/qt/stock/get?secid=${secid}&fields=f43,f57,f58,f104,f105,f6,f170,f171&fltt=2&invt=2&ut=fa5fd1943c7b386f172d6893b`;
+  const poolUrl = (tag)=> `https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=400&po=1&np=1&fltt=2&invt=2&fid=f3&fs=m:0+t:81+s:${tag}&fields=f12,f14,f3,f107&ut=fa5fd1943c7b386f172d6893b`;
+
+  Promise.all([
+    jsonp(emUrl('1.000001')),  // 上证
+    jsonp(emUrl('0.399001')),  // 深成
+    jsonp(poolUrl('2048')),    // 涨停池
+    jsonp(poolUrl('2049'))     // 跌停池
+  ]).then(([sh, sz, zt, dt])=>{
+    const sd = sh && sh.data, zd = sz && sz.data;
+    const ztd = zt && zt.data, dtd = dt && dt.data;
+    const fmtPct = (v)=> v==null||v==='' ? '—' : (parseFloat(v) >= 0 ? '+' : '') + (parseFloat(v)).toFixed(2) + '%';
+    const clsPct = (v)=> parseFloat(v) >= 0 ? 'up' : 'down';
+    const fmtAmt = (v)=> { const n = parseFloat(v)||0; return (n/1e12).toFixed(2); };
+
+    const idx = [
+      { name: '上证指数', code: '000001', now: sd && sd.f43, pct: sd && sd.f170 },
+      { name: '深证成指', code: '399001', now: zd && zd.f43, pct: zd && zd.f170 },
+    ].map(it => {
+      const v = parseFloat(it.now)||0;
+      const p = parseFloat(it.pct);
+      return { name: it.name, code: it.code, now: v ? v.toFixed(2) : '—', pct: fmtPct(p), cls: clsPct(p) };
+    });
+
+    const ztList = (ztd && ztd.diff) || [];
+    const dtList = (dtd && dtd.diff) || [];
+    let maxBoard = 1;
+    ztList.forEach(it=>{ const b = parseInt(it.f107,10)||1; if(b>maxBoard) maxBoard = b; });
+    const amt = (parseFloat(sd && sd.f6)||0) + (parseFloat(zd && zd.f6)||0);
+    const up = (parseFloat(sd && sd.f104)||0) + (parseFloat(zd && zd.f104)||0);
+    const down = (parseFloat(sd && sd.f105)||0) + (parseFloat(zd && zd.f105)||0);
+
+    box.innerHTML = `
+      <div class="snapshot-card">
+        <div class="snap-label">上证</div>
+        <div class="snap-num">${idx[0].now}</div>
+        <div class="snap-pct ${idx[0].cls}">${idx[0].pct}</div>
+      </div>
+      <div class="snapshot-card">
+        <div class="snap-label">深成</div>
+        <div class="snap-num">${idx[1].now}</div>
+        <div class="snap-pct ${idx[1].cls}">${idx[1].pct}</div>
+      </div>
+      <div class="snapshot-card">
+        <div class="snap-label">涨停</div>
+        <div class="snap-num up">${ztList.length}</div>
+        <div class="snap-sub">家</div>
+      </div>
+      <div class="snapshot-card">
+        <div class="snap-label">跌停</div>
+        <div class="snap-num ${dtList.length>0?'down':'up'}">${dtList.length}</div>
+        <div class="snap-sub">家</div>
+      </div>
+      <div class="snapshot-card">
+        <div class="snap-label">最高连板</div>
+        <div class="snap-num">${maxBoard}</div>
+        <div class="snap-sub">板</div>
+      </div>
+      <div class="snapshot-card">
+        <div class="snap-label">两市成交</div>
+        <div class="snap-num">${fmtAmt(amt)}</div>
+        <div class="snap-sub">万亿</div>
+      </div>`;
+  }).catch(()=>{
+    box.innerHTML = '<div class="snapshot-loading">盘面数据暂不可用，请<a href="daily.html">查看今日完整复盘 →</a></div>';
+  });
+}
+
 // 情绪数据：涨跌家数(沪+深指数 f104/f105) + 涨停/跌停池 + 量能(沪+深指数 f6)
 function loadEmotion(){
   const box = document.getElementById('emotionBox');
@@ -1153,30 +1225,138 @@ function initFoldableTables(root){
         btn.innerHTML = open ? `展开更多 ${rows.length - 10} 条 ↓` : '收起 ↑';
       });
       if(wrap && wrap.classList.contains('rpt-tbl-wrap')){
-        wrap.appendChild(btn);
+        // 按钮放到 wrap 外面（章节卡片内、wrap 之后），避免受 wrap 横向滚动/钉住列 z-index 影响
+        wrap.parentNode.insertBefore(btn, wrap.nextSibling);
       }
     });
+  });
+}
+
+// 名称列钉住：横向滑动时，只钉住「排名 + 名称」两列（代码列不钉，跟着滑动）
+function pinNameColumn(root){
+  if(!root) return;
+  root.querySelectorAll('.rpt-tbl').forEach(tbl => {
+    const head = tbl.querySelector('thead');
+    if(!head) return;
+    const ths = Array.from(head.querySelectorAll('th'));
+    if(!ths.length) return;
+    // 定位：nameIdx=含"名称"的列；rankIdx=含"排名"的列；codeIdx=含"代码"的列
+    let nameIdx = -1, rankIdx = -1, codeIdx = -1;
+    ths.forEach((th,i)=>{
+      const t = (th.textContent||'').trim();
+      if(t === '名称') nameIdx = i;
+      else if(t === '排名') rankIdx = i;
+      else if(t === '代码') codeIdx = i;
+    });
+    // 没有名称列：钉住第 1 列（兼容连板天梯等）
+    if(nameIdx < 0) nameIdx = 0;
+    // 钉住集合 = [排名 (若在名称左侧), 名称]，排除代码列
+    const pinIdxs = [];
+    if(rankIdx >= 0 && rankIdx < nameIdx) pinIdxs.push(rankIdx);
+    pinIdxs.push(nameIdx);
+    // 给排名列打标，CSS 单独设窄宽度
+    if(rankIdx >= 0){
+      const rcells = tbl.querySelectorAll(`th:nth-child(${rankIdx+1}), td:nth-child(${rankIdx+1})`);
+      rcells.forEach(c => c.classList.add('rpt-rank'));
+    }
+    // 计算每个钉住列的 left 偏移（按表头实际宽度累加，包含不钉的列以保证 offset 正确）
+    let acc = 0;
+    for(let i = 0; i <= nameIdx; i++){
+      const th = ths[i];
+      const w = (th && th.offsetWidth) || 80;
+      const shouldPin = pinIdxs.includes(i);
+      if(shouldPin){
+        const cells = tbl.querySelectorAll(`th:nth-child(${i+1}), td:nth-child(${i+1})`);
+        cells.forEach(cell => {
+          cell.classList.add('rpt-pin');
+          cell.style.left = acc + 'px';
+        });
+      }
+      acc += w;   // 所有列（含不钉的代码列）都累加宽度，保证后续 sticky 列的 left 准确
+    }
   });
 }
 
 async function loadFullReport(){
   const box = document.getElementById('fullReport');
   if(!box) return;
+  const ts = Date.now();
+  const params = new URLSearchParams(location.search);
+  const date = params.get('date');          // 形如 2026-08-18
+  const url = date
+    ? `assets/reviews/${date}.html?t=${ts}` // 历史某日存档
+    : `assets/review.html?t=${ts}`;         // 最新一期
   try {
-    // 加时间戳避免 16:00 更新后浏览器仍缓存旧报告
-    const ts = Date.now();
-    const r = await fetch(`assets/review.html?t=${ts}`, { cache: 'no-store' });
+    const r = await fetch(url, { cache: 'no-store' });
     if(!r.ok) throw new Error('报告文件不存在');
     box.innerHTML = await r.text();
     initFoldableTables(box);
+    pinNameColumn(box);
   } catch(e){
-    box.innerHTML = '<div class="rpt-loading">完整复盘报告暂未生成，每天 16:00 收盘后自动更新。</div>';
+    box.innerHTML = date
+      ? `<div class="rpt-loading">未找到 ${date} 的复盘记录。<a href="daily.html">返回最新一期 →</a></div>`
+      : '<div class="rpt-loading">完整复盘报告暂未生成，每天 15:00 收盘后自动更新。</div>';
   }
+}
+
+// 历史复盘下拉（读取 assets/reviews/index.json）
+async function renderHistoryBar(){
+  const bar = document.getElementById('historyBar');
+  if(!bar) return;
+  try {
+    const r = await fetch(`assets/reviews/index.json?t=${Date.now()}`, { cache: 'no-store' });
+    if(!r.ok) return;
+    const list = await r.json();
+    if(!Array.isArray(list) || !list.length) return;
+
+    const params = new URLSearchParams(location.search);
+    const cur = params.get('date') || '';
+
+    const label = document.createElement('span');
+    label.className = 'muted';
+    label.style.fontSize = '13px';
+    label.textContent = '查看历史：';
+
+    const sel = document.createElement('select');
+    sel.id = 'historySelect';
+    sel.className = 'zt-filter';
+
+    const optLatest = document.createElement('option');
+    optLatest.value = '';
+    optLatest.textContent = '最新一期';
+    sel.appendChild(optLatest);
+
+    // 最新的排在前面
+    list.slice().reverse().forEach(it => {
+      const o = document.createElement('option');
+      o.value = it.date;
+      o.textContent = it.title || it.date;
+      sel.appendChild(o);
+    });
+    sel.value = cur;
+
+    sel.addEventListener('change', () => {
+      const v = sel.value;
+      const newUrl = location.pathname + (v ? `?date=${v}` : '');
+      history.pushState({}, '', newUrl);
+      loadFullReport();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    bar.appendChild(label);
+    bar.appendChild(sel);
+  } catch(e){ /* 无历史索引时不展示选择器 */ }
 }
 
 function initReview(){
   if(!document.getElementById('reviewRoot')) return;
   loadFullReport();
+  renderHistoryBar();
 }
+
+// 浏览器前进/后退时同步切换历史复盘
+window.addEventListener('popstate', () => {
+  if(document.getElementById('reviewRoot')) loadFullReport();
+});
 
 initReview();

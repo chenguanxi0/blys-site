@@ -1,14 +1,11 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>白鹿原上-交易笔记 · 股票实盘记录与复盘站</title>
-  <meta name="description" content="每日收盘复盘、实盘日记、会员课程与战法，按日期查看历史复盘。blys.site" />
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="assets/styles.css?v=20260818" />
+  <title>实盘日记 · 白鹿原上-交易笔记</title>
+  <meta name="description" content="每日实盘记录：持仓、仓位、当日盈亏与逻辑。blys.site" />
+  <link rel="stylesheet" href="assets/styles.css" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23e23b3b'/%3E%3Cstop offset='100%25' stop-color='%23f87171'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='18' cy='18' r='17' fill='url(%23g)'/%3E%3Ctext x='18' y='23' text-anchor='middle' fill='white' font-family='-apple-system,PingFang SC,Microsoft YaHei,sans-serif' font-size='18' font-weight='700'%3E白%3C/text%3E%3C/svg%3E" />
   <link rel="apple-touch-icon" href="assets/favicon.png" />
 </head>
@@ -21,17 +18,17 @@
   <!-- 顶部导航 -->
   <header class="nav">
     <div class="nav-inner">
-      <a class="brand" href="#home">
+      <a class="brand" href="index.html">
         <span class="brand-logo">白</span>
         <span class="brand-name">白鹿原上-交易笔记 <small>· blys.site</small></span>
       </a>
       <div class="nav-right">
         <nav class="nav-links" id="navLinks">
-          <a href="diary.html">实盘日记</a>
+          <a href="diary.html" class="active">实盘日记</a>
           <a href="daily.html">每日复盘</a>
-          <a href="#vipzone">会员专享</a>
-          <a href="#vip">会员课程</a>
-          <a href="#about">关于</a>
+          <a href="index.html#vipzone">会员专享</a>
+          <a href="index.html#vip">会员课程</a>
+          <a href="index.html#about">关于</a>
         </nav>
         <div class="vip-status" id="vipStatus"></div>
         <div class="online-counter" id="onlineCounter" title="当前在线访客">
@@ -43,107 +40,15 @@
     </div>
   </header>
 
-  <!-- Hero -->
-  <section class="hero" id="home">
-    <div class="hero-inner">
-      <h1>每天记录，<br/>让<span class="hl">复利</span>看得见</h1>
-      <p class="hero-sub">一个股票博主的个人复盘站：每日收盘复盘 + 真实持仓日记。<br/>把每天的盘面翻译成人话，把每一笔交易留下痕迹。</p>
-
-      <!-- 双入口选择卡（从下方挪上来） -->
-      <div class="entry-grid" style="margin-top:24px">
-        <a class="entry-card" href="daily.html">
-          <div class="entry-icon">📊</div>
-          <div class="entry-body">
-            <h3>每日复盘</h3>
-            <p>收盘后把今天的盘面翻译成人话：核心指数、涨停跌停、热点解析、连板天梯、资金面、机构观点一站看完。</p>
-            <span class="entry-go">查看今日复盘 →</span>
-          </div>
-        </a>
-        <a class="entry-card" href="diary.html">
-          <div class="entry-icon">📒</div>
-          <div class="entry-body">
-            <h3>实盘日记</h3>
-            <p>我的真实持仓、仓位、当日盈亏、买入卖出原因。记录是为了让复利看得见。</p>
-            <span class="entry-go">看今天的操作 →</span>
-          </div>
-        </a>
-      </div>
-
-      <div class="hero-social">
-        <span class="muted" style="font-size:13px">同作者：</span>
-        <a href="https://www.xiaohongshu.com/user/profile/5c87094a00000000120101d8" target="_blank" rel="noopener" class="chip">小红书 @白鹿原上</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- 旧实盘日记（已迁到 diary.html） -->
-  <!--
+  <!-- 实盘日记 -->
   <section class="section section-alt" id="diary">
-    ...
-  </section>
-  -->
-
-  <!-- 隐藏占位：保证 app.js 初始化(renderDiary)不报错 -->
-  <section id="diary" hidden><div id="diaryStats"></div><div id="diaryList"></div></section>
-
-  <!-- 会员专享（默认对游客锁定，仅会员可见） -->
-  <section class="section section-alt vip-zone" id="vipzone">
     <div class="section-head">
-      <h2>⭐ 会员专享</h2>
-      <p>盘中提示、每周复盘文档、我的专属战法、实盘陪跑社群。<em>仅会员可见，游客输入激活码解锁。</em></p>
+      <h2>📒 实盘日记</h2>
+      <p>每天更新，数据驱动。你只需维护 <code>assets/data.js</code> 一个文件。</p>
     </div>
-    <div class="vip-body">
-      <div class="cards">
-        <div class="card vip-card">
-          <span class="badge pay">盘中</span>
-          <h3>盘中实时提示</h3>
-          <p>交易时段我的关键操作与风控提醒（示例内容，待补充真实素材）。</p>
-          <div class="result">示例：09:35 加仓某某，止损位上移；14:00 减仓至 5 成…</div>
-        </div>
-        <div class="card vip-card">
-          <span class="badge pay">周报</span>
-          <h3>每周复盘文档</h3>
-          <p>每周日完整复盘 PDF/长文：本周盈亏、做得好与做得差的地方。</p>
-          <div class="result">示例：本周 +3.2%，主线在半导体；下周关注…（待补充）</div>
-        </div>
-        <div class="card vip-card">
-          <span class="badge pay">战法</span>
-          <h3>我的专属战法</h3>
-          <p>选股框架、买点卖点、仓位管理的具体打法，会员可反复看。</p>
-          <div class="result">示例：量价突破 + 板块共振 战法详解（待补充）</div>
-        </div>
-        <div class="card vip-card" data-vip-course>
-          <span class="badge pay">社群</span>
-          <h3>实盘陪跑社群</h3>
-          <p>每周直播复盘 + 私密社群，看我实时怎么操作与纠错。</p>
-          <button class="btn btn-primary btn-block" onclick="vipGate('实盘陪跑社群')">会员加入</button>
-        </div>
-      </div>
-    </div>
-    <div class="vip-mask">
-      <div class="vip-mask-inner">
-        <div class="vip-lock">🔒</div>
-        <h3>会员专享内容</h3>
-        <p>盘中提示 · 每周复盘 · 专属战法 · 实盘陪跑社群，输入激活码即可解锁</p>
-        <button class="btn btn-primary" onclick="openRedeemModal()">登录/兑换解锁</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- 关于 / 引流 -->
-  <section class="section section-alt" id="about">
-    <div class="section-head">
-      <h2>👋 关于我</h2>
-      <p>一个把复盘当作习惯的股票博主。这里没有喊单，只有真实记录与可复用的方法。</p>
-    </div>
-    <div class="about-grid">
-      <div class="about-card">
-        <h4>关注小红书</h4>
-        <img src="assets/avatar.jpg" alt="白鹿原上" style="width:80px;height:80px;object-fit:cover;border-radius:50%;margin-bottom:8px" />
-        <p>每天短内容拆解一个知识点，实盘记录与复盘分享。</p>
-        <a class="btn btn-primary btn-block" href="https://www.xiaohongshu.com/user/profile/5c87094a00000000120101d8" target="_blank" rel="noopener">@白鹿原上 →</a>
-      </div>
-    </div>
+    <div class="stats" id="diaryStats"><!-- JS 注入 --></div>
+    <div class="diary-warn">数据由持仓截图自动识别整理，部分日期可能涉及不同券商账户（如 8.3–8.7 显示约 85 万，疑为另一账户），请以实盘为准；如有出入请告知我修正。</div>
+    <div class="diary-list" id="diaryList"><!-- JS 注入 --></div>
   </section>
 
   <footer class="footer">
@@ -163,7 +68,6 @@
         <button class="auth-tab" data-mode="register" onclick="switchAuth('register')">注册</button>
       </div>
 
-      <!-- 登录 -->
       <div id="authLogin">
         <div class="form-row">
           <label>邮箱</label>
@@ -181,7 +85,6 @@
         </p>
       </div>
 
-      <!-- 注册 -->
       <div id="authRegister" style="display:none">
         <p class="muted">用邮箱注册，首次需邮箱验证码（演示模式页面直接显示）。</p>
         <div class="form-row">
@@ -206,7 +109,6 @@
         <p class="muted auth-switch"><a onclick="switchAuth('login')">已有账号？去登录</a></p>
       </div>
 
-      <!-- 找回密码 -->
       <div id="authForgot" style="display:none">
         <p class="muted">输入注册邮箱，获取验证码后重置密码。</p>
         <div class="form-row">
