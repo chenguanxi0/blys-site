@@ -722,7 +722,7 @@ let __user = { loggedIn: false };
 
 async function fetchUser(){
   const token = localStorage.getItem(USER_TOKEN_KEY);
-  if (!token){ __user = { loggedIn: false }; renderUserStatus(); lockVipZones(); return; }
+  if (!token){ __user = { loggedIn: false }; renderUserStatus(); lockVipZones(); initReview(); initTutorialGate(); return; }
   try {
     const d = await sbRpc("get_profile", { p_token: token });
     if (d && d.ok){
@@ -734,6 +734,8 @@ async function fetchUser(){
   } catch(e){ __user = { loggedIn: false }; }
   renderUserStatus();
   lockVipZones();
+  initReview();
+  initTutorialGate();
 }
 
 function isVIP(){ return __user.loggedIn && __user.isVip; }
@@ -773,9 +775,55 @@ function lockVipZones(){
   });
 }
 
+// 若页面未包含 authModal（如 daily / diary / tutorials），动态注入
+function ensureAuthModal(){
+  if (document.getElementById("authModal")) return;
+  const div = document.createElement("div");
+  div.innerHTML = `<div class="modal-mask" id="authModal" style="display:none">
+    <div class="modal">
+      <button class="modal-close" onclick="closeAuthModal()" aria-label="关闭">×</button>
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-mode="login" onclick="switchAuth('login')">登录</button>
+        <button class="auth-tab" data-mode="register" onclick="switchAuth('register')">注册</button>
+      </div>
+      <div id="authLogin">
+        <div class="form-row"><label>邮箱</label><input id="authEmail" type="email" placeholder="you@example.com" autocomplete="username" /></div>
+        <div class="form-row"><label>密码</label><input id="authPwd" type="password" placeholder="你的密码" autocomplete="current-password" /></div>
+        <div id="authMsg" class="result"></div>
+        <button class="btn btn-primary btn-block" onclick="userLogin()">登录</button>
+        <p class="muted auth-switch">还没有账号？<a onclick="switchAuth('register')">去注册</a> ｜ <a onclick="switchAuth('forgot')">忘记密码</a></p>
+      </div>
+      <div id="authRegister" style="display:none">
+        <p class="muted">用邮箱注册，首次需邮箱验证码（演示模式页面直接显示）。</p>
+        <div class="form-row"><label>邮箱</label><input id="regEmail" type="email" placeholder="you@example.com" autocomplete="username" /></div>
+        <div class="form-row"><label>密码</label><input id="regPwd" type="password" placeholder="至少 6 位" autocomplete="new-password" /></div>
+        <div class="form-row"><label>昵称</label><input id="regNick" type="text" placeholder="怎么称呼你（选填）" /></div>
+        <div class="form-row" id="regCodeRow" style="display:none"><label>验证码</label><input id="regCode" type="text" placeholder="6 位验证码" /></div>
+        <div id="regMsg" class="result"></div>
+        <button class="btn btn-primary btn-block" id="regSendBtn" onclick="regSend()">获取验证码</button>
+        <button class="btn btn-primary btn-block" id="regSubmitBtn" style="display:none" onclick="regSubmit()">验证并注册</button>
+        <p class="muted auth-switch"><a onclick="switchAuth('login')">已有账号？去登录</a></p>
+      </div>
+      <div id="authForgot" style="display:none">
+        <p class="muted">输入注册邮箱，获取验证码后重置密码。</p>
+        <div class="form-row"><label>邮箱</label><input id="fgEmail" type="email" placeholder="you@example.com" autocomplete="username" /></div>
+        <div class="form-row" id="fgCodeRow" style="display:none"><label>验证码</label><input id="fgCode" type="text" placeholder="6 位验证码" /></div>
+        <div class="form-row" id="fgPwdRow" style="display:none"><label>新密码</label><input id="fgPwd" type="password" placeholder="至少 6 位" autocomplete="new-password" /></div>
+        <div id="fgMsg" class="result"></div>
+        <button class="btn btn-primary btn-block" id="fgSendBtn" onclick="fgSend()">获取验证码</button>
+        <button class="btn btn-primary btn-block" id="fgSubmitBtn" style="display:none" onclick="fgSubmit()">重置密码</button>
+        <p class="muted auth-switch"><a onclick="switchAuth('login')">返回登录</a></p>
+      </div>
+    </div>
+  </div>`;
+  document.body.appendChild(div.firstElementChild);
+  // 点击遮罩关闭
+  div.firstElementChild.addEventListener("click", (e)=>{ if(e.target === div.firstElementChild) closeAuthModal(); });
+}
+
 // ---- 登录 / 注册弹窗 ----
-function openAuthModal(){ const m = document.getElementById("authModal"); if (m) m.classList.add("open"); switchAuth("login"); }
-function closeAuthModal(){ const m = document.getElementById("authModal"); if (m) m.classList.remove("open"); }
+function openAuthModal(){ ensureAuthModal(); const m = document.getElementById("authModal"); if (m){ m.classList.add("open"); m.style.display=""; } switchAuth("login"); }
+function closeAuthModal(){ const m = document.getElementById("authModal"); if (m){ m.classList.remove("open"); m.style.display="none"; } }
 document.addEventListener("click", (e)=>{
   const m = document.getElementById("authModal");
   if (m && m.classList.contains("open") && e.target === m) closeAuthModal();
@@ -1278,6 +1326,54 @@ function pinNameColumn(root){
   });
 }
 
+// ========== 内容预览 + 登录解锁 ==========
+function injectGateMask(container, title, desc){
+  container.classList.add("gate-content");
+  if (container.querySelector(".gate-mask")) return; // 已存在
+  const mask = document.createElement("div");
+  mask.className = "gate-mask";
+  mask.innerHTML = `<div class="gate-mask-inner">
+    <h4>${title}</h4>
+    <p>${desc}</p>
+    <button class="btn btn-primary" onclick="openAuthModal()">注册 / 登录</button>
+  </div>`;
+  container.appendChild(mask);
+}
+
+function removeGateMask(container){
+  container.classList.remove("gate-content","is-gated");
+  const mask = container.querySelector(".gate-mask");
+  if (mask) mask.remove();
+  container.querySelectorAll(".gate-hidden").forEach(el => el.classList.remove("gate-hidden"));
+}
+
+// 复盘报告 gate：保留封面 + 第一章，其余隐藏
+function initReviewGate(box){
+  if (!box) return;
+  const chapters = Array.from(box.querySelectorAll(".rpt-chapter"));
+  if (__user.loggedIn) {
+    removeGateMask(box);
+    return;
+  }
+  chapters.forEach((ch, i)=>{ if (i >= 1) ch.classList.add("gate-hidden"); });
+  box.classList.add("is-gated");
+  injectGateMask(box, "登录查看完整复盘", "你已阅读封面概览与第一章核心指数。登录后即可解锁全部 13 章深度复盘内容，包含涨停池、连板天梯、资金流向与明日策略。");
+}
+
+// 教程文章 gate：保留前两个 section，其余隐藏
+function initTutorialGate(){
+  const tut = document.querySelector(".tutorial.gate-content, main.tutorial");
+  if (!tut) return;
+  const sections = Array.from(tut.querySelectorAll(".tut-section"));
+  if (__user.loggedIn) {
+    removeGateMask(tut);
+    return;
+  }
+  sections.forEach((sec, i)=>{ if (i >= 2) sec.classList.add("gate-hidden"); });
+  tut.classList.add("gate-content", "is-gated");
+  injectGateMask(tut, "登录查看完整课程", "你已阅读课程预览部分。登录后即可解锁全部章节、实战案例与评论区互动。");
+}
+
 async function loadFullReport(){
   const box = document.getElementById('fullReport');
   if(!box) return;
@@ -1293,6 +1389,7 @@ async function loadFullReport(){
     box.innerHTML = await r.text();
     initFoldableTables(box);
     pinNameColumn(box);
+    initReviewGate(box);
   } catch(e){
     box.innerHTML = date
       ? `<div class="rpt-loading">未找到 ${date} 的复盘记录。<a href="daily.html">返回最新一期 →</a></div>`
@@ -1359,5 +1456,3 @@ function initReview(){
 window.addEventListener('popstate', () => {
   if(document.getElementById('reviewRoot')) loadFullReport();
 });
-
-initReview();
