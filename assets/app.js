@@ -555,6 +555,7 @@ function groupLogs(logs, mode){
 function renderDiary(){
   const listEl = document.getElementById("diaryList");
   const statsEl = document.getElementById("diaryStats");
+  if (!listEl || !statsEl) return; // 非日记页不渲染
   const logs = (typeof DAILY_LOG !== "undefined" ? DAILY_LOG : []).slice().sort((a,b)=> a.date.localeCompare(b.date));
 
   const wan = (v)=> (v/10000).toFixed(2) + "万";
@@ -1032,9 +1033,12 @@ async function submitComment(article){
   onScroll();
 })();
 
-document.getElementById("year").textContent = new Date().getFullYear();
-document.getElementById("navToggle").addEventListener("click", ()=> {
-  document.getElementById("navLinks").classList.toggle("open");
+const __yearEl = document.getElementById("year");
+if (__yearEl) __yearEl.textContent = new Date().getFullYear();
+const __navToggle = document.getElementById("navToggle");
+if (__navToggle) __navToggle.addEventListener("click", ()=> {
+  const __navLinks = document.getElementById("navLinks");
+  if (__navLinks) __navLinks.classList.toggle("open");
 });
 initToolTabs();
 renderDiary();
