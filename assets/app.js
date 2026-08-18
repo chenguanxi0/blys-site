@@ -1131,9 +1131,23 @@ function loadReview(){
   loadZT();
 }
 
+// ============ 完整复盘报告（加载训练好的自动化任务生成的 assets/review.html） ============
+async function loadFullReport(){
+  const box = document.getElementById('fullReport');
+  if(!box) return;
+  try {
+    const r = await fetch('assets/review.html', { cache: 'no-store' });
+    if(!r.ok) throw new Error('报告文件不存在');
+    box.innerHTML = await r.text();
+  } catch(e){
+    box.innerHTML = '<div class="rpt-loading">完整复盘报告暂未生成（每天 16:00 自动更新）。' + e.message + '</div>';
+  }
+}
+
 function initReview(){
   if(!document.getElementById('reviewRoot')) return;
   loadReview();
+  loadFullReport();
 }
 
 initReview();
