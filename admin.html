@@ -108,8 +108,8 @@
       const box = document.getElementById('userList');
       if(!d || !d.ok){ box.innerHTML = '<p>加载失败：' + (d&&d.msg) + '</p>'; return; }
       if(!d.list.length){ box.innerHTML = '<p>暂无用户</p>'; return; }
-      box.innerHTML = '<table class="admin-table"><tr><th>昵称</th><th>邮箱</th><th>会员</th><th>到期</th><th>操作</th></tr>' +
-        d.list.map(u=>`<tr><td>${esc(u.nickname||'')}</td><td>${esc(u.email||'')}</td><td>${u.is_vip?'是':'否'}</td><td>${u.vip_expire?fmt(u.vip_expire):'-'}</td><td><button onclick="setVip('${esc(u.email||'')}')">设会员</button></td></tr>`).join('') +
+      box.innerHTML = '<table class="admin-table"><tr><th>昵称</th><th>邮箱</th><th>注册时间</th><th>会员</th><th>到期</th><th>操作</th></tr>' +
+        d.list.map(u=>`<tr><td>${esc(u.nickname||'')}</td><td>${esc(u.email||'')}</td><td>${u.created_at?fmt(u.created_at):'-'}</td><td>${u.is_vip?'是':'否'}</td><td>${u.vip_expire?fmt(u.vip_expire):'-'}</td><td><button onclick="setVip('${esc(u.email||'')}')">设会员</button></td></tr>`).join('') +
         '</table>';
     }
 
