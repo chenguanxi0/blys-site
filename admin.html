@@ -18,16 +18,28 @@
     .stat-card .lbl { color:var(--muted); font-size:13px; margin-top:4px; }
     .panel { background:#fff; border-radius:12px; padding:20px; margin-bottom:24px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
     .panel h2 { font-size:18px; margin-top:0; margin-bottom:14px; }
-    .admin-table { width:100%; border-collapse:collapse; font-size:13px; }
-    .admin-table th,.admin-table td { border:1px solid #e5e7eb; padding:8px 10px; text-align:left; }
-    .admin-table th { background:#f9fafb; }
-    .admin-table button { padding:4px 10px; border:none; background:var(--brand); color:#fff; border-radius:6px; cursor:pointer; }
+    .table-wrap { overflow-x: auto; border-radius:8px; border:1px solid #e5e7eb; }
+    .admin-table { width:100%; border-collapse:collapse; font-size:12px; min-width:680px; }
+    .admin-table th,.admin-table td { border:1px solid #e5e7eb; padding:6px 8px; text-align:left; vertical-align:middle; }
+    .admin-table th { background:#f9fafb; font-size:12px; white-space:nowrap; }
+    .admin-table td { white-space:nowrap; }
+    .admin-table td.wrap { white-space:normal; min-width:120px; }
+    .admin-table td.email { font-size:11px; color:#555; max-width:140px; overflow:hidden; text-overflow:ellipsis; }
+    .admin-table button { padding:2px 8px; border:none; background:var(--brand); color:#fff; border-radius:4px; cursor:pointer; font-size:12px; white-space:nowrap; }
     .admin-table button.danger { background:#dc2626; }
-    .comment-item { background:#f8fafc; border:1px solid #e5e7eb; border-radius:8px; padding:12px; margin-bottom:10px; }
-    .comment-head { display:flex; justify-content:space-between; font-size:13px; margin-bottom:4px; }
-    .comment-time { color:var(--muted); }
-    .comment-body { font-size:14px; line-height:1.6; }
-    .comment-item button { margin-top:8px; padding:4px 10px; border:none; background:#dc2626; color:#fff; border-radius:6px; cursor:pointer; font-size:12px; }
+    .admin-table .badge { display:inline-block; padding:1px 6px; border-radius:4px; font-size:11px; background:#f3f4f6; color:#666; }
+    .cmt-bar { display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; align-items:center; }
+    .cmt-bar input, .cmt-bar select { padding:6px 10px; border:1px solid #d1d5db; border-radius:6px; font-size:13px; }
+    .cmt-bar input { flex:1; min-width:150px; }
+    .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.4); display:none; align-items:center; justify-content:center; z-index:100; }
+    .modal-backdrop.open { display:flex; }
+    .modal-box { background:#fff; border-radius:12px; padding:24px; width:90%; max-width:360px; box-shadow:0 8px 30px rgba(0,0,0,.15); }
+    .modal-box h3 { margin:0 0 12px; }
+    .modal-box input[type="date"] { width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; margin:10px 0; }
+    .modal-box .row { display:flex; gap:10px; margin-top:14px; }
+    .modal-box .row button { flex:1; padding:10px; border-radius:8px; border:none; cursor:pointer; font-size:14px; }
+    .modal-box .row .cancel { background:#f3f4f6; color:#333; }
+    .modal-box .row .confirm { background:var(--brand); color:#fff; }
     .back-home { display:inline-block; margin-bottom:16px; color:var(--brand); }
   </style>
 </head>
@@ -53,15 +65,37 @@
 
       <div class="panel">
         <h2>👥 用户列表</h2>
-        <div id="userList">加载中…</div>
+        <div class="table-wrap" id="userList">加载中…</div>
       </div>
 
       <div class="panel">
         <h2>💬 评论管理</h2>
-        <div id="commentList">加载中…</div>
+        <div class="cmt-bar">
+          <select id="cmtFilter" onchange="renderComments()">
+            <option value="">全部文章</option>
+            <option value="market-overview">市场大局观</option>
+            <option value="trading-mindset">四种心态</option>
+          </select>
+          <input type="text" id="cmtSearch" placeholder="搜索评论内容或昵称…" oninput="renderComments()">
+          <button class="btn btn-primary" onclick="loadComments()">刷新</button>
+        </div>
+        <div class="table-wrap" id="commentList">加载中…</div>
       </div>
     </div>
   </main>
+
+  <!-- 设会员弹窗 -->
+  <div class="modal-backdrop" id="vipModal">
+    <div class="modal-box">
+      <h3>设置会员到期时间</h3>
+      <p style="font-size:13px;color:#666;margin:0 0 8px;">选择到期日期，系统会自动计算天数</p>
+      <input type="date" id="vipModalDate" />
+      <div class="row">
+        <button class="cancel" onclick="closeVipModal()">取消</button>
+        <button class="confirm" onclick="confirmVipDate()">确认</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     const SB_URL = "https://ojioiglffglyuellvcex.supabase.co";
@@ -76,7 +110,7 @@
       });
       return r.json();
     }
-    function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
+    function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;","&gt;":"&gt;","\"":"&quot;"}[c])); }
     function fmt(dt){ const d=new Date(dt); if(isNaN(d))return"-"; const p=n=>String(n).padStart(2,"0"); return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes()); }
     function getTok(){ return localStorage.getItem(ADMIN_TOKEN_KEY); }
 
@@ -109,21 +143,32 @@
       if(!d || !d.ok){ box.innerHTML = '<p>加载失败：' + (d&&d.msg) + '</p>'; return; }
       if(!d.list.length){ box.innerHTML = '<p>暂无用户</p>'; return; }
       box.innerHTML = '<table class="admin-table"><tr><th>昵称</th><th>邮箱</th><th>注册时间</th><th>会员</th><th>到期</th><th>操作</th></tr>' +
-        d.list.map(u=>`<tr><td>${esc(u.nickname||'')}</td><td>${esc(u.email||'')}</td><td>${u.created_at?fmt(u.created_at):'-'}</td><td>${u.is_vip?'是':'否'}</td><td>${u.vip_expire?fmt(u.vip_expire):'-'}</td><td><button onclick="setVip('${esc(u.email||'')}')">设会员</button></td></tr>`).join('') +
+        d.list.map(u=>`<tr><td>${esc(u.nickname||'')}</td><td class="email">${esc(u.email||'')}</td><td>${u.created_at?fmt(u.created_at):'-'}</td><td>${u.is_vip?'是':'否'}</td><td>${u.vip_expire?fmt(u.vip_expire):'-'}</td><td><button onclick="openVipModal('${esc(u.email||'')}')">设会员</button></td></tr>`).join('') +
         '</table>';
     }
 
-    async function setVip(email){
+    let __vipTargetEmail = '';
+    function openVipModal(email){
       if(!email){ alert('该用户无邮箱，无法设置会员'); return; }
-      const days = prompt('设置会员天数（正数=从当前/今天起延长 N 天；-1=取消会员）：', '30');
-      if(days === null) return;
-      const n = parseInt(days, 10);
-      if(isNaN(n)){ alert('请输入数字'); return; }
-      const d = await sbRpc('admin_set_vip', { p_admin_token: getTok(), p_email: email, p_days: n });
-      alert(d && d.ok ? '设置成功' : ('失败：' + (d&&d.msg)));
+      __vipTargetEmail = email;
+      document.getElementById('vipModalDate').value = '';
+      document.getElementById('vipModal').classList.add('open');
+    }
+    function closeVipModal(){ document.getElementById('vipModal').classList.remove('open'); __vipTargetEmail = ''; }
+    async function confirmVipDate(){
+      const dateStr = document.getElementById('vipModalDate').value;
+      if(!dateStr){ alert('请选择到期日期'); return; }
+      const target = new Date(dateStr + 'T23:59:59');
+      const now = new Date();
+      const diffMs = target - now;
+      const days = Math.ceil(diffMs / (1000*60*60*24));
+      const d = await sbRpc('admin_set_vip', { p_admin_token: getTok(), p_email: __vipTargetEmail, p_days: days });
+      alert(d && d.ok ? '设置成功：到期时间 ' + dateStr : ('失败：' + (d&&d.msg)));
+      closeVipModal();
       loadUsers();
     }
 
+    let __allComments = [];
     async function loadComments(){
       const arts = ['market-overview','trading-mindset'];
       let all = [];
@@ -131,9 +176,21 @@
         const d = await sbRpc('list_comments', { p_article: a });
         if(d && d.ok) all = all.concat(d.list.map(c=>({ ...c, article:a })));
       }
+      __allComments = all;
+      renderComments();
+    }
+
+    function renderComments(){
       const box = document.getElementById('commentList');
-      if(!all.length){ box.innerHTML = '<p>暂无评论</p>'; return; }
-      box.innerHTML = all.map(c=>`<div class="comment-item"><div class="comment-head"><b>${esc(c.nickname||'匿名')}</b><span class="comment-time">${fmt(c.created_at)} · ${c.article}</span></div><div class="comment-body">${esc(c.content)}</div><button onclick="delComment(${c.id})">删除</button></div>`).join('');
+      const filter = document.getElementById('cmtFilter').value;
+      const search = (document.getElementById('cmtSearch').value || '').trim().toLowerCase();
+      let list = __allComments;
+      if(filter) list = list.filter(c => c.article === filter);
+      if(search) list = list.filter(c => (c.content||'').toLowerCase().includes(search) || (c.nickname||'').toLowerCase().includes(search));
+      if(!list.length){ box.innerHTML = '<p>暂无评论</p>'; return; }
+      box.innerHTML = '<table class="admin-table"><tr><th>昵称</th><th>邮箱</th><th>文章</th><th>评论</th><th>时间</th><th>操作</th></tr>' +
+        list.map(c=>`<tr><td>${esc(c.nickname||'匿名')}</td><td class="email">${esc(c.email||'-')}</td><td><span class="badge">${c.article}</span></td><td class="wrap">${esc(c.content||'')}</td><td>${fmt(c.created_at)}</td><td><button class="danger" onclick="delComment(${c.id})">删除</button></td></tr>`).join('') +
+        '</table>';
     }
 
     async function delComment(id){
@@ -142,6 +199,9 @@
       alert(d && d.ok ? '已删除' : '失败');
       loadComments();
     }
+
+    // 点击遮罩关闭弹窗
+    document.getElementById('vipModal').addEventListener('click', (e)=>{ if(e.target === document.getElementById('vipModal')) closeVipModal(); });
 
     // 已登录则直接进
     if(localStorage.getItem(ADMIN_TOKEN_KEY)){
