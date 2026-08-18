@@ -1132,6 +1132,33 @@ function loadReview(){
 }
 
 // ============ 完整复盘报告（加载训练好的自动化任务生成的 assets/review.html） ============
+function initFoldableTables(root){
+  if(!root) return;
+  root.querySelectorAll('.rpt-tbl').forEach(tbl => {
+    tbl.querySelectorAll('tbody').forEach(tb => {
+      const rows = Array.from(tb.querySelectorAll('tr'));
+      if(rows.length <= 10) return;
+      const hidden = document.createElement('tbody');
+      hidden.className = 'rpt-tbody-collapsed';
+      rows.slice(10).forEach(tr => hidden.appendChild(tr));
+      tbl.appendChild(hidden);
+      const wrap = tbl.parentNode;
+      const btn = document.createElement('button');
+      btn.className = 'rpt-fold-btn';
+      btn.type = 'button';
+      btn.innerHTML = `展开更多 ${rows.length - 10} 条 ↓`;
+      btn.addEventListener('click', () => {
+        const open = hidden.classList.contains('is-open');
+        hidden.classList.toggle('is-open');
+        btn.innerHTML = open ? `展开更多 ${rows.length - 10} 条 ↓` : '收起 ↑';
+      });
+      if(wrap && wrap.classList.contains('rpt-tbl-wrap')){
+        wrap.appendChild(btn);
+      }
+    });
+  });
+}
+
 async function loadFullReport(){
   const box = document.getElementById('fullReport');
   if(!box) return;
@@ -1141,6 +1168,7 @@ async function loadFullReport(){
     const r = await fetch(`assets/review.html?t=${ts}`, { cache: 'no-store' });
     if(!r.ok) throw new Error('报告文件不存在');
     box.innerHTML = await r.text();
+    initFoldableTables(box);
   } catch(e){
     box.innerHTML = '<div class="rpt-loading">完整复盘报告暂未生成，每天 16:00 收盘后自动更新。</div>';
   }
