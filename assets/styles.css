@@ -1124,3 +1124,28 @@ a { color: inherit; text-decoration: none; transition: color var(--transition); 
 }
 
 }
+
+/* ========== 更新日志 ========== */
+.changelog-list { display:flex; flex-direction:column; gap:14px; }
+.changelog-item {
+  display:flex; gap:14px; align-items:flex-start; background:#fff; border:1px solid var(--line);
+  border-radius:12px; padding:16px; box-shadow:var(--shadow-sm); transition:transform var(--transition);
+}
+.changelog-item:hover { transform:translateY(-1px); box-shadow:var(--shadow); }
+.changelog-badge {
+  flex-shrink:0; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:600; white-space:nowrap;
+}
+.changelog-badge.new { background:var(--brand-light); color:var(--brand); }
+.changelog-badge.improve { background:#ecfdf5; color:#059669; }
+.changelog-badge.fix { background:#eff6ff; color:#2563eb; }
+.changelog-body { flex:1; min-width:0; }
+.changelog-body h3 { font-size:16px; margin:0 0 4px; color:var(--ink); }
+.changelog-date { font-size:12px; color:var(--muted); margin:0 0 6px; }
+.changelog-body p:last-child { font-size:13.5px; color:#444; line-height:1.6; margin:0; }
+
+@media (max-width: 560px) {
+  .changelog-item { padding:14px; gap:10px; }
+  .changelog-badge { font-size:11px; padding:3px 8px; }
+  .changelog-body h3 { font-size:15px; }
+  .changelog-body p:last-child { font-size:13px; }
+}
