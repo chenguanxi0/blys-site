@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>每日复盘 · 白鹿原上-交易笔记</title>
+  <meta name="description" content="每天的市场复盘：把盘面翻译成人话。情绪温度计、最强板块、连板梯队、涨停分布，一眼看懂今天发生了什么。blys.site" />
+  <link rel="stylesheet" href="assets/styles.css" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23e23b3b'/%3E%3Cstop offset='100%25' stop-color='%23f87171'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='18' cy='18' r='17' fill='url(%23g)'/%3E%3Ctext x='18' y='23' text-anchor='middle' fill='white' font-family='-apple-system,PingFang SC,Microsoft YaHei,sans-serif' font-size='18' font-weight='700'%3E白%3C/text%3E%3C/svg%3E" />
+  <link rel="apple-touch-icon" href="assets/favicon.png" />
+</head>
+<body>
+  <!-- 风险提示条 -->
+  <div class="risk-bar">
+    ⚠️ 风险提示：本站所有内容仅为个人复盘与经验分享，不构成任何投资建议，市场有风险，投资需谨慎。
+  </div>
+
+  <!-- 顶部导航 -->
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-logo">白</span>
+        <span class="brand-name">白鹿原上-交易笔记 <small>· blys.site</small></span>
+      </a>
+      <div class="nav-right">
+        <nav class="nav-links" id="navLinks">
+          <a href="index.html#tools">工具箱</a>
+          <a href="index.html#diary">实盘日记</a>
+          <a href="index.html#vipzone">会员专享</a>
+          <a href="index.html#vip">会员课程</a>
+          <a href="index.html#about">关于</a>
+          <a href="daily.html" class="active">每日复盘</a>
+        </nav>
+        <div class="vip-status" id="vipStatus"></div>
+        <div class="online-counter" id="onlineCounter" title="当前在线访客">
+          <span class="online-dot"></span>
+          <span id="onlineNum">--</span> 在线
+        </div>
+        <button class="nav-toggle" id="navToggle" aria-label="菜单">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 每日复盘 -->
+  <section class="section" id="reviewRoot">
+    <div class="section-head">
+      <h2>📊 每日复盘</h2>
+      <p>把盘面翻译成人话。交易日 9:15–15:00 自动更新，收盘后显示当日收盘提示。<em>（数据来自东方财富公开行情，仅供参考）</em></p>
+    </div>
+
+    <!-- 一句话结论 -->
+    <div id="conclusionBox" class="review-conclusion">加载中…</div>
+
+    <!-- 情绪温度计 -->
+    <div id="emotionBox" class="emotion-gauge">加载中…</div>
+
+    <!-- 最强板块 + 连板梯队 -->
+    <div class="review-grid">
+      <div class="review-block">
+        <h3 class="review-h3">🏆 最强板块 Top5</h3>
+        <div id="topSectors" class="top-sectors"><div class="result">加载中…</div></div>
+      </div>
+      <div class="review-block">
+        <h3 class="review-h3">🪜 连板梯队</h3>
+        <div id="ladderInfo" class="ladder-info"><div class="result">加载中…</div></div>
+      </div>
+    </div>
+
+    <!-- 涨停分布 -->
+    <div class="review-block">
+      <h3 class="review-h3">🔥 涨停分布</h3>
+      <div id="ztSummary" class="zt-summary"><div class="result">加载中…</div></div>
+      <div id="ztList" class="rank-list"></div>
+    </div>
+  </section>
+
+  <!-- 隐藏占位：保证 app.js 初始化(renderDiary)不报错 -->
+  <section id="diary" hidden><div id="diaryStats"></div><div id="diaryList"></div></section>
+
+  <!-- 页脚 -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <p>© <span id="year"></span> 白鹿原上-交易笔记 · <a href="https://blys.site" target="_blank" rel="noopener">blys.site</a></p>
+      <p class="muted">本站内容仅为个人复盘与经验分享，不构成任何投资建议。</p>
+    </div>
+  </footer>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>

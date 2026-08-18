@@ -993,3 +993,147 @@ document.getElementById("navToggle").addEventListener("click", ()=> {
 initToolTabs();
 renderDiary();
 fetchUser();
+
+// ============ 每日复盘模块（情绪温度计 + 一句话结论 + 板块Top + 主入口） ============
+// 情绪数据：涨跌家数(沪+深指数 f104/f105) + 涨停/跌停池 + 量能(沪+深指数 f6)
+function loadEmotion(){
+  const box = document.getElementById('emotionBox');
+  const con = document.getElementById('conclusionBox');
+  if(!box || !con) return;
+  box.innerHTML = '<div class="result">加载市场情绪…</div>';
+
+  const emUrl = (secid)=> `https://push2.eastmoney.com/api/qt/stock/get?secid=${secid}&fields=f43,f57,f58,f104,f105,f6&fltt=2&invt=2&ut=fa5fd1943c7b386f172d6893b`;
+  const poolUrl = (tag)=> `https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=600&po=1&np=1&fltt=2&invt=2&fid=f3&fs=m:0+t:81+s:${tag}&fields=f12,f14,f3,f107&ut=fa5fd1943c7b386f172d6893b`;
+
+  Promise.all([
+    jsonp(emUrl('1.000001')),   // 上证指数
+    jsonp(emUrl('0.399001')),   // 深证成指
+    jsonp(poolUrl('2048')),     // 涨停池
+    jsonp(poolUrl('2049'))      // 跌停池
+  ]).then(([sh, sz, zt, dt])=>{
+    const shd = sh && sh.data; const szd = sz && sz.data;
+    const ztd = zt && zt.data; const dtd = dt && dt.data;
+    const up = (parseFloat(shd && shd.f104)||0) + (parseFloat(szd && szd.f104)||0);
+    const down = (parseFloat(shd && shd.f105)||0) + (parseFloat(szd && szd.f105)||0);
+    const amt = (parseFloat(shd && shd.f6)||0) + (parseFloat(szd && szd.f6)||0);
+    const ztList = (ztd && ztd.diff) || [];
+    const dtList = (dtd && dtd.diff) || [];
+    const ztCount = ztList.length;
+    const dtCount = dtList.length;
+    let maxBoard = 1;
+    ztList.forEach(it=>{ const b = parseInt(it.f107,10)||1; if(b>maxBoard) maxBoard = b; });
+
+    // 情绪分 0-100（基准 50）
+    let score = 50;
+    if(up>0 && down>0){
+      const ratio = up/down;
+      if(ratio>=2) score+=25; else if(ratio>=1.5) score+=18; else if(ratio>=1.2) score+=10; else if(ratio>=1) score+=4;
+      else if(ratio>=0.8) score-=8; else if(ratio>=0.5) score-=16; else score-=26;
+    } else if(up>0 && down===0) score+=25; else if(up===0 && down>0) score-=26;
+    const zd = ztCount - dtCount;
+    if(zd>=30) score+=15; else if(zd>=15) score+=10; else if(zd>=5) score+=5; else if(zd>0) score+=2;
+    else if(zd>-5) score-=4; else if(zd>-15) score-=10; else score-=18;
+    if(maxBoard>=7) score+=10; else if(maxBoard>=5) score+=7; else if(maxBoard>=3) score+=4;
+    score = Math.max(0, Math.min(100, Math.round(score)));
+
+    renderEmotion(box, { score, up, down, ztCount, dtCount, amt });
+    genConclusion(con, { score, up, down, ztCount, dtCount, amt, maxBoard });
+  }).catch(()=>{
+    box.innerHTML = '<div class="result">市场情绪加载失败，请刷新重试</div>';
+    con.innerHTML = '<div class="review-conclusion"><p>结论暂时加载失败，请稍后刷新。</p></div>';
+  });
+}
+
+function renderEmotion(box, d){
+  let level, lvlClass;
+  if(d.score<30){ level='冰点·极弱'; lvlClass='lv-cold'; }
+  else if(d.score<45){ level='偏弱'; lvlClass='lv-weak'; }
+  else if(d.score<55){ level='中性'; lvlClass='lv-mid'; }
+  else if(d.score<70){ level='偏强'; lvlClass='lv-warm'; }
+  else { level='亢奋'; lvlClass='lv-hot'; }
+  const upStr = d.up>0 ? d.up.toLocaleString('zh-CN') : '—';
+  const downStr = d.down>0 ? d.down.toLocaleString('zh-CN') : '—';
+  const amtStr = d.amt>0 ? (d.amt/1e12).toFixed(2)+'万亿' : '—';
+  box.innerHTML = `
+    <div class="emotion-head">
+      <div class="emotion-score ${lvlClass}">${d.score}<small>分</small></div>
+      <div class="emotion-meta">
+        <div class="emotion-level ${lvlClass}">市场情绪：${level}</div>
+        <div class="emotion-detail">
+          <span>上涨 <b class="up">${upStr}</b></span>
+          <span>下跌 <b class="down">${downStr}</b></span>
+          <span>涨停 <b class="up">${d.ztCount}</b></span>
+          <span>跌停 <b class="down">${d.dtCount}</b></span>
+          <span>两市成交 <b>${amtStr}</b></span>
+        </div>
+      </div>
+    </div>
+    <div class="emotion-bar"><div class="emotion-bar-fill ${lvlClass}" style="width:${d.score}%"></div></div>`;
+}
+
+function genConclusion(con, d){
+  let head;
+  if(d.score<30) head='市场情绪冰点，亏钱效应明显——管住手、控仓位，多看少动。';
+  else if(d.score<45) head='市场偏弱、资金观望——只在确定性方向小仓试错，不追高。';
+  else if(d.score<55) head='多空拉锯、板块轮动快——轻仓做 T、不追涨杀跌。';
+  else if(d.score<70) head='市场偏强、赚钱效应回暖——可积极跟随主线。';
+  else head='情绪亢奋、主线明确——重仓顺势，但谨防高潮后回落。';
+
+  const points = [];
+  if(d.up>0 && d.down>0){
+    const r = d.up/d.down;
+    points.push(r>=1.5 ? `涨跌家数比 ${r.toFixed(2)}:1，多方占优` : (r>=1 ? `涨跌家数基本持平（${d.up}:${d.down}），结构性行情` : `跌多涨少（${d.up}:${d.down}），人气偏弱`));
+  } else { points.push('涨跌家数数据暂缺，参考下方涨停/跌停数量'); }
+  points.push(d.ztCount - d.dtCount >= 15 ? `涨停 ${d.ztCount} 家、跌停 ${d.dtCount} 家，打板赚钱效应强` : (d.dtCount > d.ztCount ? `跌停 ${d.dtCount} 家多于涨停 ${d.ztCount} 家，注意风险` : `涨停 ${d.ztCount} 家、跌停 ${d.dtCount} 家`));
+  points.push(d.amt>0 ? `两市成交 ${(d.amt/1e12).toFixed(2)} 万亿，${ d.amt>=1.2e12?'量能充沛':(d.amt>=0.8e12?'量能温和':'量能偏低、资金偏谨慎') }` : '量能数据暂缺');
+  points.push(d.maxBoard>=5 ? `连板高度打到 ${d.maxBoard} 板，短线空间打开` : (d.maxBoard>=3 ? `最高 ${d.maxBoard} 连板，题材有一定持续性` : `连板高度偏低，题材多一日游`));
+
+  con.innerHTML = `
+    <div class="conclusion-head">💡 ${head}</div>
+    <ul class="conclusion-points">${points.map(p=>`<li>${p}</li>`).join('')}</ul>`;
+}
+
+function loadTopSectors(){
+  const el = document.getElementById('topSectors'); if(!el) return;
+  el.innerHTML = '<div class="result">加载最强板块…</div>';
+  const mk = (fs)=> new Promise(res=>{
+    jsonp(`https://push2.eastmoney.com/api/qt/clist/get?pn=1&pz=5&po=1&np=1&fltt=2&invt=2&fid=f3&fs=${fs}&fields=f12,f14,f3,f62,f104,f105,f184&ut=fa5fd1943c7b386f172d6893b`)
+      .then(r=> res((r&&r.data&&r.data.diff)||[])).catch(()=> res([]));
+  });
+  Promise.all([mk('m:90+t:2'), mk('m:90+t:3')]).then(([hy, gn])=>{
+    const rows = [...hy, ...gn].sort((a,b)=> parseFloat(b.f3)-parseFloat(a.f3)).slice(0,5);
+    if(!rows.length){ el.innerHTML = '<div class="result">暂无板块数据</div>'; return; }
+    el.innerHTML = rows.map(it=>{
+      const p = parseFloat(it.f3), net = parseFloat(it.f62), bk = (it.f104||'').trim();
+      const nm = it.f14||'';
+      const clickable = !!bk;
+      return `<div class="rank-row top-sector ${clickable?'':'sector-disabled'}" data-bk="${bk}" data-name="${nm}" ${clickable?'onclick="loadSectorStocks(this)"':''}>
+        <span class="name">${nm} <small class="sector-hint">${clickable?'点击展开个股 ▸':'—'}</small></span>
+        <span class="sub ${cls(net)}">主力 ${isNaN(net)?'—':sign(net)+(net/1e8).toFixed(2)+'亿'}</span>
+        <span class="val ${cls(p)}">${isNaN(p)?'—':sign(p)+p.toFixed(2)+'%'}</span>
+      </div><div class="sector-stocks" id="stocks-${bk}"></div>`;
+    }).join('');
+  });
+}
+
+function loadReview(){
+  if(!isMarketOpen()){
+    ['conclusionBox','emotionBox'].forEach(id=>{ const e=document.getElementById(id); if(e) e.innerHTML = MARKET_HINT; });
+    const ts = document.getElementById('topSectors'); if(ts) ts.innerHTML = '<div class="result">📴 非交易时段不更新，开盘后自动加载</div>';
+    const li = document.getElementById('ladderInfo'); if(li) li.innerHTML = MARKET_HINT;
+    const zs = document.getElementById('ztSummary'); if(zs) zs.innerHTML = MARKET_HINT;
+    const zl = document.getElementById('ztList'); if(zl) zl.innerHTML = '<div class="result">📴 非交易时段不展示涨停数据</div>';
+    return;
+  }
+  loadEmotion();
+  loadTopSectors();
+  loadLadder();
+  loadZT();
+}
+
+function initReview(){
+  if(!document.getElementById('reviewRoot')) return;
+  loadReview();
+}
+
+initReview();
