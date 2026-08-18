@@ -45,40 +45,14 @@
   <section class="section" id="reviewRoot">
     <div class="section-head">
       <h2>📊 每日复盘</h2>
-      <p>把盘面翻译成人话。交易日 9:15–15:00 自动更新，收盘后显示当日收盘提示。<em>（数据来自东方财富公开行情，仅供参考）</em></p>
+      <p>收盘后把今天的盘面翻译成人话。<em>（数据来自公开市场行情与资讯，仅供参考）</em></p>
     </div>
 
-    <!-- 一句话结论 -->
-    <div id="conclusionBox" class="review-conclusion">加载中…</div>
+    <!-- 报告状态栏：16 点前显示昨日，16 点后显示今日 -->
+    <div id="reportStatus" class="report-status">加载中…</div>
 
-    <!-- 情绪温度计 -->
-    <div id="emotionBox" class="emotion-gauge">加载中…</div>
-
-    <!-- 最强板块 + 连板梯队 -->
-    <div class="review-grid">
-      <div class="review-block">
-        <h3 class="review-h3">🏆 最强板块 Top5</h3>
-        <div id="topSectors" class="top-sectors"><div class="result">加载中…</div></div>
-      </div>
-      <div class="review-block">
-        <h3 class="review-h3">🪜 连板梯队</h3>
-        <div id="ladderInfo" class="ladder-info"><div class="result">加载中…</div></div>
-      </div>
-    </div>
-
-    <!-- 涨停分布 -->
-    <div class="review-block">
-      <h3 class="review-h3">🔥 涨停分布</h3>
-      <div id="ztSummary" class="zt-summary"><div class="result">加载中…</div></div>
-      <div id="ztList" class="rank-list"></div>
-    </div>
-
-    <!-- 完整复盘报告（A股每日复盘，来自训练好的自动化任务输出） -->
-    <div class="rpt-block">
-      <h3 class="review-h3">📑 完整复盘报告</h3>
-      <p class="muted" style="font-size:13px;margin:-6px 0 12px">以下为「A股每日复盘」自动化任务生成的完整报告（持仓部分已按约定去除），每天 16:00 自动更新。</p>
-      <div id="fullReport"><div class="rpt-loading">报告加载中…</div></div>
-    </div>
+    <!-- 完整复盘报告 -->
+    <div id="fullReport" class="rpt-card"><div class="rpt-loading">报告加载中…</div></div>
   </section>
 
   <!-- 隐藏占位：保证 app.js 初始化(renderDiary)不报错 -->

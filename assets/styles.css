@@ -599,35 +599,116 @@ a { color: inherit; text-decoration: none; transition: color var(--transition); 
 .comment-body { font-size: 14px; line-height: 1.75; color: #334155; white-space: pre-wrap; word-break: break-word; }
 
 /* ===================== 完整复盘报告（A股每日复盘） ===================== */
-.rpt-block { margin-top: 28px; }
-.rpt-block .review-h3 { margin-bottom: 12px; }
-.rpt-loading { color: var(--muted); font-size: 14px; padding: 20px 0; }
-.rpt {
+.report-status {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 14px 18px; margin-bottom: 18px;
+  font-size: 14px; color: var(--muted);
+  box-shadow: var(--shadow-sm);
+}
+.rs-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #94a3b8; flex-shrink: 0;
+}
+.rs-dot.live {
+  background: #22c55e;
+  box-shadow: 0 0 0 4px rgba(34,197,94,0.12);
+  animation: rsPulse 1.6s ease-in-out infinite;
+}
+@keyframes rsPulse {
+  0%,100% { box-shadow: 0 0 0 3px rgba(34,197,94,0.12); }
+  50% { box-shadow: 0 0 0 6px rgba(34,197,94,0.06); }
+}
+
+.rpt-card {
   background: #fff;
   border: 1px solid #eef2f7;
-  border-radius: 14px;
-  padding: 22px 26px;
-  box-shadow: 0 2px 10px rgba(15,23,42,0.03);
+  border-radius: 18px;
+  padding: 0;
+  box-shadow: 0 8px 30px rgba(15,23,42,0.06);
+  overflow: hidden;
 }
-.rpt-cover { border-bottom: 2px solid #e23b3b; padding-bottom: 12px; margin-bottom: 8px; }
-.rpt-cover-line { margin: 4px 0; color: #475569; font-size: 15px; line-height: 1.6; }
-.rpt-cover-line:first-child { font-size: 24px; font-weight: 800; color: var(--ink); letter-spacing: .5px; }
-.rpt-cover-line:nth-child(3) { color: #e23b3b; font-weight: 600; }
-.rpt-chapter { margin: 22px 0 6px; }
+.rpt-loading {
+  color: var(--muted); font-size: 14px; padding: 48px 32px; text-align: center;
+}
+
+.rpt {
+  padding: 34px 38px;
+}
+.rpt-cover {
+  text-align: center;
+  padding: 10px 0 26px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid #f1f5f9;
+  position: relative;
+}
+.rpt-cover::after {
+  content: ''; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%);
+  width: 80px; height: 3px; background: linear-gradient(90deg, #e23b3b, #f87171); border-radius: 2px;
+}
+.rpt-cover-line { margin: 6px 0; color: #64748b; font-size: 15px; line-height: 1.6; }
+.rpt-cover-line:first-child {
+  font-size: 30px; font-weight: 800; color: var(--ink); letter-spacing: .5px; margin-bottom: 10px;
+}
+.rpt-cover-line:nth-child(2) {
+  display: inline-block;
+  background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 999px;
+  padding: 5px 16px; font-size: 14px; color: #475569; font-weight: 600;
+}
+.rpt-cover-line:nth-child(3) {
+  color: #e23b3b; font-weight: 700; font-size: 16px; margin-top: 14px; line-height: 1.7;
+}
+.rpt-cover-line:last-child {
+  font-size: 12.5px; color: #94a3b8; margin-top: 16px;
+}
+
+.rpt-chapter {
+  margin: 32px 0 10px;
+  padding-top: 26px;
+  border-top: 1px dashed #e2e8f0;
+}
+.rpt-chapter:first-of-type { border-top: none; padding-top: 0; }
 .rpt-h2 {
-  font-size: 18px; font-weight: 700; color: var(--ink);
-  padding-left: 12px; border-left: 4px solid #e23b3b; line-height: 1.4;
-  margin: 0 0 10px;
+  font-size: 19px; font-weight: 800; color: var(--ink);
+  display: flex; align-items: center; gap: 10px;
+  margin: 0 0 14px;
 }
-.rpt p { font-size: 14.5px; line-height: 1.85; color: #334155; margin: 8px 0; }
-.rpt-tbl-wrap { overflow-x: auto; margin: 10px 0 6px; }
-.rpt-tbl { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 13.5px; }
-.rpt-tbl th, .rpt-tbl td { border: 1px solid #e8edf3; padding: 7px 10px; text-align: center; white-space: nowrap; }
-.rpt-tbl th { background: #2b3445; color: #fff; font-weight: 600; position: sticky; top: 0; }
-.rpt-tbl tbody tr.alt { background: #f6f8fb; }
-.rpt-tbl tbody tr:hover { background: #fff3f3; }
+.rpt-h2::before {
+  content: '';
+  width: 6px; height: 22px;
+  background: linear-gradient(180deg, #e23b3b, #f87171);
+  border-radius: 3px;
+}
+.rpt p {
+  font-size: 15px; line-height: 1.95; color: #334155; margin: 10px 0;
+  text-align: justify;
+}
+
+.rpt-tbl-wrap {
+  overflow-x: auto;
+  margin: 16px 0 10px;
+  border: 1px solid #eef2f7;
+  border-radius: 12px;
+  background: #fff;
+}
+.rpt-tbl { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 560px; font-size: 13.5px; }
+.rpt-tbl th, .rpt-tbl td { padding: 10px 12px; text-align: center; white-space: nowrap; border-bottom: 1px solid #f1f5f9; }
+.rpt-tbl th {
+  background: #f8fafc; color: #334155; font-weight: 700;
+  position: sticky; top: 0; font-size: 13px;
+}
+.rpt-tbl tbody tr:last-child td { border-bottom: none; }
+.rpt-tbl tbody tr.alt { background: #fafbfc; }
+.rpt-tbl tbody tr:hover { background: #fff5f5; }
 .rpt-tbl td:first-child, .rpt-tbl th:first-child { text-align: left; }
-.rpt-note { font-size: 12.5px; color: var(--muted); margin-top: 14px; }
+.rpt-note { font-size: 12.5px; color: var(--muted); margin-top: 18px; }
+
+@media (max-width: 860px) {
+  .rpt { padding: 22px 18px; }
+  .rpt-cover-line:first-child { font-size: 24px; }
+  .rpt-h2 { font-size: 17px; }
+  .rpt p { font-size: 14px; }
+}
 
 /* ===== 每日复盘 ===== */
 .nav-links a.active { color: var(--ink); font-weight: 600; }

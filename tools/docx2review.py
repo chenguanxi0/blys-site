@@ -68,6 +68,7 @@ def render(blocks):
     out = []
     out.append('<article class="rpt" id="rptRoot">')
     seen_chapter = False
+    open_section = False
     cover = []
     for b in blocks:
         if b[0] == 'h2':
@@ -77,8 +78,12 @@ def render(blocks):
                     out.append(f'<p class="rpt-cover-line">{line}</p>')
                 out.append('</div>')
                 cover = []
+            if open_section:
+                out.append('</section>')
+                open_section = False
             out.append(f'<section class="rpt-chapter"><h2 class="rpt-h2">{html.escape(b[1])}</h2>')
             seen_chapter = True
+            open_section = True
         elif b[0] == 'p':
             if not seen_chapter:
                 cover.append(pct_color_inline(html.escape(b[1])))
@@ -119,6 +124,8 @@ def render(blocks):
         for line in cover:
             out.append(f'<p class="rpt-cover-line">{line}</p>')
         out.append('</div>')
+    if open_section:
+        out.append('</section>')
     out.append('</article>')
     return '\n'.join(out)
 
