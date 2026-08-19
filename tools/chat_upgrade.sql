@@ -6,6 +6,7 @@ ALTER TABLE messages ADD COLUMN IF NOT EXISTS image TEXT;
 
 -- 2. 改造 send_message，支持可选图片参数
 DROP FUNCTION IF EXISTS send_message(text, text, text);
+DROP FUNCTION IF EXISTS send_message(text, text, text, text);
 CREATE OR REPLACE FUNCTION send_message(
   p_token TEXT,
   p_room TEXT,
@@ -34,6 +35,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 3. 改造 list_messages，返回图片字段（id 与 messages 表实际类型一致，为 UUID）
+DROP FUNCTION IF EXISTS list_messages(text);
 DROP FUNCTION IF EXISTS list_messages(text, integer);
 CREATE OR REPLACE FUNCTION list_messages(p_room TEXT, p_limit INTEGER DEFAULT 100)
 RETURNS TABLE(id UUID, user_email TEXT, user_nickname TEXT, content TEXT, image TEXT, created_at TIMESTAMPTZ) AS $$
