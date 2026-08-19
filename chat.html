@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026081912" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026081913" />
+  <link rel="manifest" href="manifest.json" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23e23b3b'/%3E%3Cstop offset='100%25' stop-color='%23f87171'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='18' cy='18' r='17' fill='url(%23g)'/%3E%3Ctext x='18' y='23' text-anchor='middle' fill='white' font-family='-apple-system,PingFang SC,Microsoft YaHei,sans-serif' font-size='18' font-weight='700'%3E白%3C/text%3E%3C/svg%3E" />
 </head>
 <body class="chat-body">
@@ -51,6 +52,7 @@
         <span class="chat-online-dot"></span>
         <span id="chatOnlineNum">--</span> 人在线
       </div>
+      <button class="chat-notif-btn" id="chatNotifBtn" type="button" onclick="toggleChatNotification()" title="新消息弹窗提醒">🔕 开启提醒</button>
     </div>
 
     <!-- 频道切换 -->
@@ -115,7 +117,7 @@
   <!-- 登录/注册弹窗（动态注入） -->
   <div id="authModal" class="modal-mask"></div>
 
-  <script src="assets/app.js?v=2026081912"></script>
+  <script src="assets/app.js?v=2026081913"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -123,6 +125,8 @@
     let chatOnlineTimer = null;
     let chatHeartbeatTimer = null;
     let pendingChatImage = null;
+    let lastSeenMsgId = { public: 0, vip: 0 };
+    let notifEnabled = false;
 
     document.addEventListener('DOMContentLoaded', () => {
       initChatPage();
@@ -143,6 +147,8 @@
       startChatPoll();
       // 启动在线人数
       startOnlineTracking();
+      // 注册通知（新消息手机弹窗提醒）
+      initChatNotification();
       // 监听登录状态变化
       window.addEventListener('blys:user:change', () => {
         updateChatInputState();
@@ -300,7 +306,29 @@
           if (isFirst) box.innerHTML = '<div class="chat-empty">暂无消息，来做第一个发言的人吧～</div>';
           return;
         }
-        renderChatMessages(list.slice().reverse(), room, isFirst);
+
+        const renderList = list.slice().reverse();
+
+        // 新消息提醒：页面在后台隐藏、且不是自己发的消息
+        if (notifEnabled && document.hidden && !isFirst) {
+          const myEmail = (__user && __user.email) || '';
+          const lastId = lastSeenMsgId[room] || 0;
+          const fresh = renderList.filter(m => (m.id || 0) > lastId && m.user_email !== myEmail);
+          if (fresh.length) {
+            const latest = fresh[fresh.length - 1];
+            const name = latest.user_nickname || (latest.user_email ? latest.user_email.split('@')[0] : '群友');
+            const preview = (latest.content || '').trim() || (latest.image ? '[图片]' : '新消息');
+            notifyNewMessage(room, name, preview, fresh.length);
+          }
+        }
+
+        // 更新本房间最后已读消息 ID
+        if (list.length) {
+          const maxId = list.reduce((mx, m) => Math.max(mx, m.id || 0), 0);
+          lastSeenMsgId[room] = Math.max(lastSeenMsgId[room] || 0, maxId);
+        }
+
+        renderChatMessages(renderList, room, isFirst);
       } catch (e) {
         if (isFirst) box.innerHTML = '<div class="chat-empty">消息加载失败，请稍后重试</div>';
       }
@@ -453,6 +481,83 @@
         if (currentRoom === 'vip' && (!__user.loggedIn || !__user.isVip)) return;
         loadChatMessages(currentRoom);
       }, 5000);
+    }
+
+    // ===== 新消息弹窗提醒（浏览器通知）=====
+    function initChatNotification() {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js').catch(() => {});
+      }
+      if (localStorage.getItem('blys_notif') === 'on' && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        notifEnabled = true;
+      }
+      updateNotifBtn();
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+          notifEnabled = (localStorage.getItem('blys_notif') === 'on' && typeof Notification !== 'undefined' && Notification.permission === 'granted');
+          updateNotifBtn();
+          loadChatMessages(currentRoom);
+        }
+      });
+    }
+
+    function updateNotifBtn() {
+      const btn = document.getElementById('chatNotifBtn');
+      if (!btn) return;
+      if (typeof Notification === 'undefined') { btn.style.display = 'none'; return; }
+      if (notifEnabled && Notification.permission === 'granted') {
+        btn.textContent = '🔔 已开启';
+        btn.classList.add('on');
+      } else if (Notification.permission === 'denied') {
+        btn.textContent = '🔕 已禁止';
+        btn.classList.remove('on');
+      } else {
+        btn.textContent = '🔕 开启提醒';
+        btn.classList.remove('on');
+      }
+    }
+
+    async function toggleChatNotification() {
+      if (typeof Notification === 'undefined') {
+        alert('当前浏览器不支持消息提醒，请用手机/桌面浏览器打开并允许通知。');
+        return;
+      }
+      if (Notification.permission === 'granted') {
+        notifEnabled = !notifEnabled;
+        localStorage.setItem('blys_notif', notifEnabled ? 'on' : 'off');
+        updateNotifBtn();
+        return;
+      }
+      if (Notification.permission === 'denied') {
+        alert('通知已被浏览器禁止，请在站点设置里手动允许通知后再点此按钮。');
+        return;
+      }
+      try {
+        const perm = await Notification.requestPermission();
+        if (perm === 'granted') {
+          notifEnabled = true;
+          localStorage.setItem('blys_notif', 'on');
+          updateNotifBtn();
+          notifyNewMessage(currentRoom, '白鹿原上', '提醒已开启，收到新消息会弹窗通知你', 1);
+        } else {
+          updateNotifBtn();
+        }
+      } catch (e) {
+        updateNotifBtn();
+      }
+    }
+
+    async function notifyNewMessage(room, name, preview, count) {
+      const title = room === 'vip' ? '⭐ 会员群聊 · 白鹿原上' : '🌐 注册群聊 · 白鹿原上';
+      const body = (count > 1 ? `[${count}条新消息] ` : '') + name + '：' + preview;
+      try {
+        if ('serviceWorker' in navigator) {
+          const reg = await navigator.serviceWorker.ready;
+          await reg.showNotification(title, { body, icon: '/assets/favicon.png', badge: '/assets/favicon.png', tag: 'blys-chat', data: { url: '/chat.html' } });
+          return;
+        }
+      } catch (e) { /* 回退到普通通知 */ }
+      try { new Notification(title, { body }); } catch (e) { /* 忽略 */ }
     }
 
     // 页面离开时清理轮询
