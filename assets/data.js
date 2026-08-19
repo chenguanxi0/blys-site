@@ -959,5 +959,73 @@ const DAILY_LOG = [
         "open": true
       }
     ]
+  },
+  {
+    "date": "2026-08-19",
+    "day": 18,
+    "total": 550710.90,
+    "dayPnl": -1.05,
+    "pos": 35.9,
+    "holdings": [
+      {
+        "name": "药明康德",
+        "code": "603259",
+        "shares": 600,
+        "mv": 98400.00,
+        "pnlPct": -0.658,
+        "cost": 165.086,
+        "cur": 164.000
+      },
+      {
+        "name": "士兰微",
+        "code": "600460",
+        "shares": 1900,
+        "mv": 65531.00,
+        "pnlPct": 4.388,
+        "cost": 33.040,
+        "cur": 34.490
+      },
+      {
+        "name": "风华高科",
+        "code": "000636",
+        "shares": 600,
+        "mv": 33666.00,
+        "pnlPct": -3.311,
+        "cost": 58.032,
+        "cur": 56.110
+      }
+    ],
+    "note": "持仓截图(平安证券)。清仓哈药股份、京东方A、新洁能，买入风华高科，继续持有药明康德、士兰微",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "哈药股份",
+        "code": "600664",
+        "shares": 12500,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "新洁能",
+        "code": "605111",
+        "shares": 800,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "京东方A",
+        "code": "000725",
+        "shares": 17500,
+        "close": true
+      },
+      {
+        "action": "buy",
+        "name": "风华高科",
+        "code": "000636",
+        "shares": 600,
+        "open": true
+      }
+    ]
   }
 ];
