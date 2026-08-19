@@ -1482,11 +1482,17 @@ function injectReviewMeta(box, date){
   if(box.querySelector('.rpt-meta')) return; // 防止重复注入
   const meta = _rGetMeta(date);
 
+  // 未登录用户：评论区整段隐藏（顶部显示登录提示）
+  const loggedIn = !!(typeof __user !== 'undefined' && __user && __user.loggedIn);
+  const displayName = (loggedIn && (__user.nickname || (__user.email||'').split('@')[0])) || '用户';
+
   const section = document.createElement('section');
   section.className = 'rpt-chapter rpt-meta';
+  section.dataset.rptMetaDate = date;
   section.innerHTML = `
     <h2 class="rpt-h2">📮 点赞与评论</h2>
     <p class="rpt-meta-note">本机统计：点赞与评论仅保存在你当前浏览器里，清缓存会丢失。</p>
+    ${loggedIn ? `
     <div class="rpt-meta-bar">
       <button class="rpt-like-btn${meta.liked ? ' liked' : ''}" id="rptLikeBtn_${date}" type="button" aria-pressed="${meta.liked}">
         <span class="rpt-like-icon">${meta.liked ? '❤️' : '🤍'}</span>
@@ -1494,19 +1500,25 @@ function injectReviewMeta(box, date){
         <span class="rpt-like-label">点赞</span>
       </button>
       <span class="rpt-comment-stat" id="rptCommentStat_${date}">💬 ${meta.comments.length} 条评论</span>
+      <span class="rpt-meta-author">以 <b>${_escHtml(displayName)}</b> 身份</span>
     </div>
     <div class="rpt-comment-form">
-      <input class="rpt-comment-name" id="rptCommentName_${date}" type="text" maxlength="20" placeholder="昵称（默认：访客）" value="${_escHtml(_rName())}" />
-      <textarea class="rpt-comment-text" id="rptCommentText_${date}" maxlength="500" placeholder="说点什么…（最多 500 字）"></textarea>
+      <textarea class="rpt-comment-text" id="rptCommentText_${date}" maxlength="500" placeholder="说点什么…（最多 500 字，Ctrl/⌘+Enter 提交）"></textarea>
       <button class="rpt-comment-submit" id="rptCommentSubmit_${date}" type="button">发表评论</button>
     </div>
     <ul class="rpt-comment-list" id="rptCommentList_${date}"></ul>
+    ` : `
+    <div class="rpt-meta-login">
+      🔒 点赞与评论仅对注册用户开放。<a class="rpt-meta-login-btn" href="javascript:void(0)" onclick="(window.openAuthModal&&openAuthModal())||(location.href='daily.html?login=1')">登录 / 注册</a> 后即可参与。
+    </div>
+    `}
   `;
   box.appendChild(section);
 
+  if(!loggedIn) return; // 未登录：不绑定任何交互
+
   const likeBtn = section.querySelector('.rpt-like-btn');
   const likeCount = section.querySelector('.rpt-like-count');
-  const cmtName = section.querySelector('.rpt-comment-name');
   const cmtText = section.querySelector('.rpt-comment-text');
   const cmtSubmit = section.querySelector('.rpt-comment-submit');
   const cmtList = section.querySelector('.rpt-comment-list');
@@ -1521,7 +1533,7 @@ function injectReviewMeta(box, date){
       cmtList.innerHTML = list.slice().reverse().map(c =>
         `<li class="rpt-comment-item">
           <div class="rpt-comment-head">
-            <span class="rpt-comment-name-text">${_escHtml(c.name || '访客')}</span>
+            <span class="rpt-comment-name-text">${_escHtml(c.name || '用户')}</span>
             <span class="rpt-comment-time">${_fmtRelTime(c.ts)}</span>
           </div>
           <div class="rpt-comment-body">${_escHtml(c.text).replace(/\n/g, '<br>')}</div>
@@ -1548,7 +1560,6 @@ function injectReviewMeta(box, date){
   });
 
   cmtSubmit.addEventListener('click', () => {
-    const name = (cmtName.value || '').trim() || '访客';
     const text = (cmtText.value || '').trim();
     if(!text){
       cmtText.focus();
@@ -1560,9 +1571,9 @@ function injectReviewMeta(box, date){
       alert('评论过长，最多 500 字');
       return;
     }
-    _rSetName(name);
+    const dn = (__user && (__user.nickname || (__user.email||'').split('@')[0])) || '用户';
     const m = _rGetMeta(date);
-    m.comments.push({ name: name.slice(0, 20), text: text.slice(0, 500), ts: Date.now() });
+    m.comments.push({ name: dn, text: text.slice(0, 500), ts: Date.now() });
     _rSetMeta(date, m);
     cmtText.value = '';
     renderComments();
@@ -1578,10 +1589,24 @@ function injectReviewMeta(box, date){
     }
   });
 
-  cmtName.addEventListener('change', () => _rSetName(cmtName.value.trim()));
-
   renderComments();
 }
+
+// 监听登录态变化：用户从「未登录」登录后，自动把评论区从「登录提示」替换为可评论表单
+window.addEventListener('blys:user:change', () => {
+  const box = document.getElementById('fullReport');
+  if(!box) return;
+  const existing = box.querySelector('.rpt-meta');
+  if(!existing) return;
+  const date = existing.dataset.rptMetaDate || (new URLSearchParams(location.search).get('date')) || 'latest';
+  const wasLoggedIn = !existing.querySelector('.rpt-comment-form');
+  const isLoggedIn = !!(typeof __user !== 'undefined' && __user && __user.loggedIn);
+  // 仅当从「未登录」变「已登录」时重渲染
+  if(!wasLoggedIn && isLoggedIn){
+    existing.remove();
+    injectReviewMeta(box, date);
+  }
+});
 
 // 历史复盘下拉（读取 assets/reviews/index.json）
 async function renderHistoryBar(){
