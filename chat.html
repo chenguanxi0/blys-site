@@ -375,8 +375,8 @@
               const preview = (latest.content || '').trim() || (latest.image ? '[图片]' : '新消息');
               notifyNewMessage(room, name, preview, fresh.length);
             }
-            // 页内提醒模式 → 累加未读角标（回到页面再显示横幅）
-            if (inAppNotifOn) {
+            // 页内提醒模式 → 仅当页面在后台或当前不在该房间时累加未读（正在看的不算未读）
+            if (inAppNotifOn && (document.hidden || currentRoom !== room)) {
               unreadCounts[room] = (unreadCounts[room] || 0) + fresh.length;
               updateUnreadBadges();
             }
@@ -389,15 +389,9 @@
           lastSeenTs[room] = Math.max(lastSeenTs[room] || 0, maxTs);
         }
 
-        // 页面在前台且为当前房间：清掉该房间未读角标
-        if (!document.hidden && currentRoom === room) {
-          if (unreadCounts[room]) {
-            unreadCounts[room] = 0;
-            updateUnreadBadges();
-          }
-          const banner = document.getElementById('chatUnreadBanner');
-          if (banner) banner.hidden = true;
-        }
+        // 说明：未读横幅的显隐统一由 updateUnreadBadges → showUnreadBanner 控制，
+        // 未读为 0 自动隐藏；用户点击横幅(dismiss)或切到该频道(switchChatRoom)才视为已读清除。
+        // 此处不再强制隐藏横幅，避免从后台回来横幅一闪而过。
 
         renderChatMessages(renderList, room, isFirst);
       } catch (e) {
@@ -712,6 +706,8 @@
           el.hidden = true;
         }
       });
+      // 未读变化后同步横幅：未读为 0 则横幅自动隐藏
+      showUnreadBanner();
     }
 
     async function notifyNewMessage(room, name, preview, count) {
