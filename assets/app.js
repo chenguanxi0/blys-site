@@ -823,9 +823,10 @@ function ensureAuthModal(){
       </div>
     </div>
   </div>`;
-  document.body.appendChild(div.firstElementChild);
+  const modal = div.firstElementChild;
+  document.body.appendChild(modal);
   // 点击遮罩关闭
-  div.firstElementChild.addEventListener("click", (e)=>{ if(e.target === div.firstElementChild) closeAuthModal(); });
+  modal.addEventListener("click", (e)=>{ if(e.target === modal) closeAuthModal(); });
 }
 
 // ---- 登录 / 注册弹窗 ----
