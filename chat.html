@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026081919" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026081920" />
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23e23b3b'/%3E%3Cstop offset='100%25' stop-color='%23f87171'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='18' cy='18' r='17' fill='url(%23g)'/%3E%3Ctext x='18' y='23' text-anchor='middle' fill='white' font-family='-apple-system,PingFang SC,Microsoft YaHei,sans-serif' font-size='18' font-weight='700'%3E白%3C/text%3E%3C/svg%3E" />
 </head>
@@ -98,7 +98,6 @@
               <button class="chat-tool-btn" type="button" onclick="toggleEmojiPanel(event)" title="表情">😊</button>
               <button class="chat-tool-btn" type="button" onclick="document.getElementById('chatImgInput').click()" title="发送图片">📎</button>
               <input type="file" id="chatImgInput" accept="image/*" style="display:none;" onchange="onChatImageSelected(this)" />
-              <div class="chat-emoji-panel" id="chatEmojiPanel" onclick="insertEmoji(event)"></div>
             </div>
             <div class="chat-img-preview" id="chatImgPreview">
               <img id="chatImgPreviewThumb" src="" alt="preview" />
@@ -123,11 +122,14 @@
     </div>
   </main>
 
+  <!-- 表情面板：放到 body 层级，避免被 chat-box overflow:hidden 裁切 -->
+  <div class="chat-emoji-panel" id="chatEmojiPanel" onclick="insertEmoji(event)"></div>
+
   <footer class="footer" style="margin-top:0;">
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026081919"></script>
+  <script src="assets/app.js?v=2026081920"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -254,8 +256,9 @@
       if (!panel) return;
       panel.classList.toggle('open');
       if (panel.classList.contains('open')) {
+        const isEmojiBtn = (target) => target && target.closest && target.closest('.chat-tool-btn[title="表情"]');
         const closeOnClickOutside = (ev) => {
-          if (!panel.contains(ev.target) && !ev.target.closest('.chat-emoji-btn')) {
+          if (!panel.contains(ev.target) && !isEmojiBtn(ev.target)) {
             panel.classList.remove('open');
             document.removeEventListener('click', closeOnClickOutside);
           }
@@ -487,15 +490,19 @@
       if (!file.type.startsWith('image/')) { alert('请选择图片文件'); input.value = ''; return; }
       if (file.size > 8 * 1024 * 1024) { alert('图片最大支持 8MB'); input.value = ''; return; }
 
-      // 压缩：最大宽度 900，质量 0.75，控制 base64 在合理范围
-      compressChatImage(file, 900, 0.75).then(({ base64, name }) => {
-        // base64 超过 1.5MB 时再次压缩
+      // 压缩：最大宽度 720，质量 0.7，控制 base64 在合理范围
+      compressChatImage(file, 720, 0.7).then(({ base64, name }) => {
+        // base64 超过 600KB 时再次压缩
         const roughSize = Math.round(base64.length * 0.75);
-        if (roughSize > 1.5 * 1024 * 1024) {
-          return compressChatImage(file, 720, 0.65);
+        if (roughSize > 600 * 1024) {
+          return compressChatImage(file, 480, 0.6);
         }
         return { base64, name };
       }).then(({ base64, name }) => {
+        const finalSize = Math.round(base64.length * 0.75);
+        if (finalSize > 1 * 1024 * 1024) {
+          throw new Error('图片压缩后仍超过 1MB，请换一张更小的图片');
+        }
         pendingChatImage = base64;
         const thumb = document.getElementById('chatImgPreviewThumb');
         const preview = document.getElementById('chatImgPreview');

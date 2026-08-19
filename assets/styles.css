@@ -1168,10 +1168,11 @@ body.chat-body .footer { display:none; }
 .chat-input-wrap .btn { padding:12px 22px; border-radius:10px; white-space:nowrap; }
 
 .chat-emoji-panel {
-  position:absolute; bottom:100%; left:0; margin-bottom:8px;
+  position:fixed; bottom:110px; left:50%; transform:translateX(-50%);
   background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px;
-  box-shadow:0 8px 30px rgba(0,0,0,.12); display:none; flex-wrap:wrap; gap:6px;
-  width:280px; z-index:10;
+  box-shadow:0 8px 30px rgba(0,0,0,.18); display:none; flex-wrap:wrap; gap:6px;
+  width:92vw; max-width:320px; max-height:38vh; overflow-y:auto;
+  z-index:100;
 }
 .chat-emoji-panel.open { display:flex; }
 .chat-emoji-panel span {
@@ -1217,7 +1218,7 @@ body.chat-body .footer { display:none; }
   .chat-msg-img { max-height:180px; }
   .chat-tab { padding:8px 6px; font-size:13px; }
   .chat-input-wrap .btn { padding:10px 14px; }
-  .chat-emoji-panel { width:260px; left:8px; }
+  .chat-emoji-panel { width:92vw; max-width:320px; bottom:100px; }
 }
 
 /* ========== 更新日志 ========== */
