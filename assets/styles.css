@@ -1105,13 +1105,13 @@ body.chat-body .footer { display:none; }
 }
 .chat-tab { position:relative; }
 
-.chat-unread-banner {
+.chat-unread-banner { display:none; }
+.chat-unread-banner:not([hidden]) {
   display:block; cursor:pointer; margin:10px 10px 0; padding:10px 14px; border-radius:12px;
   background:var(--brand); color:#fff; font-size:13.5px; text-align:center;
   box-shadow:0 4px 14px rgba(226,59,59,.25); animation:chatUnreadPop .25s ease;
   flex-shrink:0;
 }
-.chat-unread-banner[hidden] { display:none !important; }
 .chat-unread-banner b { font-size:15px; }
 @keyframes chatUnreadPop { from { transform:translateY(-6px); opacity:0; } to { transform:translateY(0); opacity:1; } }
 

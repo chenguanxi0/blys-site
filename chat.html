@@ -80,7 +80,7 @@
     <div class="chat-box" id="chatBox">
       <!-- 未读横幅：离开期间有新消息时显示 -->
       <div class="chat-unread-banner" id="chatUnreadBanner" hidden onclick="dismissUnreadBanner()">
-        📬 你离开期间有 <b id="chatUnreadCount">0</b> 条新消息，点此回到最新
+        📬 你离开期间有 <b id="chatUnreadCount"></b> 条新消息，点此回到最新
       </div>
       <div class="chat-messages" id="chatMessages">
         <div class="chat-loading">加载消息中…</div>
@@ -681,7 +681,7 @@
     }
 
     function showUnreadBanner() {
-      const total = unreadCounts.public + unreadCounts.vip;
+      const total = (Number(unreadCounts.public) || 0) + (Number(unreadCounts.vip) || 0);
       const banner = document.getElementById('chatUnreadBanner');
       if (!banner) return;
       if (inAppNotifOn && total > 0) {
