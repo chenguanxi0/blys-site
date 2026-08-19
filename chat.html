@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026081911" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026081912" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23e23b3b'/%3E%3Cstop offset='100%25' stop-color='%23f87171'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='18' cy='18' r='17' fill='url(%23g)'/%3E%3Ctext x='18' y='23' text-anchor='middle' fill='white' font-family='-apple-system,PingFang SC,Microsoft YaHei,sans-serif' font-size='18' font-weight='700'%3E白%3C/text%3E%3C/svg%3E" />
 </head>
-<body>
+<body class="chat-body">
   <!-- 风险提示条 -->
   <div class="risk-bar">
     ⚠️ 风险提示：本站所有内容仅为个人复盘与经验分享，不构成任何投资建议，市场有风险，投资需谨慎。
@@ -41,10 +41,16 @@
     </div>
   </header>
 
-  <main class="chat-page" style="max-width:800px; margin:0 auto; padding:24px 16px 80px;">
-    <div class="section-head" style="margin-bottom:16px;">
-      <h1>💬 聊天室</h1>
-      <p>和站友们交流观点、分享经验。<em>文明发言，禁止荐股与广告。</em></p>
+  <main class="chat-page">
+    <div class="chat-head">
+      <div class="section-head" style="margin-bottom:0;">
+        <h1>💬 聊天室</h1>
+        <p>和站友们交流观点、分享经验。<em>文明发言，禁止荐股与广告。</em></p>
+      </div>
+      <div class="chat-online" id="chatOnline" title="当前房间在线人数">
+        <span class="chat-online-dot"></span>
+        <span id="chatOnlineNum">--</span> 人在线
+      </div>
     </div>
 
     <!-- 频道切换 -->
@@ -72,10 +78,17 @@
           <button class="btn btn-primary" onclick="openAuthModal()">注册 / 登录</button>
         </div>
         <div class="chat-input-wrap" id="chatInputWrap" style="display:none;">
-          <div style="flex:1; position:relative;">
+          <div class="chat-input-col" style="position:relative;">
             <div class="chat-input-tools">
-              <button class="chat-emoji-btn" type="button" onclick="toggleEmojiPanel(event)" title="表情">😊</button>
+              <button class="chat-tool-btn" type="button" onclick="toggleEmojiPanel(event)" title="表情">😊</button>
+              <button class="chat-tool-btn" type="button" onclick="document.getElementById('chatImgInput').click()" title="发送图片">📎</button>
+              <input type="file" id="chatImgInput" accept="image/*" style="display:none;" onchange="onChatImageSelected(this)" />
               <div class="chat-emoji-panel" id="chatEmojiPanel" onclick="insertEmoji(event)"></div>
+            </div>
+            <div class="chat-img-preview" id="chatImgPreview">
+              <img id="chatImgPreviewThumb" src="" alt="preview" />
+              <span id="chatImgPreviewName">图片</span>
+              <button class="chat-tool-btn" type="button" onclick="clearChatImage()" title="取消">✕</button>
             </div>
             <textarea id="chatInput" class="chat-input" placeholder="文明发言，禁止荐股与广告…" maxlength="500" autocomplete="off" rows="2"></textarea>
           </div>
@@ -102,11 +115,14 @@
   <!-- 登录/注册弹窗（动态注入） -->
   <div id="authModal" class="modal-mask"></div>
 
-  <script src="assets/app.js?v=2026081911"></script>
+  <script src="assets/app.js?v=2026081912"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
     let chatPollTimer = null;
+    let chatOnlineTimer = null;
+    let chatHeartbeatTimer = null;
+    let pendingChatImage = null;
 
     document.addEventListener('DOMContentLoaded', () => {
       initChatPage();
@@ -125,6 +141,8 @@
       switchChatRoom('public');
       // 启动轮询
       startChatPoll();
+      // 启动在线人数
+      startOnlineTracking();
       // 监听登录状态变化
       window.addEventListener('blys:user:change', () => {
         updateChatInputState();
@@ -143,6 +161,43 @@
           input.style.height = 'auto';
           input.style.height = Math.min(input.scrollHeight, 160) + 'px';
         });
+      }
+    }
+
+    function getChatSessionId() {
+      let sid = localStorage.getItem('blys_chat_session');
+      if (!sid) {
+        sid = 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        localStorage.setItem('blys_chat_session', sid);
+      }
+      return sid;
+    }
+
+    function startOnlineTracking() {
+      refreshOnlineCount();
+      sendHeartbeat();
+      // 每12秒刷新人数，每25秒发送心跳
+      if (chatOnlineTimer) clearInterval(chatOnlineTimer);
+      if (chatHeartbeatTimer) clearInterval(chatHeartbeatTimer);
+      chatOnlineTimer = setInterval(refreshOnlineCount, 12000);
+      chatHeartbeatTimer = setInterval(sendHeartbeat, 25000);
+    }
+
+    async function sendHeartbeat() {
+      try {
+        await sbRpc('heartbeat', { p_session: getChatSessionId(), p_room: currentRoom });
+      } catch (e) { /* 静默失败 */ }
+    }
+
+    async function refreshOnlineCount() {
+      const el = document.getElementById('chatOnlineNum');
+      if (!el) return;
+      try {
+        const d = await sbRpc('online_count', { p_room: currentRoom });
+        const n = (d && typeof d === 'number') ? d : (d && d.count);
+        el.textContent = Number.isFinite(n) ? n : '0';
+      } catch (e) {
+        el.textContent = '0';
       }
     }
 
@@ -207,6 +262,8 @@
 
       updateChatInputState();
       loadChatMessages(room);
+      refreshOnlineCount();
+      sendHeartbeat();
     }
 
     function updateChatInputState() {
@@ -243,13 +300,26 @@
           if (isFirst) box.innerHTML = '<div class="chat-empty">暂无消息，来做第一个发言的人吧～</div>';
           return;
         }
-        renderChatMessages(list.slice().reverse(), room);
+        renderChatMessages(list.slice().reverse(), room, isFirst);
       } catch (e) {
         if (isFirst) box.innerHTML = '<div class="chat-empty">消息加载失败，请稍后重试</div>';
       }
     }
 
-    function renderChatMessages(list, room) {
+    function renderChatMessageContent(m) {
+      const text = (m.content || '').trim();
+      const img = m.image;
+      let html = '';
+      if (img) {
+        html += `<img class="chat-msg-img" src="${esc(img)}" alt="图片" onclick="window.open('${esc(img)}', '_blank')" />`;
+      }
+      if (text) {
+        html += `<div class="chat-msg-text">${esc(text).replace(/\n/g, '<br>')}</div>`;
+      }
+      return html || '<div class="chat-msg-text">[空消息]</div>';
+    }
+
+    function renderChatMessages(list, room, isFirst) {
       const box = document.getElementById('chatMessages');
       if (!box) return;
       if (list.length === 0) {
@@ -269,7 +339,7 @@
               <span class="chat-msg-name">${name}</span>
               <span class="chat-msg-time">${time}</span>
             </div>
-            <div class="chat-msg-text">${esc(m.content).replace(/\n/g, '<br>')}</div>
+            ${renderChatMessageContent(m)}
           </div>
         </div>`;
       }).join('');
@@ -289,21 +359,24 @@
       const input = document.getElementById('chatInput');
       const btn = document.getElementById('chatSendBtn');
       const content = (input.value || '').trim();
-      if (!content) return;
+      const image = pendingChatImage;
 
-      // 简单内容过滤
+      if (!content && !image) return;
       if (content.length > 500) { alert('单条消息最多 500 字'); return; }
 
       btn.disabled = true;
       btn.textContent = '发送中…';
       try {
-        const d = await sbRpc('send_message', {
+        const payload = {
           p_token: __user.token,
           p_room: currentRoom,
           p_content: content
-        });
+        };
+        if (image) payload.p_image = image;
+        const d = await sbRpc('send_message', payload);
         if (d && d.ok) {
           input.value = '';
+          clearChatImage();
           loadChatMessages(currentRoom);
         } else {
           alert((d && d.msg) || '发送失败');
@@ -314,6 +387,63 @@
         btn.disabled = false;
         btn.textContent = '发送';
       }
+    }
+
+    function onChatImageSelected(input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) { alert('请选择图片文件'); input.value = ''; return; }
+      if (file.size > 8 * 1024 * 1024) { alert('图片最大支持 8MB'); input.value = ''; return; }
+
+      compressChatImage(file, 1200, 0.8).then(({ base64, name }) => {
+        pendingChatImage = base64;
+        const thumb = document.getElementById('chatImgPreviewThumb');
+        const preview = document.getElementById('chatImgPreview');
+        const nameEl = document.getElementById('chatImgPreviewName');
+        if (thumb) thumb.src = base64;
+        if (nameEl) nameEl.textContent = name;
+        if (preview) preview.classList.add('active');
+      }).catch(err => {
+        alert('图片处理失败: ' + (err && err.message || '未知错误'));
+        clearChatImage();
+      }).finally(() => { input.value = ''; });
+    }
+
+    function clearChatImage() {
+      pendingChatImage = null;
+      const preview = document.getElementById('chatImgPreview');
+      const thumb = document.getElementById('chatImgPreviewThumb');
+      if (preview) preview.classList.remove('active');
+      if (thumb) thumb.src = '';
+      const input = document.getElementById('chatImgInput');
+      if (input) input.value = '';
+    }
+
+    function compressChatImage(file, maxWidth, quality) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            let { width, height } = img;
+            if (width > maxWidth) {
+              height = Math.round(height * maxWidth / width);
+              width = maxWidth;
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            const base64 = canvas.toDataURL('image/jpeg', quality);
+            resolve({ base64, name: file.name, width, height });
+          };
+          img.onerror = () => reject(new Error('图片加载失败'));
+          img.src = e.target.result;
+        };
+        reader.onerror = () => reject(new Error('图片读取失败'));
+        reader.readAsDataURL(file);
+      });
     }
 
     function startChatPoll() {
@@ -328,6 +458,8 @@
     // 页面离开时清理轮询
     window.addEventListener('beforeunload', () => {
       if (chatPollTimer) clearInterval(chatPollTimer);
+      if (chatOnlineTimer) clearInterval(chatOnlineTimer);
+      if (chatHeartbeatTimer) clearInterval(chatHeartbeatTimer);
     });
   </script>
 </body>
