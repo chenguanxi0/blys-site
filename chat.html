@@ -162,20 +162,28 @@
       }
     }
 
+    function fmtDateTime(dt){
+      const d = new Date(dt);
+      if (isNaN(d)) return '';
+      const p = n => String(n).padStart(2,'0');
+      return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+    }
+
     async function loadChatMessages(room) {
       const box = document.getElementById('chatMessages');
       if (!box) return;
-      // 首次加载显示 loading，后续静默刷新
       const isFirst = box.querySelector('.chat-loading') != null;
       if (isFirst) box.innerHTML = '<div class="chat-loading">加载消息中…</div>';
 
       try {
         const d = await sbRpc('list_messages', { p_room: room, p_limit: 100 });
-        if (!d || !d.ok || !Array.isArray(d.list)) {
+        // list_messages 返回表，直接是数组；也兼容返回 {ok:true, list:[]} 的情况
+        const list = Array.isArray(d) ? d : (d && d.list);
+        if (!Array.isArray(list)) {
           if (isFirst) box.innerHTML = '<div class="chat-empty">暂无消息，来做第一个发言的人吧～</div>';
           return;
         }
-        renderChatMessages(d.list, room);
+        renderChatMessages(list.slice().reverse(), room);
       } catch (e) {
         if (isFirst) box.innerHTML = '<div class="chat-empty">消息加载失败，请稍后重试</div>';
       }
