@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026081916" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026081917" />
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23e23b3b'/%3E%3Cstop offset='100%25' stop-color='%23f87171'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='18' cy='18' r='17' fill='url(%23g)'/%3E%3Ctext x='18' y='23' text-anchor='middle' fill='white' font-family='-apple-system,PingFang SC,Microsoft YaHei,sans-serif' font-size='18' font-weight='700'%3E白%3C/text%3E%3C/svg%3E" />
 </head>
@@ -66,12 +66,19 @@
       <button class="chat-tab active" data-room="public" onclick="switchChatRoom('public')">
         🌐 注册用户群聊
         <span class="chat-tab-sub">登录即可发言</span>
+        <span class="chat-tab-badge" id="badge-public" hidden>0</span>
       </button>
       <button class="chat-tab" data-room="vip" onclick="switchChatRoom('vip')">
         ⭐ 会员群聊
         <span class="chat-tab-sub">VIP 专属</span>
+        <span class="chat-tab-badge" id="badge-vip" hidden>0</span>
       </button>
     </div>
+    </div>
+
+    <!-- 未读横幅：离开期间有新消息时显示 -->
+    <div class="chat-unread-banner" id="chatUnreadBanner" hidden onclick="dismissUnreadBanner()">
+      📬 你离开期间有 <b id="chatUnreadCount">0</b> 条新消息，点此回到最新
     </div>
 
     <!-- 聊天窗口 -->
@@ -121,7 +128,7 @@
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026081916"></script>
+  <script src="assets/app.js?v=2026081917"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -131,6 +138,8 @@
     let pendingChatImage = null;
     let lastSeenTs = { public: 0, vip: 0 };
     let notifEnabled = false;
+    let inAppNotifOn = false;
+    let unreadCounts = { public: 0, vip: 0 };
 
     document.addEventListener('DOMContentLoaded', () => {
       initChatPage();
@@ -294,6 +303,10 @@
       if (inputArea) inputArea.style.display = 'block';
 
       updateChatInputState();
+      // 切到该频道即视为已读，清掉其未读角标
+      if (unreadCounts[room]) { unreadCounts[room] = 0; updateUnreadBadges(); }
+      const banner = document.getElementById('chatUnreadBanner');
+      if (banner && unreadCounts.public + unreadCounts.vip === 0) banner.hidden = true;
       loadChatMessages(room);
       refreshOnlineCount();
       sendHeartbeat();
@@ -344,8 +357,8 @@
 
         const renderList = list.slice().reverse();
 
-        // 新消息提醒：页面在后台隐藏、且不是自己发的消息
-        if (notifEnabled && document.hidden && !isFirst) {
+        // 新消息处理：页面在后台隐藏、且不是自己发的消息
+        if (document.hidden && !isFirst) {
           const myEmail = (__user && __user.email) || '';
           const lastTs = lastSeenTs[room] || 0;
           const fresh = renderList.filter(m => {
@@ -353,10 +366,18 @@
             return t > lastTs && m.user_email !== myEmail;
           });
           if (fresh.length) {
-            const latest = fresh[fresh.length - 1];
-            const name = latest.user_nickname || (latest.user_email ? latest.user_email.split('@')[0] : '群友');
-            const preview = (latest.content || '').trim() || (latest.image ? '[图片]' : '新消息');
-            notifyNewMessage(room, name, preview, fresh.length);
+            // 系统通知可用 → 弹系统窗
+            if (notifEnabled) {
+              const latest = fresh[fresh.length - 1];
+              const name = latest.user_nickname || (latest.user_email ? latest.user_email.split('@')[0] : '群友');
+              const preview = (latest.content || '').trim() || (latest.image ? '[图片]' : '新消息');
+              notifyNewMessage(room, name, preview, fresh.length);
+            }
+            // 页内提醒模式 → 累加未读角标（回到页面再显示横幅）
+            if (inAppNotifOn) {
+              unreadCounts[room] = (unreadCounts[room] || 0) + fresh.length;
+              updateUnreadBadges();
+            }
           }
         }
 
@@ -364,6 +385,16 @@
         if (list.length) {
           const maxTs = list.reduce((mx, m) => Math.max(mx, m.created_at ? new Date(m.created_at).getTime() : 0), 0);
           lastSeenTs[room] = Math.max(lastSeenTs[room] || 0, maxTs);
+        }
+
+        // 页面在前台且为当前房间：清掉该房间未读角标
+        if (!document.hidden && currentRoom === room) {
+          if (unreadCounts[room]) {
+            unreadCounts[room] = 0;
+            updateUnreadBadges();
+          }
+          const banner = document.getElementById('chatUnreadBanner');
+          if (banner) banner.hidden = true;
         }
 
         renderChatMessages(renderList, room, isFirst);
@@ -530,7 +561,7 @@
       }, 5000);
     }
 
-    // ===== 新消息弹窗提醒（浏览器通知）=====
+    // ===== 新消息提醒 =====
     function initChatNotification() {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js').catch(() => {});
@@ -538,13 +569,18 @@
       if (localStorage.getItem('blys_notif') === 'on' && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
         notifEnabled = true;
       }
+      // 页内未读提醒模式（不受系统通知支持限制，OPPO/vivo/小米等浏览器也能用）
+      if (localStorage.getItem('blys_notif_inapp') === 'on') {
+        inAppNotifOn = true;
+      }
       updateNotifBtn();
       document.addEventListener('visibilitychange', () => {
-        if (!document.hidden) {
-          notifEnabled = (localStorage.getItem('blys_notif') === 'on' && typeof Notification !== 'undefined' && Notification.permission === 'granted');
-          updateNotifBtn();
-          loadChatMessages(currentRoom);
-        }
+        if (document.hidden) return;
+        notifEnabled = (localStorage.getItem('blys_notif') === 'on' && typeof Notification !== 'undefined' && Notification.permission === 'granted');
+        updateNotifBtn();
+        // 回到页面：展示未读横幅
+        showUnreadBanner();
+        loadChatMessages(currentRoom);
       });
     }
 
@@ -553,30 +589,49 @@
       const isWeChat = /MicroMessenger/i.test(ua);
       const isQQ = /QQ\//i.test(ua) || /Qzone/i.test(ua);
       const isTikTok = /douyin|aweme|tiktok/i.test(ua);
-      const isWebView = /WebView/i.test(ua) && !/Chrome/i.test(ua);
-      if (isWeChat) return '微信内置浏览器不支持网页通知。请点右上角「···」→「在浏览器打开」，用 Safari/Chrome/Edge 打开本页后再开启提醒；或者把站点「添加到桌面」作为 App 使用。';
-      if (isQQ) return 'QQ 内置浏览器不支持网页通知。请在系统浏览器（Safari/Chrome/Edge）中打开本页后再开启提醒。';
-      if (isTikTok) return '抖音内置浏览器不支持网页通知。请在系统浏览器（Safari/Chrome/Edge）中打开本页后再开启提醒。';
-      if (isWebView) return '当前 App 内置浏览器不支持网页通知。请在系统浏览器（Safari/Chrome/Edge）中打开本页后再开启提醒。';
-      return '当前浏览器不支持网页通知。请用手机自带的 Safari/Chrome/Edge 浏览器打开本页，或把站点「添加到桌面」作为 App 使用。';
+      if (isWeChat) return '微信内置浏览器不支持网页通知。请点右上角「···」→「在浏览器打开」，用 Chrome/Edge 打开本页后开启提醒，或把站点「添加到桌面」作为 App 使用。';
+      if (isQQ) return 'QQ 内置浏览器不支持网页通知。请在系统浏览器（Chrome/Edge）中打开本页后开启提醒。';
+      if (isTikTok) return '抖音内置浏览器不支持网页通知。请在系统浏览器（Chrome/Edge）中打开本页后开启提醒。';
+      return '你的浏览器（OPPO/vivo/小米等手机自带浏览器）默认关闭了网页通知接口，系统级弹窗无法开启。可改用手机上的 Chrome 或 Edge 打开本页并「添加到桌面」，即可收到锁屏弹窗；或直接开启「页内提醒」，离开再回来时会看到未读提示。';
+    }
+
+    function getBrowserName() {
+      const ua = navigator.userAgent || '';
+      if (/MicroMessenger/i.test(ua)) return '微信';
+      if (/QQ\//i.test(ua) || /Qzone/i.test(ua)) return 'QQ';
+      if (/douyin|aweme|tiktok/i.test(ua)) return '抖音';
+      if (/Oppo|ColorOS/i.test(ua)) return 'OPPO 自带浏览器';
+      if (/vivo/i.test(ua)) return 'vivo 自带浏览器';
+      if (/Miui|Redmi|Xiaomi/i.test(ua)) return '小米自带浏览器';
+      if (/Huawei|Harmony/i.test(ua)) return '华为浏览器';
+      if (/Chrome/i.test(ua)) return 'Chrome';
+      if (/Edg/i.test(ua)) return 'Edge';
+      return '当前浏览器';
     }
 
     function updateNotifBtn() {
       const btn = document.getElementById('chatNotifBtn');
       if (!btn) return;
-      if (typeof Notification === 'undefined') {
-        btn.textContent = '🔕 开启提醒';
-        btn.classList.remove('on');
-        btn.title = getBrowserTip();
+      // 系统通知可用
+      if (typeof Notification !== 'undefined') {
+        btn.title = '新消息弹窗提醒';
+        if (notifEnabled && Notification.permission === 'granted') {
+          btn.textContent = '🔔 已开启';
+          btn.classList.add('on');
+        } else if (Notification.permission === 'denied') {
+          btn.textContent = '🔕 已禁止';
+          btn.classList.remove('on');
+        } else {
+          btn.textContent = '🔕 开启提醒';
+          btn.classList.remove('on');
+        }
         return;
       }
-      btn.title = '新消息弹窗提醒';
-      if (notifEnabled && Notification.permission === 'granted') {
-        btn.textContent = '🔔 已开启';
+      // 系统通知不可用：页内提醒模式
+      btn.title = '未读页内提醒（不弹系统窗）';
+      if (inAppNotifOn) {
+        btn.textContent = '📬 页内提醒';
         btn.classList.add('on');
-      } else if (Notification.permission === 'denied') {
-        btn.textContent = '🔕 已禁止';
-        btn.classList.remove('on');
       } else {
         btn.textContent = '🔕 开启提醒';
         btn.classList.remove('on');
@@ -584,33 +639,77 @@
     }
 
     async function toggleChatNotification() {
-      if (typeof Notification === 'undefined') {
-        alert(getBrowserTip());
-        return;
-      }
-      if (Notification.permission === 'granted') {
-        notifEnabled = !notifEnabled;
-        localStorage.setItem('blys_notif', notifEnabled ? 'on' : 'off');
-        updateNotifBtn();
-        return;
-      }
-      if (Notification.permission === 'denied') {
-        alert('通知已被浏览器禁止，请在站点设置里手动允许通知后再点此按钮。');
-        return;
-      }
-      try {
-        const perm = await Notification.requestPermission();
-        if (perm === 'granted') {
-          notifEnabled = true;
-          localStorage.setItem('blys_notif', 'on');
+      if (typeof Notification !== 'undefined') {
+        if (Notification.permission === 'granted') {
+          notifEnabled = !notifEnabled;
+          localStorage.setItem('blys_notif', notifEnabled ? 'on' : 'off');
           updateNotifBtn();
-          notifyNewMessage(currentRoom, '白鹿原上', '提醒已开启，收到新消息会弹窗通知你', 1);
-        } else {
+          return;
+        }
+        if (Notification.permission === 'denied') {
+          alert('通知已被浏览器禁止，请在站点设置里手动允许通知后再点此按钮。');
+          return;
+        }
+        try {
+          const perm = await Notification.requestPermission();
+          if (perm === 'granted') {
+            notifEnabled = true;
+            localStorage.setItem('blys_notif', 'on');
+            updateNotifBtn();
+            notifyNewMessage(currentRoom, '白鹿原上', '提醒已开启，收到新消息会弹窗通知你', 1);
+          } else {
+            updateNotifBtn();
+          }
+        } catch (e) {
           updateNotifBtn();
         }
-      } catch (e) {
-        updateNotifBtn();
+        return;
       }
+      // 系统通知不可用 → 切换页内未读提醒模式
+      inAppNotifOn = !inAppNotifOn;
+      localStorage.setItem('blys_notif_inapp', inAppNotifOn ? 'on' : 'off');
+      updateNotifBtn();
+      if (inAppNotifOn) {
+        unreadCounts = { public: 0, vip: 0 };
+        updateUnreadBadges();
+        const bname = getBrowserName();
+        alert('已开启「页内提醒」。' + bname + '不支持系统弹窗，但你切走再回来时，会看到未读横幅和频道红点提醒。\n\n想收到真正的锁屏弹窗，请用手机上的 Chrome 或 Edge 打开本页并「添加到桌面」。');
+      }
+    }
+
+    function dismissUnreadBanner() {
+      const banner = document.getElementById('chatUnreadBanner');
+      if (banner) banner.hidden = true;
+      unreadCounts = { public: 0, vip: 0 };
+      updateUnreadBadges();
+      const box = document.getElementById('chatMessages');
+      if (box) box.scrollTop = box.scrollHeight;
+    }
+
+    function showUnreadBanner() {
+      const total = unreadCounts.public + unreadCounts.vip;
+      const banner = document.getElementById('chatUnreadBanner');
+      if (!banner) return;
+      if (inAppNotifOn && total > 0) {
+        document.getElementById('chatUnreadCount').textContent = total;
+        banner.hidden = false;
+      } else {
+        banner.hidden = true;
+      }
+    }
+
+    function updateUnreadBadges() {
+      ['public', 'vip'].forEach(room => {
+        const el = document.getElementById('badge-' + room);
+        if (!el) return;
+        const n = unreadCounts[room] || 0;
+        if (n > 0) {
+          el.textContent = n > 99 ? '99+' : n;
+          el.hidden = false;
+        } else {
+          el.hidden = true;
+        }
+      });
     }
 
     async function notifyNewMessage(room, name, preview, count) {
