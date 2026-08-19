@@ -259,6 +259,32 @@ def update_index(date, weekday, out_dir):
     print("Updated: %s" % idx_path)
 
 
+def sync_latest_review(html_path, out_dir):
+    """把最新一期同步覆盖 assets/review.html（站点默认最新展示兜底用）。
+    仅当 index.json 中最新日期 == 当前生成日期时才覆盖，避免历史回填污染 latest。"""
+    idx_path = os.path.join(out_dir, "index.json")
+    with open(html_path, encoding="utf-8") as f:
+        html = f.read()
+    # review.html 位于 assets/ 下，与 assets/reviews/ 同级
+    parent_dir = os.path.dirname(out_dir.rstrip("\\/")) or "."
+    latest_path = os.path.join(parent_dir, "review.html")
+    try:
+        with open(idx_path, encoding="utf-8") as f:
+            index = json.load(f)
+        if index:
+            top = sorted(index, key=lambda x: x.get("date", ""))[-1]
+            cur_date = os.path.basename(html_path).replace(".html", "")
+            if top.get("date") != cur_date:
+                print("Skip review.html sync: %s is not latest (top=%s)" % (cur_date, top.get("date")))
+                return
+    except Exception as e:
+        print("review.html sync skipped (index read failed): %s" % e)
+        return
+    with open(latest_path, "w", encoding="utf-8") as f:
+        f.write(html)
+    print("Synced latest: %s" % latest_path)
+
+
 def main():
     if len(sys.argv) < 2:
         print("用法: python gen_review_0818.py <review_YYYY-MM-DD.json>")
@@ -274,6 +300,7 @@ def main():
         f.write(html)
     print("Generated: %s" % out_file)
     update_index(d["date"], d["weekday"], out_dir)
+    sync_latest_review(out_file, out_dir)
 
 
 if __name__ == "__main__":

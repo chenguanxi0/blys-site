@@ -1385,15 +1385,34 @@ function initTutorialGate(){
   injectGateMask(tut, "登录查看完整课程", "你已阅读课程预览部分。登录后即可解锁全部章节、实战案例与评论区互动。");
 }
 
+// 从 index.json 取出最新日期（按 date 字符串倒序，取首条非空 date）
+async function pickLatestReviewDate(){
+  try {
+    const r = await fetch(`assets/reviews/index.json?t=${Date.now()}`, { cache: 'no-store' });
+    if(!r.ok) return null;
+    const list = await r.json();
+    if(!Array.isArray(list) || !list.length) return null;
+    const sorted = list.slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    return sorted[0] && sorted[0].date ? sorted[0].date : null;
+  } catch(e){ return null; }
+}
+
 async function loadFullReport(){
   const box = document.getElementById('fullReport');
   if(!box) return;
   const ts = Date.now();
   const params = new URLSearchParams(location.search);
   const date = params.get('date');          // 形如 2026-08-18
-  const url = date
-    ? `assets/reviews/${date}.html?t=${ts}` // 历史某日存档
-    : `assets/review.html?t=${ts}`;         // 最新一期
+  let url = null;
+  let fallbackUsed = false;
+  if (date) {
+    url = `assets/reviews/${date}.html?t=${ts}`;  // 历史某日存档
+  } else {
+    // 默认：自动从 index.json 选最新一期（无需 ?date= 也能拿到当天报告）
+    const latest = await pickLatestReviewDate();
+    if (latest) url = `assets/reviews/${latest}.html?t=${ts}`;
+    else { url = `assets/review.html?t=${ts}`; fallbackUsed = true; }
+  }
   try {
     const r = await fetch(url, { cache: 'no-store' });
     if(!r.ok) throw new Error('报告文件不存在');
@@ -1402,6 +1421,13 @@ async function loadFullReport(){
     pinNameColumn(box);
     initReviewGate(box);
   } catch(e){
+    // 自动选的最新文件失败时，再回退 review.html
+    if(!date && !fallbackUsed){
+      try {
+        const r2 = await fetch(`assets/review.html?t=${ts}`, { cache: 'no-store' });
+        if(r2.ok){ box.innerHTML = await r2.text(); initFoldableTables(box); pinNameColumn(box); initReviewGate(box); return; }
+      } catch(_){}
+    }
     box.innerHTML = date
       ? `<div class="rpt-loading">未找到 ${date} 的复盘记录。<a href="daily.html">返回最新一期 →</a></div>`
       : '<div class="rpt-loading">完整复盘报告暂未生成，每天 15:00 收盘后自动更新。</div>';
