@@ -33,10 +33,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 3. 改造 list_messages，返回图片字段
+-- 3. 改造 list_messages，返回图片字段（id 与 messages 表实际类型一致，为 UUID）
 DROP FUNCTION IF EXISTS list_messages(text, integer);
 CREATE OR REPLACE FUNCTION list_messages(p_room TEXT, p_limit INTEGER DEFAULT 100)
-RETURNS TABLE(id BIGINT, user_email TEXT, user_nickname TEXT, content TEXT, image TEXT, created_at TIMESTAMPTZ) AS $$
+RETURNS TABLE(id UUID, user_email TEXT, user_nickname TEXT, content TEXT, image TEXT, created_at TIMESTAMPTZ) AS $$
 BEGIN
   RETURN QUERY SELECT m.id, m.user_email, m.user_nickname, m.content, m.image, m.created_at
     FROM messages m WHERE m.room = p_room ORDER BY m.created_at DESC LIMIT p_limit;

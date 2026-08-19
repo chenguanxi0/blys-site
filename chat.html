@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026081913" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026081914" />
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23e23b3b'/%3E%3Cstop offset='100%25' stop-color='%23f87171'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='18' cy='18' r='17' fill='url(%23g)'/%3E%3Ctext x='18' y='23' text-anchor='middle' fill='white' font-family='-apple-system,PingFang SC,Microsoft YaHei,sans-serif' font-size='18' font-weight='700'%3E白%3C/text%3E%3C/svg%3E" />
 </head>
@@ -76,8 +76,8 @@
       <!-- 输入区 -->
       <div class="chat-input-area" id="chatInputArea">
         <div class="chat-login-mask" id="chatLoginMask">
-          <p>登录后即可参与群聊</p>
-          <button class="btn btn-primary" onclick="openAuthModal()">注册 / 登录</button>
+          <p id="chatLoginText">正在检查登录状态…</p>
+          <button class="btn btn-primary" id="chatLoginBtn" onclick="openAuthModal()" style="display:none;">注册 / 登录</button>
         </div>
         <div class="chat-input-wrap" id="chatInputWrap" style="display:none;">
           <div class="chat-input-col" style="position:relative;">
@@ -114,7 +114,7 @@
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026081913"></script>
+  <script src="assets/app.js?v=2026081914"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -136,8 +136,12 @@
       ensureAuthModal();
       // 渲染表情面板
       renderEmojiPanel();
+      // 初始状态：显示"检查中"，避免先闪出登录按钮
+      setChatLoginLoading(true);
       // 等待用户状态获取完成
       await fetchUser();
+      // 同步刷新一次输入区状态（防止 switchChatRoom 里出现竞态）
+      updateChatInputState();
       // 初始加载公共房间
       switchChatRoom('public');
       // 启动轮询
@@ -148,12 +152,15 @@
       initChatNotification();
       // 监听登录状态变化
       window.addEventListener('blys:user:change', () => {
+        setChatLoginLoading(false);
         updateChatInputState();
         // 如果在VIP房间，登录后检查权限
         if (currentRoom === 'vip' && __user.loggedIn && __user.isVip) {
           switchChatRoom('vip');
         }
       });
+      // 兜底：再延迟刷新一次，避免某些浏览器事件时机问题
+      setTimeout(() => { setChatLoginLoading(false); updateChatInputState(); }, 300);
       // Enter 发送（Shift+Enter换行）
       const input = document.getElementById('chatInput');
       if (input) {
@@ -269,17 +276,25 @@
       sendHeartbeat();
     }
 
+    function setChatLoginLoading(isLoading) {
+      const text = document.getElementById('chatLoginText');
+      const btn = document.getElementById('chatLoginBtn');
+      if (text) text.textContent = isLoading ? '正在检查登录状态…' : '登录后即可参与群聊';
+      if (btn) btn.style.display = isLoading ? 'none' : '';
+    }
+
     function updateChatInputState() {
       const mask = document.getElementById('chatLoginMask');
       const wrap = document.getElementById('chatInputWrap');
       if (!mask || !wrap) return;
-      if (__user.loggedIn) {
+      if (__user && __user.loggedIn) {
         mask.style.display = 'none';
         wrap.style.display = 'flex';
       } else {
         mask.style.display = 'flex';
         wrap.style.display = 'none';
       }
+      setChatLoginLoading(false);
     }
 
     function fmtDateTime(dt){
@@ -410,7 +425,8 @@
           alert((d && d.msg) || '发送失败');
         }
       } catch (e) {
-        alert('网络错误，发送失败');
+        console.error('sendChatMessage error', e);
+        alert('网络错误，发送失败: ' + (e && e.message ? e.message : '请检查网络或刷新页面'));
       } finally {
         btn.disabled = false;
         btn.textContent = '发送';
@@ -423,7 +439,15 @@
       if (!file.type.startsWith('image/')) { alert('请选择图片文件'); input.value = ''; return; }
       if (file.size > 8 * 1024 * 1024) { alert('图片最大支持 8MB'); input.value = ''; return; }
 
-      compressChatImage(file, 1200, 0.8).then(({ base64, name }) => {
+      // 压缩：最大宽度 900，质量 0.75，控制 base64 在合理范围
+      compressChatImage(file, 900, 0.75).then(({ base64, name }) => {
+        // base64 超过 1.5MB 时再次压缩
+        const roughSize = Math.round(base64.length * 0.75);
+        if (roughSize > 1.5 * 1024 * 1024) {
+          return compressChatImage(file, 720, 0.65);
+        }
+        return { base64, name };
+      }).then(({ base64, name }) => {
         pendingChatImage = base64;
         const thumb = document.getElementById('chatImgPreviewThumb');
         const preview = document.getElementById('chatImgPreview');
