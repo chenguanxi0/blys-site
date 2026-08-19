@@ -727,7 +727,8 @@ async function fetchUser(){
   try {
     const d = await sbRpc("get_profile", { p_token: token });
     if (d && d.ok){
-      __user = { loggedIn: true, token, isVip: d.is_vip, isAdmin: d.is_admin, nickname: d.nickname, email: d.email, vipExpire: d.vip_expire };
+      const isVip = !!(d.vip_expire && new Date(d.vip_expire) > new Date());
+      __user = { loggedIn: true, token, isVip, isAdmin: d.is_admin, nickname: d.nickname, email: d.email, vipExpire: d.vip_expire };
     } else {
       localStorage.removeItem(USER_TOKEN_KEY);
       __user = { loggedIn: false };
