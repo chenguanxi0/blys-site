@@ -1405,12 +1405,13 @@ async function loadFullReport(){
   const date = params.get('date');          // 形如 2026-08-18
   let url = null;
   let fallbackUsed = false;
+  let resolvedDate = date;
   if (date) {
     url = `assets/reviews/${date}.html?t=${ts}`;  // 历史某日存档
   } else {
     // 默认：自动从 index.json 选最新一期（无需 ?date= 也能拿到当天报告）
     const latest = await pickLatestReviewDate();
-    if (latest) url = `assets/reviews/${latest}.html?t=${ts}`;
+    if (latest) { url = `assets/reviews/${latest}.html?t=${ts}`; resolvedDate = latest; }
     else { url = `assets/review.html?t=${ts}`; fallbackUsed = true; }
   }
   try {
@@ -1420,18 +1421,166 @@ async function loadFullReport(){
     initFoldableTables(box);
     pinNameColumn(box);
     initReviewGate(box);
+    injectReviewMeta(box, resolvedDate || 'latest');
   } catch(e){
     // 自动选的最新文件失败时，再回退 review.html
     if(!date && !fallbackUsed){
       try {
         const r2 = await fetch(`assets/review.html?t=${ts}`, { cache: 'no-store' });
-        if(r2.ok){ box.innerHTML = await r2.text(); initFoldableTables(box); pinNameColumn(box); initReviewGate(box); return; }
+        if(r2.ok){ box.innerHTML = await r2.text(); initFoldableTables(box); pinNameColumn(box); initReviewGate(box); injectReviewMeta(box, resolvedDate || 'latest'); return; }
       } catch(_){}
     }
     box.innerHTML = date
       ? `<div class="rpt-loading">未找到 ${date} 的复盘记录。<a href="daily.html">返回最新一期 →</a></div>`
       : '<div class="rpt-loading">完整复盘报告暂未生成，每天 15:00 收盘后自动更新。</div>';
   }
+}
+
+// ============ 复盘互动区：点赞 + 评论（按 review date 维度，本机 localStorage 统计） ============
+function _rKey(date){ return 'blys_review_meta_' + date; }
+function _rGetMeta(date){
+  try {
+    const raw = localStorage.getItem(_rKey(date));
+    if(!raw) return { likes: 0, liked: false, comments: [] };
+    const m = JSON.parse(raw);
+    return {
+      likes: Number(m.likes) || 0,
+      liked: !!m.liked,
+      comments: Array.isArray(m.comments) ? m.comments : []
+    };
+  } catch(e){ return { likes: 0, liked: false, comments: [] }; }
+}
+function _rSetMeta(date, meta){
+  try { localStorage.setItem(_rKey(date), JSON.stringify(meta)); } catch(e){}
+}
+function _rName(){
+  try { return (localStorage.getItem('blys_chat_name') || '').trim(); } catch(e){ return ''; }
+}
+function _rSetName(n){
+  try { localStorage.setItem('blys_chat_name', n || ''); } catch(e){}
+}
+function _escHtml(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function _fmtRelTime(ts){
+  const diff = Math.max(0, Date.now() - ts);
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return '刚刚';
+  if (m < 60) return m + '分钟前';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + '小时前';
+  const d = Math.floor(h / 24);
+  if (d < 30) return d + '天前';
+  const dt = new Date(ts);
+  return dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
+}
+
+function injectReviewMeta(box, date){
+  if(!box) return;
+  if(box.querySelector('.rpt-meta')) return; // 防止重复注入
+  const meta = _rGetMeta(date);
+
+  const section = document.createElement('section');
+  section.className = 'rpt-chapter rpt-meta';
+  section.innerHTML = `
+    <h2 class="rpt-h2">📮 点赞与评论</h2>
+    <p class="rpt-meta-note">本机统计：点赞与评论仅保存在你当前浏览器里，清缓存会丢失。</p>
+    <div class="rpt-meta-bar">
+      <button class="rpt-like-btn${meta.liked ? ' liked' : ''}" id="rptLikeBtn_${date}" type="button" aria-pressed="${meta.liked}">
+        <span class="rpt-like-icon">${meta.liked ? '❤️' : '🤍'}</span>
+        <span class="rpt-like-count" id="rptLikeCount_${date}">${meta.likes}</span>
+        <span class="rpt-like-label">点赞</span>
+      </button>
+      <span class="rpt-comment-stat" id="rptCommentStat_${date}">💬 ${meta.comments.length} 条评论</span>
+    </div>
+    <div class="rpt-comment-form">
+      <input class="rpt-comment-name" id="rptCommentName_${date}" type="text" maxlength="20" placeholder="昵称（默认：访客）" value="${_escHtml(_rName())}" />
+      <textarea class="rpt-comment-text" id="rptCommentText_${date}" maxlength="500" placeholder="说点什么…（最多 500 字）"></textarea>
+      <button class="rpt-comment-submit" id="rptCommentSubmit_${date}" type="button">发表评论</button>
+    </div>
+    <ul class="rpt-comment-list" id="rptCommentList_${date}"></ul>
+  `;
+  box.appendChild(section);
+
+  const likeBtn = section.querySelector('.rpt-like-btn');
+  const likeCount = section.querySelector('.rpt-like-count');
+  const cmtName = section.querySelector('.rpt-comment-name');
+  const cmtText = section.querySelector('.rpt-comment-text');
+  const cmtSubmit = section.querySelector('.rpt-comment-submit');
+  const cmtList = section.querySelector('.rpt-comment-list');
+  const cmtStat = section.querySelector('.rpt-comment-stat');
+
+  function renderComments(){
+    const list = _rGetMeta(date).comments;
+    if(!list.length){
+      cmtList.innerHTML = '<li class="rpt-comment-empty">还没有评论，来抢沙发～</li>';
+    } else {
+      // 倒序（最新在前）
+      cmtList.innerHTML = list.slice().reverse().map(c =>
+        `<li class="rpt-comment-item">
+          <div class="rpt-comment-head">
+            <span class="rpt-comment-name-text">${_escHtml(c.name || '访客')}</span>
+            <span class="rpt-comment-time">${_fmtRelTime(c.ts)}</span>
+          </div>
+          <div class="rpt-comment-body">${_escHtml(c.text).replace(/\n/g, '<br>')}</div>
+         </li>`
+        ).join('');
+    }
+    cmtStat.textContent = '💬 ' + list.length + ' 条评论';
+  }
+
+  likeBtn.addEventListener('click', () => {
+    const m = _rGetMeta(date);
+    if (m.liked) {
+      m.liked = false;
+      m.likes = Math.max(0, m.likes - 1);
+    } else {
+      m.liked = true;
+      m.likes = m.likes + 1;
+    }
+    _rSetMeta(date, m);
+    likeBtn.classList.toggle('liked', m.liked);
+    likeBtn.setAttribute('aria-pressed', String(m.liked));
+    likeBtn.querySelector('.rpt-like-icon').textContent = m.liked ? '❤️' : '🤍';
+    likeCount.textContent = m.likes;
+  });
+
+  cmtSubmit.addEventListener('click', () => {
+    const name = (cmtName.value || '').trim() || '访客';
+    const text = (cmtText.value || '').trim();
+    if(!text){
+      cmtText.focus();
+      cmtText.classList.add('shake');
+      setTimeout(() => cmtText.classList.remove('shake'), 400);
+      return;
+    }
+    if(text.length > 500){
+      alert('评论过长，最多 500 字');
+      return;
+    }
+    _rSetName(name);
+    const m = _rGetMeta(date);
+    m.comments.push({ name: name.slice(0, 20), text: text.slice(0, 500), ts: Date.now() });
+    _rSetMeta(date, m);
+    cmtText.value = '';
+    renderComments();
+    // 滚动到新评论
+    const first = cmtList.querySelector('.rpt-comment-item');
+    if(first) first.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+
+  cmtText.addEventListener('keydown', (e) => {
+    if((e.ctrlKey || e.metaKey) && e.key === 'Enter'){
+      e.preventDefault();
+      cmtSubmit.click();
+    }
+  });
+
+  cmtName.addEventListener('change', () => _rSetName(cmtName.value.trim()));
+
+  renderComments();
 }
 
 // 历史复盘下拉（读取 assets/reviews/index.json）

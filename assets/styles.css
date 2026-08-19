@@ -856,11 +856,63 @@ a { color: inherit; text-decoration: none; transition: color var(--transition); 
 .rpt-ladder th[colspan] { text-align: center; background: linear-gradient(180deg, #f8fafc, #f1f5f9); color: #334155; }
 .rpt-ladder td:empty, .rpt-ladder td:only-child:empty { color: #cbd5e1; }
 
+/* 复盘互动区：点赞 + 评论（注入式 meta 区） */
+.rpt-meta { background:#f8fafc; border-radius:14px; padding:18px 18px 22px; border:1px solid #e2e8f0; margin-top:28px; }
+.rpt-meta .rpt-h2 { margin-top:0; }
+.rpt-meta-note { color:#64748b; font-size:13px; margin:0 0 14px; }
+.rpt-meta-bar { display:flex; align-items:center; gap:18px; flex-wrap:wrap; margin-bottom:14px; }
+.rpt-like-btn {
+  display:inline-flex; align-items:center; gap:8px;
+  padding:8px 18px; border-radius:999px; border:1px solid #e2e8f0;
+  background:#fff; color:#334155; font-size:14px; font-weight:500;
+  cursor:pointer; transition:transform .12s ease, background .15s ease, border-color .15s ease;
+  user-select:none;
+}
+.rpt-like-btn:hover { background:#f1f5f9; border-color:#cbd5e1; transform:translateY(-1px); }
+.rpt-like-btn:active { transform:translateY(0); }
+.rpt-like-btn.liked { background:#fff1f2; border-color:#fda4af; color:#be123c; }
+.rpt-like-btn.liked .rpt-like-icon { animation:rptLikePop .35s ease; }
+.rpt-like-icon { font-size:18px; line-height:1; }
+.rpt-like-count { font-weight:700; min-width:18px; text-align:center; }
+.rpt-comment-stat { color:#64748b; font-size:13px; }
+.rpt-comment-form { display:flex; flex-direction:column; gap:8px; margin:12px 0 14px; }
+.rpt-comment-name,
+.rpt-comment-text {
+  width:100%; padding:10px 14px; border:1px solid #e2e8f0; border-radius:10px;
+  background:#fff; color:#0f172a; font-size:14px; font-family:inherit;
+  transition:border-color .15s ease, box-shadow .15s ease;
+}
+.rpt-comment-name { max-width:240px; }
+.rpt-comment-text { min-height:72px; resize:vertical; }
+.rpt-comment-name:focus,
+.rpt-comment-text:focus { outline:none; border-color:#6366f1; box-shadow:0 0 0 3px rgba(99,102,241,.15); }
+.rpt-comment-text.shake { animation:rptShake .35s ease; border-color:#ef4444; }
+.rpt-comment-submit {
+  align-self:flex-start; padding:8px 20px; border:none; border-radius:10px;
+  background:linear-gradient(135deg,#6366f1,#8b5cf6); color:#fff;
+  font-size:14px; font-weight:600; cursor:pointer;
+  transition:transform .12s ease, box-shadow .15s ease;
+}
+.rpt-comment-submit:hover { transform:translateY(-1px); box-shadow:0 6px 18px rgba(99,102,241,.35); }
+.rpt-comment-submit:active { transform:translateY(0); }
+.rpt-comment-list { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px; }
+.rpt-comment-empty { color:#94a3b8; font-size:13px; padding:14px; background:#fff; border:1px dashed #e2e8f0; border-radius:10px; text-align:center; }
+.rpt-comment-item { background:#fff; border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px; }
+.rpt-comment-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+.rpt-comment-name-text { font-weight:600; color:#334155; font-size:13px; }
+.rpt-comment-time { color:#94a3b8; font-size:12px; }
+.rpt-comment-body { color:#1e293b; font-size:14px; line-height:1.55; word-break:break-word; }
+@keyframes rptShake { 0%,100%{transform:translateX(0);} 20%,60%{transform:translateX(-4px);} 40%,80%{transform:translateX(4px);} }
+@keyframes rptLikePop { 0%{transform:scale(1);} 50%{transform:scale(1.4);} 100%{transform:scale(1);} }
+
 @media (max-width: 860px) {
   .rpt { padding: 22px 18px; }
   .rpt-cover-line:first-child { font-size: 24px; }
   .rpt-h2 { font-size: 17px; }
   .rpt p { font-size: 14px; }
+  .rpt-meta { padding:14px; }
+  .rpt-meta-bar { gap:12px; }
+  .rpt-comment-name { max-width:100%; }
 }
 
 /* ===== 每日复盘 ===== */

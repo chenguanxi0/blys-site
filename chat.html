@@ -96,7 +96,7 @@
           <div class="chat-input-col" style="position:relative;">
             <div class="chat-input-tools">
               <button class="chat-tool-btn" type="button" onclick="toggleEmojiPanel(event)" title="表情">😊</button>
-              <button class="chat-tool-btn" type="button" onclick="document.getElementById('chatImgInput').click()" title="发送图片">📎</button>
+              <button class="chat-tool-btn" type="button" onclick="document.getElementById('chatImgInput').click()" title="发送图片" aria-label="发送图片"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M3 17l5-5 4 4 3-3 6 6"/></svg></button>
               <input type="file" id="chatImgInput" accept="image/*" style="display:none;" onchange="onChatImageSelected(this)" />
             </div>
             <div class="chat-img-preview" id="chatImgPreview">
