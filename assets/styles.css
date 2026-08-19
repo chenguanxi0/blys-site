@@ -1121,7 +1121,7 @@ body.chat-body .footer { display:none; }
 .chat-loading, .chat-empty { text-align:center; color:var(--muted); padding:40px 0; font-size:13px; }
 
 .chat-msg { display:flex; gap:10px; margin-bottom:14px; align-items:flex-start; }
-.chat-msg-me { flex-direction:row-reverse; }
+.chat-msg-me { flex-direction:row-reverse; gap:4px; }
 /* 自己发的消息：body 紧贴右侧头像，不撑满左侧 */
 .chat-msg-avatar {
   width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg, var(--brand), #f87171);
