@@ -723,7 +723,7 @@ let __user = { loggedIn: false };
 
 async function fetchUser(){
   const token = localStorage.getItem(USER_TOKEN_KEY);
-  if (!token){ __user = { loggedIn: false }; renderUserStatus(); lockVipZones(); initReview(); initTutorialGate(); return; }
+  if (!token){ __user = { loggedIn: false }; renderUserStatus(); lockVipZones(); initReview(); initTutorialGate(); emitUserChange(); return; }
   try {
     const d = await sbRpc("get_profile", { p_token: token });
     if (d && d.ok){
@@ -738,6 +738,11 @@ async function fetchUser(){
   lockVipZones();
   initReview();
   initTutorialGate();
+  emitUserChange();
+}
+
+function emitUserChange(){
+  try { window.dispatchEvent(new CustomEvent('blys:user:change', { detail: __user })); } catch(e){}
 }
 
 function isVIP(){ return __user.loggedIn && __user.isVip; }
