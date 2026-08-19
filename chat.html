@@ -125,7 +125,7 @@
     let chatOnlineTimer = null;
     let chatHeartbeatTimer = null;
     let pendingChatImage = null;
-    let lastSeenMsgId = { public: 0, vip: 0 };
+    let lastSeenTs = { public: 0, vip: 0 };
     let notifEnabled = false;
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -312,8 +312,11 @@
         // 新消息提醒：页面在后台隐藏、且不是自己发的消息
         if (notifEnabled && document.hidden && !isFirst) {
           const myEmail = (__user && __user.email) || '';
-          const lastId = lastSeenMsgId[room] || 0;
-          const fresh = renderList.filter(m => (m.id || 0) > lastId && m.user_email !== myEmail);
+          const lastTs = lastSeenTs[room] || 0;
+          const fresh = renderList.filter(m => {
+            const t = m.created_at ? new Date(m.created_at).getTime() : 0;
+            return t > lastTs && m.user_email !== myEmail;
+          });
           if (fresh.length) {
             const latest = fresh[fresh.length - 1];
             const name = latest.user_nickname || (latest.user_email ? latest.user_email.split('@')[0] : '群友');
@@ -322,10 +325,10 @@
           }
         }
 
-        // 更新本房间最后已读消息 ID
+        // 更新本房间最后已读消息时间戳
         if (list.length) {
-          const maxId = list.reduce((mx, m) => Math.max(mx, m.id || 0), 0);
-          lastSeenMsgId[room] = Math.max(lastSeenMsgId[room] || 0, maxId);
+          const maxTs = list.reduce((mx, m) => Math.max(mx, m.created_at ? new Date(m.created_at).getTime() : 0), 0);
+          lastSeenTs[room] = Math.max(lastSeenTs[room] || 0, maxTs);
         }
 
         renderChatMessages(renderList, room, isFirst);
