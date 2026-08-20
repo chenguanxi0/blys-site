@@ -1,4 +1,4 @@
-const CACHE_NAME = 'blys-v2';
+const CACHE_NAME = 'blys-v3';
 const ASSETS = [
   '/',
   '/index.html',

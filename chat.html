@@ -1113,7 +1113,7 @@
     // ===== 新消息提醒 =====
     function initChatNotification() {
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082026').then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082028').then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -1148,6 +1148,7 @@
       if (msg.includes('没有允许浏览器通知权限')) return '系统通知权限没有允许';
       if (msg.includes('订阅保存失败')) return '推送订阅保存失败，服务器没有记住这台手机';
       if (msg.includes('Registration failed')) return '浏览器注册系统弹窗失败' + (name ? '（' + name + '）' : '');
+      if (msg.includes('Subscription failed')) return '浏览器创建推送订阅失败' + (name ? '（' + name + '）' : '');
       if (msg.includes('Permission denied')) return '系统通知权限没有允许';
       return '系统弹窗开启失败，已退回页内提醒' + (name ? '（' + name + '）' : '');
     }
@@ -1192,6 +1193,26 @@
       }
     }
 
+    async function rebuildChatServiceWorker() {
+      if (!('serviceWorker' in navigator)) return navigator.serviceWorker.ready;
+      try {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (const reg of regs) {
+          const url = reg.active && reg.active.scriptURL ? reg.active.scriptURL : '';
+          const waiting = reg.waiting && reg.waiting.scriptURL ? reg.waiting.scriptURL : '';
+          const installing = reg.installing && reg.installing.scriptURL ? reg.installing.scriptURL : '';
+          const hit = [url, waiting, installing].some((s) => String(s).includes('/sw.js'));
+          if (hit) {
+            try { await clearChatPushSubscription(reg); } catch (e) {}
+            try { await reg.unregister(); } catch (e) {}
+          }
+        }
+      } catch (e) {
+        console.warn('[chat] rebuild service worker scan failed', e);
+      }
+      return navigator.serviceWorker.register('sw.js?v=2026082028');
+    }
+
     async function subscribeChatPush(retryMode) {
       if (!supportsSystemPush()) throw new Error('当前浏览器不支持系统推送');
       if (!__user.loggedIn || !__user.token) throw new Error('请先登录后再开启提醒');
@@ -1216,6 +1237,7 @@
         if (retryMode === 'after-reset') throw e;
         console.warn('[chat] subscribe failed, retry after reset', e);
         await clearChatPushSubscription(reg);
+        await rebuildChatServiceWorker();
         return subscribeChatPush('after-reset');
       }
     }
