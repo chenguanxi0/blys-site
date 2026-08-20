@@ -1144,9 +1144,25 @@ async function submitComment(article){
 const __yearEl = document.getElementById("year");
 if (__yearEl) __yearEl.textContent = new Date().getFullYear();
 const __navToggle = document.getElementById("navToggle");
-if (__navToggle) __navToggle.addEventListener("click", ()=> {
+if (__navToggle && !__navToggle.dataset.navReady) __navToggle.addEventListener("click", ()=> {
   const __navLinks = document.getElementById("navLinks");
-  if (__navLinks) __navLinks.classList.toggle("open");
+  if (!__navLinks) return;
+  const isOpen = __navLinks.classList.toggle("open");
+  __navToggle.setAttribute("aria-expanded", String(isOpen));
+});
+const __navLinksEl = document.getElementById("navLinks");
+if (__navLinksEl) __navLinksEl.addEventListener("click", (e)=> {
+  if (e.target.closest("a") && window.innerWidth <= 980) {
+    __navLinksEl.classList.remove("open");
+    if (__navToggle) __navToggle.setAttribute("aria-expanded", "false");
+  }
+});
+document.addEventListener("click", (e)=> {
+  if (window.innerWidth > 980 || !__navLinksEl || !__navToggle) return;
+  if (!e.target.closest(".nav-inner")) {
+    __navLinksEl.classList.remove("open");
+    __navToggle.setAttribute("aria-expanded", "false");
+  }
 });
 initToolTabs();
 renderDiary();

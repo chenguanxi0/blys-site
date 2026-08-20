@@ -41,6 +41,32 @@
       </div>
     </div>
   </header>
+  <script>
+    (function () {
+      var toggle = document.getElementById('navToggle');
+      var links = document.getElementById('navLinks');
+      if (!toggle || !links) return;
+      toggle.dataset.navReady = '1';
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.addEventListener('click', function (event) {
+        event.preventDefault();
+        var open = links.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', String(open));
+      });
+      links.addEventListener('click', function (event) {
+        if (event.target.closest('a')) {
+          links.classList.remove('open');
+          toggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+      document.addEventListener('click', function (event) {
+        if (!event.target.closest('.nav-inner')) {
+          links.classList.remove('open');
+          toggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }());
+  </script>
 
   <!-- 实盘日记 -->
   <section class="section section-alt" id="diary">
@@ -58,7 +84,7 @@
 
   <script src="assets/data.js?v=20260819"></script>
   <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
-  <script src="assets/app.js?v=2026082001"></script>
+  <script src="assets/app.js?v=2026082003"></script>
 
   <!-- 登录 / 注册 / 找回密码 弹窗 -->
   <div class="modal-mask" id="authModal">
