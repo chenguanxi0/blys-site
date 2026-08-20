@@ -80,6 +80,7 @@
 
   <h1>🧭 短线核心：市场大局观</h1>
   <p class="sub">不盯单只票的涨跌，先看清自己站在什么样的「天时、地利」里。约 15 分钟阅读</p>
+  <p class="sub" style="color:#16a34a;margin-top:6px">👁 浏览 <b id="tutViews">--</b> 次</p>
 
   <!-- 核心问题 -->
   <div class="tut-section">
@@ -297,7 +298,7 @@
   <p>&copy; 2026 白鹿原上-交易笔记 · blys.top ｜ 本内容为个人分享，不构成投资建议</p>
 </footer>
 
-<script src="../assets/app.js?v=2026081911"></script>
+<script src="../assets/app.js?v=2026082001"></script>
 <script>
 // 盘前检查清单进度
 document.querySelectorAll('#preCheckList li').forEach(function(li){
@@ -342,9 +343,18 @@ async function tutSubmit(){
   if(!d||!d.ok){ alert((d&&d.msg)||"发送失败"); return; }
   ta.value=""; document.getElementById("commentBtn").textContent="已发送 ✓";
   tutLoad();
+  if(d.points!=null) alert("评论成功 +2 积分，当前积分 " + d.points);
   setTimeout(function(){ document.getElementById("commentBtn").textContent="发表评论"; },1500);
 }
 tutLoad();
+// 浏览量统计（服务端）
+if (typeof recordPageView === "function"){
+  recordPageView("article", TUT_ARTICLE);
+  getPageViews("article", TUT_ARTICLE).then(function(n){
+    var el=document.getElementById("tutViews");
+    if(el) el.textContent=n;
+  });
+}
 </script>
 </body>
 </html>

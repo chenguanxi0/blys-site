@@ -762,24 +762,125 @@ function renderUserStatus(){
   if (__user.loggedIn){
     const tag = __user.isVip ? `⭐ 会员至 ${fmtDateStr(new Date(__user.vipExpire))}` : "普通用户";
     let html = `<span class="vip-badge">${esc(__user.nickname || __user.email || "用户")} · ${tag}</span>`;
+    html += `<button class="vip-open checkin-btn" id="checkinBtn" onclick="doCheckin()" title="每日签到领积分">📅 签到</button>`;
+    html += `<span class="vip-badge points-badge" id="userPointsBadge" title="当前积分，可兑换会员专享内容">🪙 <b id="userPointsNum">0</b> 分</span>`;
     if (__user.isAdmin) html += `<button class="vip-open" onclick="location.href='admin.html'">后台</button>`;
     el.innerHTML = html;
+    refreshPointsUI();
   } else {
     el.innerHTML = `<button class="vip-open" onclick="openAuthModal()">登录/注册</button>`;
   }
+}
+
+// ---- 积分体系（签到 / 评论奖励 / 兑换解锁） ----
+async function refreshPointsUI(){
+  const num = document.getElementById("userPointsNum");
+  const btn = document.getElementById("checkinBtn");
+  if (!num) return;
+  if (!__user.loggedIn || !__user.token){
+    num.textContent = "0";
+    return;
+  }
+  try {
+    const d = await sbRpc("get_points", { p_token: __user.token });
+    if (!d || !d.ok){ num.textContent = "0"; return; }
+    num.textContent = (d.points == null ? 0 : d.points);
+    __user.points = d.points || 0;
+    __user.todayChecked = !!d.today_checked;
+    if (btn){
+      if (__user.todayChecked){
+        btn.textContent = "✅ 已签到";
+        btn.disabled = true;
+      } else {
+        btn.textContent = "📅 签到";
+        btn.disabled = false;
+      }
+    }
+  } catch(e){ num.textContent = "0"; }
+}
+async function doCheckin(){
+  if (!__user.loggedIn){ openAuthModal(); return; }
+  const btn = document.getElementById("checkinBtn");
+  if (btn && btn.disabled) return;
+  try {
+    const d = await sbRpc("checkin", { p_token: __user.token });
+    if (!d || !d.ok){ alert((d && d.msg) || "签到失败"); refreshPointsUI(); return; }
+    alert(`✅ 签到成功！${d.streak ? "连续 " + d.streak + " 天，" : ""}当前积分 ${d.points}`);
+    refreshPointsUI();
+    emitUserChange();
+  } catch(e){ alert("网络错误"); }
+}
+// 积分兑换专享内容：p_page 是 vipzone 卡片 data-page 标识，p_cost 是所需积分
+async function redeemContent(page, cost){
+  if (!__user.loggedIn){ openAuthModal(); return; }
+  const ok = confirm(`使用 ${cost} 积分兑换「${page}」？`);
+  if (!ok) return;
+  try {
+    const d = await sbRpc("redeem_content", { p_token: __user.token, p_page: page, p_points: cost });
+    if (!d || !d.ok){
+      alert((d && d.msg) || "兑换失败");
+      return;
+    }
+    alert(`✅ 兑换成功！已解锁「${page}」`);
+    refreshPointsUI();
+    renderVipLocks();
+    emitUserChange();
+  } catch(e){ alert("网络错误"); }
+}
+// 根据已解锁内容刷新 vipzone 卡片状态
+async function renderVipLocks(){
+  const cards = document.querySelectorAll("[data-page]");
+  if (!cards.length) return;
+  let locks = [];
+  if (typeof __user !== 'undefined' && __user && __user.loggedIn && __user.token){
+    try {
+      const d = await sbRpc("get_locks", { p_token: __user.token });
+      if (d && d.ok && Array.isArray(d.list)) locks = d.list;
+    } catch(e){}
+    __user.locks = locks;
+  } else if (typeof __user !== 'undefined') {
+    __user.locks = [];
+  }
+  cards.forEach(card => {
+    const page = card.dataset.page;
+    const cost = Number(card.dataset.cost || 0);
+    const unlocked = locks.indexOf(page) >= 0;
+    card.classList.toggle("points-locked", !unlocked && cost > 0);
+    // VIP 用户直接解锁全部（不再显示兑换按钮）
+    const isVipUser = typeof __user !== 'undefined' && __user && __user.isVip;
+    const finalUnlocked = unlocked || isVipUser;
+    const btn = card.querySelector(".points-redeem-btn");
+    if (btn) btn.remove();
+    if (cost > 0 && !finalUnlocked){
+      const b = document.createElement("button");
+      b.className = "btn btn-primary btn-block points-redeem-btn";
+      b.textContent = `🪙 ${cost} 积分解锁`;
+      b.onclick = () => redeemContent(page, cost);
+      card.appendChild(b);
+    }
+  });
 }
 
 // 根据会员状态锁定 / 解锁会员专属区块
 function lockVipZones(){
   document.querySelectorAll(".vip-zone").forEach(z=>{
     const isLoginGate = z.id === "vip";   // 会员课程：登录即可
-    const unlocked = isLoginGate ? __user.loggedIn : isVIP();
+    // 积分兑换区：登录用户即可看到卡片（未解锁卡片带兑换按钮）；VIP 直接全部解锁
+    const isPointsZone = !!z.querySelector("[data-page][data-cost]");
+    const unlocked = isPointsZone
+      ? (isVIP() || __user.loggedIn)
+      : (isLoginGate ? __user.loggedIn : isVIP());
     z.classList.toggle("unlocked", unlocked);
     z.classList.toggle("is-locked", !unlocked);
   });
   document.querySelectorAll("[data-vip-course]").forEach(c=>{
-    c.classList.toggle("is-locked", !isVIP());
+    // VIP 或已积分解锁该卡片的用户无需锁定
+    const page = c.dataset.page;
+    const locks = (typeof __user !== 'undefined' && __user) ? (__user.locks || []) : [];
+    const hasLock = locks.indexOf(page) >= 0;
+    c.classList.toggle("is-locked", !isVIP() && !hasLock);
   });
+  renderVipLocks();
 }
 
 // 若页面未包含 authModal（如 daily / diary / tutorials），动态注入
@@ -1441,14 +1542,15 @@ function _rKey(date){ return 'blys_review_meta_' + date; }
 function _rGetMeta(date){
   try {
     const raw = localStorage.getItem(_rKey(date));
-    if(!raw) return { likes: 0, liked: false, comments: [] };
+    if(!raw) return { likes: 0, liked: false, comments: [], views: 0 };
     const m = JSON.parse(raw);
     return {
       likes: Number(m.likes) || 0,
       liked: !!m.liked,
-      comments: Array.isArray(m.comments) ? m.comments : []
+      comments: Array.isArray(m.comments) ? m.comments : [],
+      views: Number(m.views) || 0
     };
-  } catch(e){ return { likes: 0, liked: false, comments: [] }; }
+  } catch(e){ return { likes: 0, liked: false, comments: [], views: 0 }; }
 }
 function _rSetMeta(date, meta){
   try { localStorage.setItem(_rKey(date), JSON.stringify(meta)); } catch(e){}
@@ -1490,8 +1592,9 @@ function injectReviewMeta(box, date){
   section.className = 'rpt-chapter rpt-meta';
   section.dataset.rptMetaDate = date;
   section.innerHTML = `
-    <h2 class="rpt-h2">📮 点赞与评论</h2>
-    <p class="rpt-meta-note">本机统计：点赞与评论仅保存在你当前浏览器里，清缓存会丢失。</p>
+    <h2 class="rpt-h2">📮 浏览 · 点赞与评论</h2>
+    <p class="rpt-meta-note">浏览量实时统计；评论服务端存储（发表 +2 积分）；点赞凭据仅存当前浏览器。</p>
+    <div class="rpt-view-count" id="rptViewCount_${date}">👁 浏览 ${meta.views > 0 ? '<b>'+meta.views+'</b>' : '…'} 次</div>
     ${loggedIn ? `
     <div class="rpt-meta-bar">
       <button class="rpt-like-btn${meta.liked ? ' liked' : ''}" id="rptLikeBtn_${date}" type="button" aria-pressed="${meta.liked}">
@@ -1499,7 +1602,7 @@ function injectReviewMeta(box, date){
         <span class="rpt-like-count" id="rptLikeCount_${date}">${meta.likes}</span>
         <span class="rpt-like-label">点赞</span>
       </button>
-      <span class="rpt-comment-stat" id="rptCommentStat_${date}">💬 ${meta.comments.length} 条评论</span>
+      <span class="rpt-comment-stat" id="rptCommentStat_${date}">💬 加载评论…</span>
       <span class="rpt-meta-author">以 <b>${_escHtml(displayName)}</b> 身份</span>
     </div>
     <div class="rpt-comment-form">
@@ -1515,6 +1618,14 @@ function injectReviewMeta(box, date){
   `;
   box.appendChild(section);
 
+  // 浏览量：会话内仅统计一次（服务端）
+  const lastRecorded = sessionStorage.getItem('blys_viewed_review_' + date) || '';
+  if(lastRecorded !== '1'){
+    sessionStorage.setItem('blys_viewed_review_' + date, '1');
+    recordReviewView(date);
+  }
+  loadReviewViews(section, date);
+
   if(!loggedIn) return; // 未登录：不绑定任何交互
 
   const likeBtn = section.querySelector('.rpt-like-btn');
@@ -1525,22 +1636,27 @@ function injectReviewMeta(box, date){
   const cmtStat = section.querySelector('.rpt-comment-stat');
 
   function renderComments(){
-    const list = _rGetMeta(date).comments;
-    if(!list.length){
-      cmtList.innerHTML = '<li class="rpt-comment-empty">还没有评论，来抢沙发～</li>';
-    } else {
-      // 倒序（最新在前）
-      cmtList.innerHTML = list.slice().reverse().map(c =>
-        `<li class="rpt-comment-item">
-          <div class="rpt-comment-head">
-            <span class="rpt-comment-name-text">${_escHtml(c.name || '用户')}</span>
-            <span class="rpt-comment-time">${_fmtRelTime(c.ts)}</span>
-          </div>
-          <div class="rpt-comment-body">${_escHtml(c.text).replace(/\n/g, '<br>')}</div>
-         </li>`
-        ).join('');
-    }
-    cmtStat.textContent = '💬 ' + list.length + ' 条评论';
+    cmtList.innerHTML = '<li class="rpt-comment-empty">加载中…</li>';
+    sbRpc('list_comments', { p_article: 'review:' + date }).then(d => {
+      const list = (d && d.ok && Array.isArray(d.list)) ? d.list : [];
+      if(!list.length){
+        cmtList.innerHTML = '<li class="rpt-comment-empty">还没有评论，来抢沙发～</li>';
+      } else {
+        // 倒序（最新在前）
+        cmtList.innerHTML = list.slice().reverse().map(c =>
+          `<li class="rpt-comment-item">
+            <div class="rpt-comment-head">
+              <span class="rpt-comment-name-text">${_escHtml(c.nickname || c.email || '用户')}</span>
+              <span class="rpt-comment-time">${_fmtRelTime(new Date(c.created_at).getTime())}</span>
+            </div>
+            <div class="rpt-comment-body">${_escHtml(c.content || '').replace(/\n/g, '<br>')}</div>
+           </li>`
+          ).join('');
+      }
+      cmtStat.textContent = '💬 ' + list.length + ' 条评论';
+    }).catch(() => {
+      cmtList.innerHTML = '<li class="rpt-comment-empty">评论加载失败</li>';
+    });
   }
 
   likeBtn.addEventListener('click', () => {
@@ -1571,15 +1687,29 @@ function injectReviewMeta(box, date){
       alert('评论过长，最多 500 字');
       return;
     }
-    const dn = (__user && (__user.nickname || (__user.email||'').split('@')[0])) || '用户';
-    const m = _rGetMeta(date);
-    m.comments.push({ name: dn, text: text.slice(0, 500), ts: Date.now() });
-    _rSetMeta(date, m);
-    cmtText.value = '';
-    renderComments();
-    // 滚动到新评论
-    const first = cmtList.querySelector('.rpt-comment-item');
-    if(first) first.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    const oldLabel = cmtSubmit.textContent;
+    cmtSubmit.textContent = '发送中…';
+    cmtSubmit.disabled = true;
+    sbRpc('add_comment', { p_token: __user.token, p_article: 'review:' + date, p_content: text.slice(0, 500) }).then(d => {
+      cmtSubmit.disabled = false;
+      if(!d || !d.ok){
+        cmtSubmit.textContent = oldLabel;
+        alert((d && d.msg) || '发送失败');
+        return;
+      }
+      cmtText.value = '';
+      renderComments();
+      cmtSubmit.textContent = '已发送 ✓';
+      refreshPointsUI();
+      setTimeout(()=>{ cmtSubmit.textContent = oldLabel; }, 1500);
+      const first = cmtList.querySelector('.rpt-comment-item');
+      if(first) first.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      // 滚动到新评论
+    }).catch(() => {
+      cmtSubmit.disabled = false;
+      cmtSubmit.textContent = oldLabel;
+      alert('网络错误');
+    });
   });
 
   cmtText.addEventListener('keydown', (e) => {
@@ -1590,6 +1720,45 @@ function injectReviewMeta(box, date){
   });
 
   renderComments();
+}
+
+// 浏览量：服务端 RPC（Tongdaxin 无关，纯统计）
+async function recordReviewView(date){
+  try {
+    const key = __userIdKey();
+    await sbRpc('record_view', { p_page_type: 'review', p_ref_id: date, p_viewer_key: key });
+  } catch(e){}
+}
+async function loadReviewViews(section, date){
+  try {
+    const d = await sbRpc('get_views', { p_page_type: 'review', p_ref_id: date });
+    const el = section.querySelector('#rptViewCount_' + date);
+    if(el && d && d.ok){
+      const n = Number(d.views) || 0;
+      el.innerHTML = '👁 浏览 <b>' + n + '</b> 次';
+    }
+  } catch(e){}
+}
+// 匿名设备标识：登录用邮箱，游客用 localStorage 随机 id
+function __userIdKey(){
+  if (typeof __user !== 'undefined' && __user && __user.loggedIn && __user.email) return 'u:' + __user.email;
+  let k = '';
+  try { k = localStorage.getItem('blys_visitor_id') || ''; } catch(e){}
+  if(!k){
+    k = 'v:' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+    try { localStorage.setItem('blys_visitor_id', k); } catch(e){}
+  }
+  return k;
+}
+// 文章/复盘通用浏览量（教程页调用）
+async function recordPageView(pageType, refId){
+  try { await sbRpc('record_view', { p_page_type: pageType, p_ref_id: refId, p_viewer_key: __userIdKey() }); } catch(e){}
+}
+async function getPageViews(pageType, refId){
+  try {
+    const d = await sbRpc('get_views', { p_page_type: pageType, p_ref_id: refId });
+    return (d && d.ok) ? (Number(d.views) || 0) : 0;
+  } catch(e){ return 0; }
 }
 
 // 监听登录态变化：用户从「未登录」登录后，自动把评论区从「登录提示」替换为可评论表单

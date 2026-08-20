@@ -546,6 +546,14 @@ a { color: inherit; text-decoration: none; transition: color var(--transition); 
 .vip-open { padding: 8px 16px; border-radius: 999px; background: var(--brand); color: #fff; border: none; font-weight: 600; cursor: pointer; font-size: 14px; white-space: nowrap; }
 .vip-open:hover { background: var(--brand-dark); }
 .vip-badge { font-size: 13px; color: #b45309; background: #fffbeb; border: 1px solid #fde68a; padding: 5px 10px; border-radius: 999px; white-space: nowrap; }
+.checkin-btn { background: linear-gradient(135deg, #16a34a, #22c55e); font-size: 13px; padding: 6px 12px; }
+.checkin-btn:hover { background: linear-gradient(135deg, #15803d, #16a34a); }
+.checkin-btn:disabled { background: #9ca3af; cursor: not-allowed; }
+.points-badge { color: #2563eb; background: #eff6ff; border-color: #bfdbfe; }
+#userPointsNum { font-size: 15px; }
+.points-redeem-btn { background: linear-gradient(135deg, #4f46e5, #7c3aed); }
+.points-redeem-btn:hover { box-shadow: 0 4px 14px rgba(79,70,229,.35); }
+.vip-card.points-locked .result, .vip-card.points-locked p { opacity: .55; }
 .vip-logout { background: none; border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; font-size: 12px; cursor: pointer; color: var(--muted); white-space: nowrap; }
 .vip-logout:hover { border-color: var(--brand); color: var(--brand); }
 
@@ -860,6 +868,8 @@ a { color: inherit; text-decoration: none; transition: color var(--transition); 
 .rpt-meta { background:#f8fafc; border-radius:14px; padding:18px 18px 22px; border:1px solid #e2e8f0; margin-top:28px; }
 .rpt-meta .rpt-h2 { margin-top:0; }
 .rpt-meta-note { color:#64748b; font-size:13px; margin:0 0 14px; }
+.rpt-view-count { display:inline-block; margin:0 0 14px; font-size:14px; color:#334155; background:#fff; border:1px solid #e2e8f0; padding:6px 14px; border-radius:999px; }
+.rpt-view-count b { color:var(--brand); font-size:16px; }
 .rpt-meta-bar { display:flex; align-items:center; gap:18px; flex-wrap:wrap; margin-bottom:14px; }
 .rpt-meta-author { color:#64748b; font-size:13px; margin-left:auto; }
 .rpt-meta-author b { color:#1e293b; font-weight:600; }
