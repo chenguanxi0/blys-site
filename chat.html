@@ -162,7 +162,7 @@
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082003"></script>
+  <script src="assets/app.js?v=2026082004"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -198,8 +198,11 @@
       // 等待用户状态获取完成（失败也不影响消息加载，包裹 try 防止整段中断）
       try { await fetchUser(); } catch (e) { console.error('[chat] fetchUser failed', e); }
       console.log('[chat] fetchUser done');
-      // 登录态回来后刷新输入区
+      // fetchUser 会异步更新登录/VIP状态；如果用户已在会员频道，状态回来后必须重新加载
       updateChatInputState();
+      if (currentRoom === 'vip' && __user.loggedIn && __user.isVip) {
+        switchChatRoom('vip');
+      }
       // 启动轮询
       startChatPoll();
       // 启动在线人数
