@@ -1,47 +1,127 @@
--- 聊天室升级 SQL：图片消息 + 在线人数
+-- 聊天室升级 SQL：图片消息 + 引用回复 + 在线人数
 -- 在 Supabase SQL Editor 中执行一次即可
 
--- 1. messages 表增加图片字段
+-- 1. messages 表增加图片与引用字段
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS image TEXT;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_id UUID;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_nickname TEXT;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_content TEXT;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_image TEXT;
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS recalled_at TIMESTAMPTZ;
 
--- 2. 改造 send_message，支持可选图片参数
+-- 2. 改造 send_message，支持可选图片与引用参数
 DROP FUNCTION IF EXISTS send_message(text, text, text);
 DROP FUNCTION IF EXISTS send_message(text, text, text, text);
+DROP FUNCTION IF EXISTS send_message(text, text, text, text, uuid);
 CREATE OR REPLACE FUNCTION send_message(
   p_token TEXT,
   p_room TEXT,
   p_content TEXT,
-  p_image TEXT DEFAULT NULL
+  p_image TEXT DEFAULT NULL,
+  p_reply_to_id UUID DEFAULT NULL
 ) RETURNS JSONB AS $$
 DECLARE
   v_user RECORD;
+  v_reply_id UUID;
+  v_reply_nickname TEXT;
+  v_reply_content TEXT;
+  v_reply_image TEXT;
+  v_has_reply BOOLEAN := false;
 BEGIN
   SELECT email, nickname, vip_expire INTO v_user FROM profiles WHERE token = p_token;
   IF NOT FOUND THEN RETURN jsonb_build_object('ok', false, 'msg', '请先登录'); END IF;
   IF p_room = 'vip' AND (v_user.vip_expire IS NULL OR v_user.vip_expire <= now()) THEN
     RETURN jsonb_build_object('ok', false, 'msg', 'VIP专属房间');
   END IF;
-  INSERT INTO messages (room, user_email, user_nickname, content, image, created_at)
+  IF p_reply_to_id IS NOT NULL THEN
+    SELECT m.id, m.user_nickname, m.content, m.image
+    INTO v_reply_id, v_reply_nickname, v_reply_content, v_reply_image
+    FROM messages m
+    WHERE m.id = p_reply_to_id AND m.room = p_room AND m.recalled_at IS NULL;
+    v_has_reply := FOUND;
+  END IF;
+  INSERT INTO messages (room, user_email, user_nickname, content, image, reply_to_id, reply_to_nickname, reply_to_content, reply_to_image, created_at)
   VALUES (
     p_room,
     v_user.email,
     COALESCE(v_user.nickname, split_part(v_user.email,'@',1)),
     NULLIF(trim(p_content), ''),
     NULLIF(trim(p_image), ''),
+    CASE WHEN v_has_reply THEN v_reply_id ELSE NULL END,
+    CASE WHEN v_has_reply THEN v_reply_nickname ELSE NULL END,
+    CASE WHEN v_has_reply THEN v_reply_content ELSE NULL END,
+    CASE WHEN v_has_reply THEN v_reply_image ELSE NULL END,
     now()
   );
   RETURN jsonb_build_object('ok', true);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 3. 改造 list_messages，返回图片字段（id 与 messages 表实际类型一致，为 UUID）
+-- 3. 增加撤回时间字段
+-- （已在上方统一补充，避免重复执行时报错）
+
+-- 4. 撤回自己的消息：发送后2分钟内允许撤回
+DROP FUNCTION IF EXISTS recall_message(text, uuid);
+CREATE OR REPLACE FUNCTION recall_message(p_token TEXT, p_message_id UUID)
+RETURNS JSONB AS $$
+DECLARE
+  v_user RECORD;
+  v_message RECORD;
+BEGIN
+  SELECT email INTO v_user FROM profiles WHERE token = p_token;
+  IF NOT FOUND THEN RETURN jsonb_build_object('ok', false, 'msg', '请先登录'); END IF;
+
+  SELECT id, user_email, created_at, recalled_at
+  INTO v_message
+  FROM messages
+  WHERE id = p_message_id;
+
+  IF NOT FOUND THEN RETURN jsonb_build_object('ok', false, 'msg', '消息不存在'); END IF;
+  IF v_message.user_email <> v_user.email THEN
+    RETURN jsonb_build_object('ok', false, 'msg', '只能撤回自己的消息');
+  END IF;
+  IF v_message.recalled_at IS NOT NULL THEN
+    RETURN jsonb_build_object('ok', false, 'msg', '消息已经撤回');
+  END IF;
+  IF v_message.created_at < now() - interval '2 minutes' THEN
+    RETURN jsonb_build_object('ok', false, 'msg', '消息已超过2分钟，不能撤回');
+  END IF;
+
+  UPDATE messages
+  SET recalled_at = now(), content = NULL, image = NULL,
+      reply_to_id = NULL, reply_to_nickname = NULL,
+      reply_to_content = NULL, reply_to_image = NULL
+  WHERE id = p_message_id;
+  RETURN jsonb_build_object('ok', true);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 5. 改造 list_messages，返回图片与引用字段
 DROP FUNCTION IF EXISTS list_messages(text);
 DROP FUNCTION IF EXISTS list_messages(text, integer);
 CREATE OR REPLACE FUNCTION list_messages(p_room TEXT, p_limit INTEGER DEFAULT 100)
-RETURNS TABLE(id UUID, user_email TEXT, user_nickname TEXT, content TEXT, image TEXT, created_at TIMESTAMPTZ) AS $$
+RETURNS TABLE(
+  id UUID,
+  user_email TEXT,
+  user_nickname TEXT,
+  content TEXT,
+  image TEXT,
+  reply_to_id UUID,
+  reply_to_nickname TEXT,
+  reply_to_content TEXT,
+  reply_to_image TEXT,
+  recalled_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ
+) AS $$
 BEGIN
-  RETURN QUERY SELECT m.id, m.user_email, m.user_nickname, m.content, m.image, m.created_at
-    FROM messages m WHERE m.room = p_room ORDER BY m.created_at DESC LIMIT p_limit;
+  RETURN QUERY SELECT
+    m.id, m.user_email, m.user_nickname, m.content, m.image,
+    m.reply_to_id, m.reply_to_nickname, m.reply_to_content, m.reply_to_image,
+    m.recalled_at, m.created_at
+  FROM messages m
+  WHERE m.room = p_room
+  ORDER BY m.created_at DESC
+  LIMIT p_limit;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
