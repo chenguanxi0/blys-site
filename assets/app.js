@@ -691,12 +691,27 @@ const ADMIN_TOKEN_KEY = "blys_admin_token";
 
 // 调用 Supabase RPC
 async function sbRpc(fn, params){
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON, "Authorization": "Bearer " + SUPABASE_ANON },
-    body: JSON.stringify(params || {})
-  });
-  return r.json();
+  let r;
+  try {
+    r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON, "Authorization": "Bearer " + SUPABASE_ANON },
+      body: JSON.stringify(params || {})
+    });
+  } catch (e) {
+    // 网络层失败（DNS/TLS/被墙/跨域未配置）：透出真实错误，便于定位
+    const err = new Error("网络请求失败：" + (e && e.message ? e.message : String(e)));
+    err._status = 0;
+    throw err;
+  }
+  const text = await r.text();
+  let d;
+  try { d = text ? JSON.parse(text) : {}; } catch (e) { d = { _raw: text }; }
+  if (!r.ok) {
+    d._status = r.status;
+    d._ok = false;
+  }
+  return d;
 }
 
 // 调用 Supabase Edge Function（发邮件走这里，数据库出站被挡，改用 Edge Function）
