@@ -1,0 +1,20 @@
+{
+  "name": "blys-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "白鹿原上 Android app shell",
+  "scripts": {
+    "build:app": "node tools/build_app_web.mjs",
+    "cap:sync": "node tools/build_app_web.mjs && cap sync android",
+    "cap:open": "cap open android",
+    "cap:copy": "node tools/build_app_web.mjs && cap copy android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.4.2",
+    "@capacitor/core": "^7.4.2",
+    "@capacitor/push-notifications": "^7.0.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.2"
+  }
+}

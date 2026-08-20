@@ -1,0 +1,9 @@
+{
+  "appId": "site.blys.app",
+  "appName": "白鹿原上",
+  "webDir": "mobile_www",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}

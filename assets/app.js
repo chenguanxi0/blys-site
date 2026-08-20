@@ -724,6 +724,7 @@ async function sbRpc(fn, params, options){
   }
   return d;
 }
+window.sbRpc = sbRpc;
 
 // 调用 Supabase Edge Function（发邮件走这里，数据库出站被挡，改用 Edge Function）
 async function callEdge(fn, body){
@@ -734,6 +735,7 @@ async function callEdge(fn, body){
   });
   return r.json();
 }
+window.callEdge = callEdge;
 
 // 简单 HTML 转义，防 XSS
 function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;" }[c])); }
@@ -746,10 +748,15 @@ function fmtDateTime(dt){
 
 // 当前登录用户
 let __user = { loggedIn: false };
+window.__user = __user;
+
+function syncUserGlobals(){
+  window.__user = __user;
+}
 
 async function fetchUser(){
   const token = localStorage.getItem(USER_TOKEN_KEY);
-  if (!token){ __user = { loggedIn: false }; renderUserStatus(); lockVipZones(); initReview(); initTutorialGate(); emitUserChange(); return; }
+  if (!token){ __user = { loggedIn: false }; syncUserGlobals(); renderUserStatus(); lockVipZones(); initReview(); initTutorialGate(); emitUserChange(); return; }
   try {
     const d = await sbRpc("get_profile", { p_token: token });
     if (d && d.ok){
@@ -760,6 +767,7 @@ async function fetchUser(){
       __user = { loggedIn: false };
     }
   } catch(e){ __user = { loggedIn: false }; }
+  syncUserGlobals();
   renderUserStatus();
   lockVipZones();
   initReview();
@@ -777,6 +785,7 @@ function isAdmin(){ return __user.loggedIn && __user.isAdmin; }
 function logoutUser(){
   localStorage.removeItem(USER_TOKEN_KEY);
   __user = { loggedIn: false };
+  syncUserGlobals();
   renderUserStatus();
   lockVipZones();
   emitUserChange();
