@@ -1113,11 +1113,12 @@
           refreshChatPushSubscription();
         }).catch(() => {});
       }
-      // 唯一可靠的持久化依据：页内未读提醒（任何浏览器都生效，刷新后能记住）
-      // 系统通知仅作为“锦上添花”，不用来判断“是否记住”
       inAppNotifOn = localStorage.getItem('blys_notif_inapp') === 'on';
       notifEnabled = false;
       updateNotifBtn();
+      if (inAppNotifOn && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        setTimeout(refreshChatPushSubscription, 500);
+      }
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) return;
         inAppNotifOn = localStorage.getItem('blys_notif_inapp') === 'on';
@@ -1199,7 +1200,6 @@
         updateNotifBtn();
       } catch (e) {
         notifEnabled = false;
-        localStorage.setItem('blys_notif', 'off');
         console.warn('[chat] refresh push subscription failed', e);
         updateNotifBtn();
       }
@@ -1257,7 +1257,7 @@
     }
 
     async function toggleChatNotification() {
-      if (notifEnabled || inAppNotifOn) {
+      if (notifEnabled) {
         // 关闭提醒
         inAppNotifOn = false;
         localStorage.setItem('blys_notif_inapp', 'off');
@@ -1269,6 +1269,22 @@
       }
       if (!__user.loggedIn) {
         openAuthModal();
+        return;
+      }
+
+      if (inAppNotifOn) {
+        try {
+          await subscribeChatPush();
+          notifEnabled = true;
+          localStorage.setItem('blys_notif', 'on');
+        } catch (e) {
+          console.warn('[chat] retry system push unavailable', e);
+          notifEnabled = false;
+          localStorage.setItem('blys_notif', 'off');
+          const msg = e && e.message ? e.message : '系统弹窗暂时开启失败';
+          alert(msg + '\n\n我保留了「页内提醒」。如果你刚刚换了浏览器或添加到桌面，请刷新后再点一次开启。');
+        }
+        updateNotifBtn();
         return;
       }
 
