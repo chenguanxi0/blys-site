@@ -99,7 +99,10 @@
             <span class="chat-online-dot"></span>
             <span id="chatOnlineNum">--</span> 人在线
           </div>
-          <button class="chat-notif-btn" id="chatNotifBtn" type="button" onclick="toggleChatNotification()" title="新消息弹窗提醒">🔕 开启提醒</button>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+            <button class="chat-notif-btn" id="chatNotifBtn" type="button" onclick="toggleChatNotification()" title="新消息弹窗提醒">🔕 开启提醒</button>
+            <div id="chatNotifDiag" style="max-width:280px; font-size:12px; line-height:1.4; color:#7a8699; text-align:right;"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -221,6 +224,7 @@
     let chatHistLoading = false;
     let notifEnabled = false;
     let inAppNotifOn = false;
+    let notifDiagMsg = '';
     let unreadCounts = { public: 0, vip: 0 };
     const PUSH_VAPID_PUBLIC_KEY = 'BA2xT4Y1plL6c9JNmBJI8aqp_vjxrnOG1-p-nhazGbm_QGnnuq8A7hbYbBIpZKd3MQ3-jx0EfXZGnKYQQuFHFac';
 
@@ -1134,6 +1138,26 @@
       return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
     }
 
+    function getNotifErrorText(err) {
+      const msg = err && err.message ? String(err.message) : '';
+      if (!supportsSystemPush()) return '当前环境不支持系统弹窗推送';
+      if (typeof Notification !== 'undefined' && Notification.permission === 'denied') return '系统通知权限已被禁止';
+      if (msg.includes('不支持系统推送')) return '当前浏览器不支持系统弹窗推送';
+      if (msg.includes('请先登录')) return '请先登录后再开启提醒';
+      if (msg.includes('没有允许浏览器通知权限')) return '系统通知权限没有允许';
+      if (msg.includes('订阅保存失败')) return '推送订阅保存失败，服务器没有记住这台手机';
+      if (msg.includes('Registration failed')) return '浏览器注册系统弹窗失败';
+      if (msg.includes('Permission denied')) return '系统通知权限没有允许';
+      return '系统弹窗开启失败，已退回页内提醒';
+    }
+
+    function setNotifDiag(msg) {
+      notifDiagMsg = msg || '';
+      const el = document.getElementById('chatNotifDiag');
+      if (!el) return;
+      el.textContent = notifDiagMsg;
+    }
+
     function urlBase64ToUint8Array(base64String) {
       const padding = '='.repeat((4 - base64String.length % 4) % 4);
       const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -1197,9 +1221,11 @@
         await subscribeChatPush();
         notifEnabled = true;
         localStorage.setItem('blys_notif', 'on');
+        setNotifDiag('系统弹窗提醒已开启');
         updateNotifBtn();
       } catch (e) {
         notifEnabled = false;
+        setNotifDiag(getNotifErrorText(e));
         console.warn('[chat] refresh push subscription failed', e);
         updateNotifBtn();
       }
@@ -1237,6 +1263,7 @@
         btn.textContent = '🔔 已开启';
         btn.classList.add('on');
         btn.title = '系统弹窗提醒已开启';
+        setNotifDiag('系统弹窗提醒已开启');
         return;
       }
       // 优先显示「页内提醒」状态（任何浏览器都生效，且可持久化）
@@ -1244,13 +1271,16 @@
         btn.textContent = '📬 页内提醒';
         btn.classList.add('on');
         btn.title = '页内未读提醒已开启（切走再回来会看到未读横幅）';
+        if (!notifDiagMsg) setNotifDiag('当前只开启了页内提醒');
         return;
       }
       // 未开启
       if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
         btn.textContent = '🔕 已禁止';
+        setNotifDiag('系统通知权限已被禁止');
       } else {
         btn.textContent = '🔔 开启提醒';
+        if (!notifDiagMsg) setNotifDiag('');
       }
       btn.classList.remove('on');
       btn.title = '新消息弹窗提醒 / 页内提醒';
@@ -1263,6 +1293,7 @@
         localStorage.setItem('blys_notif_inapp', 'off');
         notifEnabled = false;
         localStorage.setItem('blys_notif', 'off');
+        setNotifDiag('');
         unsubscribeChatPush();
         updateNotifBtn();
         return;
@@ -1279,10 +1310,12 @@
         await subscribeChatPush();
         notifEnabled = true;
         localStorage.setItem('blys_notif', 'on');
+        setNotifDiag('系统弹窗提醒已开启');
       } catch (e) {
         console.warn('[chat] system push unavailable', e);
         notifEnabled = false;
         localStorage.setItem('blys_notif', 'off');
+        setNotifDiag(getNotifErrorText(e));
       }
       updateNotifBtn();
       unreadCounts = { public: 0, vip: 0 };
