@@ -1203,6 +1203,15 @@ body.chat-body .footer { display:none; }
 .chat-msg-me .chat-msg-meta { justify-content:flex-end; }
 .chat-msg-name { color:var(--ink); font-weight:500; }
 .chat-msg-time { color:var(--muted); font-size:11px; }
+/* 乐观发送状态：发送中/发送失败 */
+.chat-msg-state { color:var(--muted); font-size:11px; }
+.chat-msg-pending .chat-msg-text, .chat-msg-pending .chat-msg-img { opacity:.62; }
+.chat-msg-state-failed { color:#dc2626; font-size:11px; display:inline-flex; align-items:center; gap:4px; }
+.chat-retry-btn {
+  border:none; background:transparent; color:#dc2626; font-size:11px;
+  padding:0; cursor:pointer; text-decoration:underline;
+}
+.chat-msg-failed .chat-msg-text { opacity:.75; border-style:dashed; }
 .chat-msg-text {
   display:inline-block; background:#fff; border:1px solid var(--line); border-radius:12px; padding:10px 14px;
   font-size:14px; line-height:1.6; word-break:break-word; color:var(--ink);

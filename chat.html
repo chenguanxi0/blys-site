@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082014" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082017" />
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23e23b3b'/%3E%3Cstop offset='100%25' stop-color='%23f87171'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='18' cy='18' r='17' fill='url(%23g)'/%3E%3Ctext x='18' y='23' text-anchor='middle' fill='white' font-family='-apple-system,PingFang SC,Microsoft YaHei,sans-serif' font-size='18' font-weight='700'%3E白%3C/text%3E%3C/svg%3E" />
 </head>
@@ -187,7 +187,7 @@
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082014"></script>
+  <script src="assets/app.js?v=2026082017"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -197,9 +197,21 @@
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
+    console.log('[chat] build v2026082017 (incremental + history paging + optimistic send)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
     let lastSeenTs = { public: 0, vip: 0 };
+    let chatOldestTs = { public: 0, vip: 0 };
+    let chatHasMore = { public: true, vip: true };
+    // 乐观发送：点击发送即先本地渲染，后台再同步到服务器
+    // tempId -> { key, room, message, payload }
+    const chatPendingSends = new Map();
+    // key(room|content|imageLen) -> tempId，用于轮询拉回自己消息时合并去重
+    const chatPendingKeys = new Map();
+    function chatSendKey(room, content, image) {
+      return room + '|' + (content || '') + '|' + (image ? String(image).length : 0);
+    }
+    let chatHistLoading = false;
     let notifEnabled = false;
     let inAppNotifOn = false;
     let unreadCounts = { public: 0, vip: 0 };
@@ -264,6 +276,19 @@
       }
       // 绑定头部淡出滚动效果
       bindChatHeadFade();
+      // 聊天记录上滑到顶 → 加载更早历史（分页），不阻塞首屏
+      const histBox = document.getElementById('chatMessages');
+      if (histBox && !histBox.__histBound) {
+        histBox.addEventListener('scroll', () => {
+          if (histBox.scrollTop <= 60 && chatHasMore[currentRoom] && !chatHistLoading) {
+            chatHistLoading = true;
+            loadChatMessages(currentRoom, { history: true }).finally(() => {
+              setTimeout(() => { chatHistLoading = false; }, 400);
+            });
+          }
+        });
+        histBox.__histBound = true;
+      }
     }
 
     function bindChatHeadFade() {
@@ -436,14 +461,26 @@
       // 首屏/失败自动重试：网络抖动或 Supabase 冷启动时，避免“进来没内容”
       const retryLater = () => {
         if (retry < 3) setTimeout(() => {
-          if (room === currentRoom) loadChatMessages(room, { retry: retry + 1 });
+          if (room === currentRoom) loadChatMessages(room, { retry: retry + 1, history: opts.history });
         }, 1500);
       };
 
       try {
-        console.log('[chat] loadChatMessages start', room, 'retry=', retry);
+        console.log('[chat] loadChatMessages start', room, 'isFirst=', isFirst, 'history=', !!opts.history, 'retry=', retry);
+        // 首屏只拉最近 30 条（更快）；轮询只拉增量；历史分页向上拉更早的 30 条
+        const isHistory = !!opts.history;
+        const rpcParams = { p_room: room };
+        if (isHistory) {
+          rpcParams.p_limit = 30;
+          rpcParams.p_before = chatOldestTs[room] || null;
+        } else if (isFirst) {
+          rpcParams.p_limit = 30;
+        } else {
+          rpcParams.p_limit = 100;
+          rpcParams.p_after = lastSeenTs[room] || null;
+        }
         const d = await Promise.race([
-          sbRpc('list_messages', { p_room: room, p_limit: 100 }),
+          sbRpc('list_messages', rpcParams),
           new Promise((_, rej) => setTimeout(() => rej(new Error('list_messages timeout')), 5000))
         ]);
         console.log('[chat] list_messages response', room, d);
@@ -457,25 +494,34 @@
           return;
         }
 
-        const renderList = list.slice().reverse();
+        const myEmail = (__user && __user.email) || '';
 
-        // 新消息处理：页面在后台隐藏、且不是自己发的消息
-        if (document.hidden && !isFirst) {
-          const myEmail = (__user && __user.email) || '';
-          const lastTs = lastSeenTs[room] || 0;
-          const fresh = renderList.filter(m => {
-            const t = m.created_at ? new Date(m.created_at).getTime() : 0;
-            return t > lastTs && m.user_email !== myEmail;
-          });
+        if (isHistory) {
+          // 历史分页：把更早的消息插入列表顶部，并维持当前阅读位置
+          prependChatHistory(list, room);
+        } else if (isFirst) {
+          // 首屏：最近 30 条为降序，翻转后整列表渲染，并滚到最新
+          renderChatMessages(list.slice().reverse(), room, true);
+          if (list.length) {
+            const minTs = list.reduce((mn, m) => Math.min(mn, m.created_at ? new Date(m.created_at).getTime() : 0), Infinity);
+            chatOldestTs[room] = minTs;
+            chatHasMore[room] = list.length >= 30;
+          }
+        } else {
+          // 增量：只把新消息追加到列表底部，不再重建整个列表
+          for (const m of list) appendChatMessage(m, room);
+        }
+
+        // 未读统计：仅后台/非当前房间，且为增量拉取的新消息
+        if (!isFirst && !isHistory) {
+          const fresh = list.filter(m => m.user_email !== myEmail);
           if (fresh.length) {
-            // 系统通知可用 → 弹系统窗
-            if (notifEnabled) {
+            if (document.hidden && notifEnabled) {
               const latest = fresh[fresh.length - 1];
               const name = latest.user_nickname || (latest.user_email ? latest.user_email.split('@')[0] : '群友');
               const preview = (latest.content || '').trim() || (latest.image ? '[图片]' : '新消息');
               notifyNewMessage(room, name, preview, fresh.length);
             }
-            // 页内提醒模式 → 仅当页面在后台或当前不在该房间时累加未读（正在看的不算未读）
             if (inAppNotifOn && (document.hidden || currentRoom !== room)) {
               unreadCounts[room] = (unreadCounts[room] || 0) + fresh.length;
               updateUnreadBadges();
@@ -483,17 +529,11 @@
           }
         }
 
-        // 更新本房间最后已读消息时间戳
-        if (list.length) {
+        // 更新本房间最后已读消息时间戳（用于下一次增量拉取；历史分页不更新）
+        if (!isHistory && list.length) {
           const maxTs = list.reduce((mx, m) => Math.max(mx, m.created_at ? new Date(m.created_at).getTime() : 0), 0);
           lastSeenTs[room] = Math.max(lastSeenTs[room] || 0, maxTs);
         }
-
-        // 说明：未读横幅的显隐统一由 updateUnreadBadges → showUnreadBanner 控制，
-        // 未读为 0 自动隐藏；用户点击横幅(dismiss)或切到该频道(switchChatRoom)才视为已读清除。
-        // 此处不再强制隐藏横幅，避免从后台回来横幅一闪而过。
-
-        renderChatMessages(renderList, room, isFirst);
       } catch (e) {
         console.error('[chat] loadChatMessages error', e);
         if (retry < 3) { retryLater(); return; }
@@ -606,15 +646,21 @@
       const time = m.created_at ? fmtDateTime(m.created_at) : '';
       const name = esc(m.user_nickname || m.user_email?.split('@')[0] || '匿名');
       chatMessageCache.set(`${room}:${m.id}`, m);
-      const canRecall = isMe && !m.recalled_at && m.id && m.created_at && (Date.now() - new Date(m.created_at).getTime() <= 2 * 60 * 1000);
+      const pending = !!m.__pending;
+      const failed = !!m.__failed;
+      const canRecall = isMe && !pending && !failed && !m.recalled_at && m.id && m.created_at && (Date.now() - new Date(m.created_at).getTime() <= 2 * 60 * 1000);
       const recalled = !!m.recalled_at;
-      return `<div class="chat-msg ${isMe ? 'chat-msg-me' : 'chat-msg-other'}" data-message-id="${esc(m.id || '')}" data-room="${esc(room)}">
+      const stateCls = pending ? ' chat-msg-pending' : (failed ? ' chat-msg-failed' : '');
+      const timeHtml = failed
+        ? `<span class="chat-msg-state chat-msg-state-failed">发送失败 <button type="button" class="chat-retry-btn" onclick="retryChatSend('${esc(m.id)}')">重试</button></span>`
+        : (pending ? '<span class="chat-msg-state">发送中…</span>' : `<span class="chat-msg-time">${time}</span>`);
+      return `<div class="chat-msg ${isMe ? 'chat-msg-me' : 'chat-msg-other'}${stateCls}" data-message-id="${esc(m.id || '')}" data-room="${esc(room)}">
         ${canRecall ? `<button class="chat-recall-btn" type="button" onclick="recallChatMessage('${esc(m.id)}')">撤回</button>` : ''}
         <div class="chat-msg-avatar">${name.charAt(0).toUpperCase()}</div>
         <div class="chat-msg-body">
           <div class="chat-msg-meta">
             <span class="chat-msg-name">${name}</span>
-            <span class="chat-msg-time">${time}</span>
+            ${timeHtml}
           </div>
           ${recalled ? '<div class="chat-recalled">消息已撤回</div>' : renderChatMessageContent(m)}
         </div>
@@ -624,13 +670,58 @@
     function appendChatMessage(message, room) {
       const box = document.getElementById('chatMessages');
       if (!box || room !== currentRoom) return;
+      // 增量轮询可能重复拉回已渲染的消息（如自己刚发的），按 id 去重；
+      // 若已存在且远端标记为“已撤回”，则就地更新为撤回样式
+      if (message && message.id) {
+        const sel = '[data-message-id="' + String(message.id).replace(/"/g, '\\"') + '"]';
+        const exist = box.querySelector(sel);
+        if (exist) {
+          if (message.recalled_at && !exist.querySelector('.chat-recalled')) {
+            exist.outerHTML = renderChatMessageHtml(message, room);
+          }
+          return;
+        }
+      }
+      // 轮询拉回的可能正是自己"发送中"的那条：就地替换占位消息，避免重复两条
+      if (message && message.user_email === ((__user && __user.email) || '')) {
+        const key = chatSendKey(room, (message.content || '').trim(), message.image || '');
+        const tempId = chatPendingKeys.get(key);
+        if (tempId) {
+          const holder = box.querySelector('[data-message-id="' + tempId + '"]');
+          chatPendingKeys.delete(key);
+          chatPendingSends.delete(tempId);
+          if (holder) {
+            holder.outerHTML = renderChatMessageHtml(message, room);
+            return;
+          }
+        }
+      }
       const empty = box.querySelector('.chat-empty, .chat-loading');
       if (empty) box.innerHTML = '';
       const wasNearBottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 60;
       box.insertAdjacentHTML('beforeend', renderChatMessageHtml(message, room));
       if (wasNearBottom || message.user_email === ((__user && __user.email) || '')) {
         box.scrollTop = box.scrollHeight;
+        // 图片异步解码会撑高内容，稍后补滚一次以停留在最新
+        setTimeout(() => { box.scrollTop = box.scrollHeight; }, 120);
       }
+    }
+
+    // 历史分页：把更早的消息插入到列表顶部，并维持用户当前阅读位置
+    function prependChatHistory(list, room) {
+      const box = document.getElementById('chatMessages');
+      if (!box || !list || !list.length) { chatHasMore[room] = false; return; }
+      // list 为降序（最新在前），转成升序以便按时间顺序插入顶部
+      const ordered = list.slice().reverse();
+      const prevHeight = box.scrollHeight;
+      const prevTop = box.scrollTop;
+      const html = ordered.map(m => renderChatMessageHtml(m, room)).join('');
+      box.insertAdjacentHTML('afterbegin', html);
+      // 补偿：顶部插入后，把滚动位置下移新增高度，避免画面跳动
+      box.scrollTop = prevTop + (box.scrollHeight - prevHeight);
+      const minTs = ordered.reduce((mn, m) => Math.min(mn, m.created_at ? new Date(m.created_at).getTime() : 0), Infinity);
+      chatOldestTs[room] = Math.min(chatOldestTs[room] || Infinity, minTs);
+      chatHasMore[room] = list.length >= 30;
     }
 
     function renderChatMessages(list, room, isFirst) {
@@ -642,12 +733,15 @@
       }
 
       const html = list.map(m => renderChatMessageHtml(m, room)).join('');
-
-      // 如果内容没变，不滚动（避免打断用户阅读）
-      const shouldScroll = box.scrollTop + box.clientHeight >= box.scrollHeight - 60;
       box.innerHTML = html;
-      if (shouldScroll || isFirst) {
-        box.scrollTop = box.scrollHeight;
+      // 首屏始终滚到最新；图片是 base64 异步解码，会撑高内容，故多次兜底滚动
+      const scrollToBottom = () => { box.scrollTop = box.scrollHeight; };
+      if (isFirst) {
+        scrollToBottom();
+        requestAnimationFrame(scrollToBottom);
+        setTimeout(scrollToBottom, 60);
+        setTimeout(scrollToBottom, 300);
+        setTimeout(scrollToBottom, 700);
       }
     }
 
@@ -728,7 +822,15 @@
       try {
         const d = await sbRpc('recall_message', { p_token: __user.token, p_message_id: messageId });
         if (d && d.ok) {
-          loadChatMessages(currentRoom, { isFirst: true });
+          // 就地把这条改成“已撤回”，不再整列表重载
+          const box = document.getElementById('chatMessages');
+          const node = box && box.querySelector('[data-message-id="' + String(messageId).replace(/"/g, '\\"') + '"]');
+          const cached = chatMessageCache.get(`${currentRoom}:${messageId}`);
+          if (node && cached) {
+            node.outerHTML = renderChatMessageHtml(Object.assign({}, cached, { recalled_at: new Date().toISOString() }), currentRoom);
+          } else {
+            loadChatMessages(currentRoom, { isFirst: true });
+          }
         } else {
           alert('撤回失败：' + ((d && (d.msg || d.message)) || '消息可能已超过2分钟'));
         }
@@ -742,53 +844,111 @@
       if (currentRoom === 'vip' && !__user.isVip) { openRedeemModal(); return; }
 
       const input = document.getElementById('chatInput');
-      const btn = document.getElementById('chatSendBtn');
       const content = (input.value || '').trim();
       const image = pendingChatImage;
 
       if (!content && !image) return;
       if (content.length > 500) { alert('单条消息最多 500 字'); return; }
 
-      btn.disabled = true;
-      btn.textContent = '发送中…';
+      const room = currentRoom;
+      const quote = pendingChatQuote;
+      const payload = {
+        p_token: __user.token,
+        p_room: room,
+        p_content: content,
+        p_image: image || null,
+        p_reply_to_id: quote && quote.id ? quote.id : null
+      };
+      const tempId = 'pending-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+      const optimistic = {
+        id: tempId,
+        user_email: __user.email,
+        user_nickname: __user.nickname || __user.email?.split('@')[0] || '我',
+        content,
+        image,
+        reply_to_id: quote && quote.id ? quote.id : null,
+        reply_to_nickname: quote && quote.nickname ? quote.nickname : null,
+        reply_to_content: quote && quote.content ? quote.content : null,
+        reply_to_image: quote && quote.image ? quote.image : null,
+        created_at: new Date().toISOString(),
+        __pending: true
+      };
+      const key = chatSendKey(room, content, image);
+
+      // 乐观渲染：先清空输入框并立即上屏，用户无需等待网络往返
+      input.value = '';
+      clearChatImage();
+      clearChatQuote();
+      chatPendingSends.set(tempId, { key, room, message: optimistic, payload });
+      chatPendingKeys.set(key, tempId);
+      appendChatMessage(optimistic, room);
+
+      // 后台发送，不阻塞输入框；发送按钮保持可用，允许连续发言
+      deliverChatMessage(tempId);
+    }
+
+    // 实际把消息发到服务器，成功后把本地占位消息替换为真实消息
+    async function deliverChatMessage(tempId) {
+      const task = chatPendingSends.get(tempId);
+      if (!task) return;
       try {
-        const payload = {
-          p_token: __user.token,
-          p_room: currentRoom,
-          p_content: content,
-          p_image: image || null,
-          p_reply_to_id: pendingChatQuote && pendingChatQuote.id ? pendingChatQuote.id : null
-        };
-        const d = await sbRpc('send_message', payload);
+        const d = await sbRpc('send_message', task.payload);
         console.log('[chat] send_message response', d);
         if (d && d.ok) {
-          const sentMessage = {
-            id: d.id || d.message_id || ('local-' + Date.now()),
-            user_email: __user.email,
-            user_nickname: __user.nickname || __user.email?.split('@')[0] || '我',
-            content,
-            image,
-            reply_to_id: pendingChatQuote && pendingChatQuote.id ? pendingChatQuote.id : null,
-            reply_to_nickname: pendingChatQuote && pendingChatQuote.nickname ? pendingChatQuote.nickname : null,
-            reply_to_content: pendingChatQuote && pendingChatQuote.content ? pendingChatQuote.content : null,
-            reply_to_image: pendingChatQuote && pendingChatQuote.image ? pendingChatQuote.image : null,
-            created_at: new Date().toISOString()
-          };
-          input.value = '';
-          clearChatImage();
-          clearChatQuote();
-          appendChatMessage(sentMessage, currentRoom);
+          finalizeChatSend(tempId, d.id || d.message_id || null);
         } else {
           const detail = d && (d.msg || d.message || d.error || d.details || JSON.stringify(d));
-          alert('发送失败：' + (detail || '未知错误'));
+          markChatSendFailed(tempId, detail || '未知错误');
         }
       } catch (e) {
         console.error('sendChatMessage error', e);
-        alert('网络错误，发送失败: ' + (e && e.message ? e.message : '请检查网络或刷新页面'));
-      } finally {
-        btn.disabled = false;
-        btn.textContent = '发送';
+        markChatSendFailed(tempId, (e && e.message) ? e.message : '网络异常');
       }
+    }
+
+    // 发送成功：把占位消息就地换成带真实 id 的消息（可撤回、可被引用）
+    function finalizeChatSend(tempId, realId) {
+      const task = chatPendingSends.get(tempId);
+      chatPendingSends.delete(tempId);
+      if (task) chatPendingKeys.delete(task.key);
+      if (!task) return;
+      const box = document.getElementById('chatMessages');
+      if (!box) return;
+      const node = box.querySelector('[data-message-id="' + tempId + '"]');
+      if (!node) return;
+      // 轮询可能已把真实消息追加进来，此时直接移除占位，避免重复
+      if (realId && box.querySelector('[data-message-id="' + String(realId).replace(/"/g, '\\"') + '"]')) {
+        node.remove();
+        return;
+      }
+      const finalMessage = Object.assign({}, task.message, { id: realId || task.message.id, __pending: false });
+      node.outerHTML = renderChatMessageHtml(finalMessage, task.room);
+      if (realId) lastSeenTs[task.room] = Math.max(lastSeenTs[task.room] || 0, new Date(finalMessage.created_at).getTime());
+    }
+
+    // 发送失败：占位消息标红并提供重试，不丢用户内容
+    function markChatSendFailed(tempId, detail) {
+      const task = chatPendingSends.get(tempId);
+      if (!task) return;
+      task.message.__pending = false;
+      task.message.__failed = true;
+      task.error = detail;
+      const box = document.getElementById('chatMessages');
+      const node = box && box.querySelector('[data-message-id="' + tempId + '"]');
+      if (node) node.outerHTML = renderChatMessageHtml(task.message, task.room);
+      console.warn('[chat] send failed:', detail);
+    }
+
+    // 点“重试”重新投递同一条消息
+    function retryChatSend(tempId) {
+      const task = chatPendingSends.get(tempId);
+      if (!task) return;
+      task.message.__failed = false;
+      task.message.__pending = true;
+      const box = document.getElementById('chatMessages');
+      const node = box && box.querySelector('[data-message-id="' + tempId + '"]');
+      if (node) node.outerHTML = renderChatMessageHtml(task.message, task.room);
+      deliverChatMessage(tempId);
     }
 
     function onChatImageSelected(input) {

@@ -27,6 +27,7 @@ DECLARE
   v_reply_content TEXT;
   v_reply_image TEXT;
   v_has_reply BOOLEAN := false;
+  v_new_id UUID;
 BEGIN
   SELECT email, nickname, vip_expire INTO v_user FROM profiles WHERE token = p_token;
   IF NOT FOUND THEN RETURN jsonb_build_object('ok', false, 'msg', '请先登录'); END IF;
@@ -52,8 +53,9 @@ BEGIN
     CASE WHEN v_has_reply THEN v_reply_content ELSE NULL END,
     CASE WHEN v_has_reply THEN v_reply_image ELSE NULL END,
     now()
-  );
-  RETURN jsonb_build_object('ok', true);
+  )
+  RETURNING id INTO v_new_id;
+  RETURN jsonb_build_object('ok', true, 'id', v_new_id);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -96,10 +98,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 5. 改造 list_messages，返回图片与引用字段
+-- 5. 改造 list_messages，返回图片与引用字段，并支持增量拉取
 DROP FUNCTION IF EXISTS list_messages(text);
 DROP FUNCTION IF EXISTS list_messages(text, integer);
-CREATE OR REPLACE FUNCTION list_messages(p_room TEXT, p_limit INTEGER DEFAULT 100)
+CREATE OR REPLACE FUNCTION list_messages(p_room TEXT, p_limit INTEGER DEFAULT 100, p_after TIMESTAMPTZ DEFAULT NULL, p_before TIMESTAMPTZ DEFAULT NULL)
 RETURNS TABLE(
   id UUID,
   user_email TEXT,
@@ -114,14 +116,36 @@ RETURNS TABLE(
   created_at TIMESTAMPTZ
 ) AS $$
 BEGIN
-  RETURN QUERY SELECT
-    m.id, m.user_email, m.user_nickname, m.content, m.image,
-    m.reply_to_id, m.reply_to_nickname, m.reply_to_content, m.reply_to_image,
-    m.recalled_at, m.created_at
-  FROM messages m
-  WHERE m.room = p_room
-  ORDER BY m.created_at DESC
-  LIMIT p_limit;
+  IF p_after IS NOT NULL THEN
+    -- 增量：只返回 p_after 之后的新消息（升序），前端直接追加，避免全量重渲染
+    RETURN QUERY SELECT
+      m.id, m.user_email, m.user_nickname, m.content, m.image,
+      m.reply_to_id, m.reply_to_nickname, m.reply_to_content, m.reply_to_image,
+      m.recalled_at, m.created_at
+    FROM messages m
+    WHERE m.room = p_room AND (m.created_at > p_after OR m.recalled_at > p_after)
+    ORDER BY m.created_at ASC;
+  ELSIF p_before IS NOT NULL THEN
+    -- 历史分页：返回早于 p_before 的 p_limit 条（降序），前端插入列表顶部
+    RETURN QUERY SELECT
+      m.id, m.user_email, m.user_nickname, m.content, m.image,
+      m.reply_to_id, m.reply_to_nickname, m.reply_to_content, m.reply_to_image,
+      m.recalled_at, m.created_at
+    FROM messages m
+    WHERE m.room = p_room AND m.created_at < p_before
+    ORDER BY m.created_at DESC
+    LIMIT p_limit;
+  ELSE
+    -- 首屏：返回最近 p_limit 条（降序），前端翻转后整列表渲染
+    RETURN QUERY SELECT
+      m.id, m.user_email, m.user_nickname, m.content, m.image,
+      m.reply_to_id, m.reply_to_nickname, m.reply_to_content, m.reply_to_image,
+      m.recalled_at, m.created_at
+    FROM messages m
+    WHERE m.room = p_room
+    ORDER BY m.created_at DESC
+    LIMIT p_limit;
+  END IF;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
