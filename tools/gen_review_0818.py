@@ -49,16 +49,28 @@ def sec_core_index(d):
         % (altcls(i), x["name"], x["code"], x["open"], x["close"], chg_cell(x["change"]), x["amount"])
         for i, x in enumerate(idx)
     )
-    trend = "涨" if idx[0]["change"] > 0 else "跌"
+    upn = sum(1 for x in idx if x["change"] > 0)
+    downn = sum(1 for x in idx if x["change"] < 0)
+    trend = "涨" if idx[0]["change"] >= 0 else "跌"
+    if upn == len(idx):
+        overall = "主要指数全线上涨"
+    elif downn == len(idx):
+        overall = "主要指数全线下跌"
+    else:
+        overall = "主要指数走势分化（%d涨%d跌）" % (upn, downn)
+    s = lambda c: "涨" if c >= 0 else "跌"
+    bigthree = "上证指数%s%.2f%%，深证成指%s%.2f%%，创业板指%s%.2f%%" % (
+        s(idx[0]["change"]), abs(idx[0]["change"]),
+        s(idx[1]["change"]), abs(idx[1]["change"]),
+        s(idx[2]["change"]), abs(idx[2]["change"]))
     return (
         '<section class="rpt-chapter"><h2 class="rpt-h2">一  核心指数概览</h2>\n'
-        '<p>%s月%s日A股集体收%s，主要指数全线下跌。上证指数%s%.2f%%，深证成指%s%.2f%%，创业板指%s%.2f%%。全市场%s，成交额约%.2f万亿元。</p>\n'
+        '<p>%s月%s日A股集体收%s，%s。%s。全市场%s，成交额约%.2f万亿元。</p>\n'
         '<div class="rpt-tbl-wrap"><table class="rpt-tbl"><thead><tr>\n'
         '<th>指数</th><th>代码</th><th>开盘</th><th>收盘</th><th>涨跌幅</th><th>成交额</th>\n'
         '</tr></thead><tbody>\n%s\n</tbody></table></div>\n'
         '<p>%s</p>\n</section>'
-        % (d["date"][5:7], d["date"][8:10], trend,
-           trend, abs(idx[0]["change"]), trend, abs(idx[1]["change"]), trend, abs(idx[2]["change"]),
+        % (d["date"][5:7], d["date"][8:10], trend, overall, bigthree,
            ("涨多跌少" if d.get("up", 0) > d.get("down", 0) else "跌多跌少"),
            d["total_amount"] / 10000, rows, d["index_note"])
     )
