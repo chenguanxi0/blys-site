@@ -21,7 +21,11 @@ npx cap add android
 1. 创建 Firebase Android 应用：`site.blys.app`
 2. 下载 `google-services.json`
 3. 放到：`android/app/google-services.json`
-4. 在 Android Studio 中确认 Firebase Messaging 依赖已启用
+4. Firebase 后台生成 service account JSON
+5. 在 Supabase Edge Function Secrets 中添加：
+   - `FIREBASE_SERVICE_ACCOUNT_JSON`
+   - `FIREBASE_PROJECT_ID`
+6. 在 Android Studio 中确认 Firebase Messaging 依赖已启用
 
 ## 4. 数据库
 
@@ -38,7 +42,15 @@ npx cap add android
 
 ## 6. 后端发推送
 
-下一步需要新增一个发送 FCM 的 Edge Function，替代浏览器 Web Push。
+新增 Supabase Edge Function：
+
+- 名称：`notify-native-chat`
+- 源码：`web/tools/notify-native-chat-edge-function.ts`
+
+发消息后会并行调用：
+
+- `notify-chat`：浏览器 Web Push
+- `notify-native-chat`：Android App 原生推送
 
 ## 7. 常用命令
 

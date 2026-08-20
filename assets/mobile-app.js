@@ -13,7 +13,7 @@
   }
 
   function canUseNativePush() {
-    return isNativeApp() && !!window.CapacitorCustomPlatform === false;
+    return isNativeApp() && !!(window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.PushNotifications);
   }
 
   function saveToken(token) {
@@ -38,8 +38,7 @@
     if (APP_BRIDGE.initPromise) return APP_BRIDGE.initPromise;
     APP_BRIDGE.initPromise = (async () => {
       try {
-        const mod = await import('https://unpkg.com/@capacitor/push-notifications@7.0.3/dist/plugin.js');
-        const PushNotifications = mod.PushNotifications;
+        const PushNotifications = window.Capacitor.Plugins.PushNotifications;
         APP_BRIDGE.enabled = true;
         APP_BRIDGE.nativePush = true;
 
@@ -70,6 +69,7 @@
         return { ok: true };
       } catch (e) {
         localStorage.setItem('blys_native_push_error', e && e.message ? String(e.message) : 'native push init error');
+        APP_BRIDGE.initPromise = null;
         return { ok: false, msg: 'native-init-failed' };
       }
     })();

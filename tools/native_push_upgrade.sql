@@ -77,7 +77,7 @@ BEGIN
     RETURN;
   END IF;
 
-  IF p_room = 'vip' AND (v_user.vip_expire IS NULL OR v_user.vip_expire <= now()) THEN
+  IF p_room = 'vip' AND NOT (COALESCE(v_user.is_admin, false) OR (v_user.vip_expire IS NOT NULL AND v_user.vip_expire > now())) THEN
     RETURN;
   END IF;
 
@@ -88,6 +88,7 @@ BEGIN
   WHERE npt.user_token <> p_token
     AND (
       p_room <> 'vip'
+      OR COALESCE(p.is_admin, false)
       OR (p.vip_expire IS NOT NULL AND p.vip_expire > now())
     );
 END;

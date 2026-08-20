@@ -1445,12 +1445,16 @@
 
     async function triggerChatPushNotification(task) {
       if (!task || !task.payload || !__user.loggedIn || !__user.token) return;
-      await callEdge('notify-chat', {
+      const body = {
         token: __user.token,
         room: task.room,
         content: task.payload.p_content || '',
         image: !!task.payload.p_image
-      });
+      };
+      await Promise.allSettled([
+        callEdge('notify-chat', body),
+        callEdge('notify-native-chat', body)
+      ]);
     }
 
     // 页面离开时清理轮询
