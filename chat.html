@@ -1143,6 +1143,9 @@
       const msg = err && err.message ? String(err.message) : '';
       if (!supportsSystemPush()) return '当前环境不支持系统弹窗推送';
       if (typeof Notification !== 'undefined' && Notification.permission === 'denied') return '系统通知权限已被禁止';
+      if (msg.includes('SW rebuild failed')) return '重建推送组件失败' + (name ? '（' + name + '）' : '');
+      if (msg.includes('SW ready failed')) return '读取推送组件失败' + (name ? '（' + name + '）' : '');
+      if (msg.includes('Get subscription failed')) return '读取旧推送订阅失败' + (name ? '（' + name + '）' : '');
       if (msg.includes('不支持系统推送')) return '当前浏览器不支持系统弹窗推送';
       if (msg.includes('请先登录')) return '请先登录后再开启提醒';
       if (msg.includes('没有允许浏览器通知权限')) return '系统通知权限没有允许';
@@ -1210,7 +1213,11 @@
       } catch (e) {
         console.warn('[chat] rebuild service worker scan failed', e);
       }
-      return navigator.serviceWorker.register('sw.js?v=2026082028');
+      try {
+        return await navigator.serviceWorker.register('sw.js?v=2026082028');
+      } catch (e) {
+        throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
+      }
     }
 
     async function subscribeChatPush(retryMode) {
@@ -1221,14 +1228,28 @@
         : await Notification.requestPermission();
       if (permission !== 'granted') throw new Error('你没有允许浏览器通知权限');
 
-      const reg = await navigator.serviceWorker.ready;
+      let reg;
       try {
-        let sub = await reg.pushManager.getSubscription();
+        reg = await navigator.serviceWorker.ready;
+      } catch (e) {
+        throw new Error('SW ready failed: ' + ((e && e.message) ? e.message : 'unknown'));
+      }
+      try {
+        let sub;
+        try {
+          sub = await reg.pushManager.getSubscription();
+        } catch (e) {
+          throw new Error('Get subscription failed: ' + ((e && e.message) ? e.message : 'unknown'));
+        }
         if (!sub) {
-          sub = await reg.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(PUSH_VAPID_PUBLIC_KEY)
-          });
+          try {
+            sub = await reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(PUSH_VAPID_PUBLIC_KEY)
+            });
+          } catch (e) {
+            throw new Error('Subscription failed: ' + ((e && e.message) ? e.message : 'unknown'));
+          }
         }
         const saved = await saveChatPushSubscription(sub);
         if (!saved) throw new Error('订阅保存失败，请确认已执行 push_upgrade.sql');
