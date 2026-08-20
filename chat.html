@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082025" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082026" />
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23e23b3b'/%3E%3Cstop offset='100%25' stop-color='%23f87171'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='18' cy='18' r='17' fill='url(%23g)'/%3E%3Ctext x='18' y='23' text-anchor='middle' fill='white' font-family='-apple-system,PingFang SC,Microsoft YaHei,sans-serif' font-size='18' font-weight='700'%3E白%3C/text%3E%3C/svg%3E" />
 </head>
@@ -187,7 +187,7 @@
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082025"></script>
+  <script src="assets/app.js?v=2026082026"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -199,7 +199,7 @@
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    console.log('[chat] build v2026082025 (fix initial latest scroll + optimistic send)');
+    console.log('[chat] build v2026082026 (web push notifications + optimistic send)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
     let lastSeenTs = { public: 0, vip: 0 };
@@ -222,6 +222,7 @@
     let notifEnabled = false;
     let inAppNotifOn = false;
     let unreadCounts = { public: 0, vip: 0 };
+    const PUSH_VAPID_PUBLIC_KEY = 'BA2xT4Y1plL6c9JNmBJI8aqp_vjxrnOG1-p-nhazGbm_QGnnuq8A7hbYbBIpZKd3MQ3-jx0EfXZGnKYQQuFHFac';
 
     document.addEventListener('DOMContentLoaded', () => {
       initChatPage();
@@ -264,6 +265,7 @@
         if (currentRoom !== preferredRoom) {
           switchChatRoom(preferredRoom, { skipUserRefresh: true });
         }
+        refreshChatPushSubscription();
       });
       // 兜底：再延迟刷新一次，避免某些浏览器事件时机问题
       setTimeout(() => {
@@ -931,6 +933,7 @@
         console.log('[chat] send_message response', d);
         if (d && d.ok) {
           updateChatPendingState(tempId, '发送成功…');
+          triggerChatPushNotification(task).catch(e => console.warn('[chat] push notify failed', e));
           finalizeChatSend(tempId, d.id || d.message_id || null);
         } else {
           const status = (d && d._status) ? ' [HTTP ' + d._status + ']' : '';
@@ -1106,7 +1109,9 @@
     // ===== 新消息提醒 =====
     function initChatNotification() {
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js').catch(() => {});
+        navigator.serviceWorker.register('sw.js?v=2026082026').then(() => {
+          refreshChatPushSubscription();
+        }).catch(() => {});
       }
       // 唯一可靠的持久化依据：页内未读提醒（任何浏览器都生效，刷新后能记住）
       // 系统通知仅作为“锦上添花”，不用来判断“是否记住”
@@ -1122,6 +1127,78 @@
         showUnreadBanner();
         loadChatMessages(currentRoom);
       });
+    }
+
+    function supportsSystemPush() {
+      return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+    }
+
+    function urlBase64ToUint8Array(base64String) {
+      const padding = '='.repeat((4 - base64String.length % 4) % 4);
+      const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+      const rawData = atob(base64);
+      const outputArray = new Uint8Array(rawData.length);
+      for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+      return outputArray;
+    }
+
+    async function saveChatPushSubscription(subscription) {
+      if (!subscription || !__user.loggedIn || !__user.token) return false;
+      const d = await sbRpc('save_push_subscription', {
+        p_token: __user.token,
+        p_subscription: subscription.toJSON(),
+        p_user_agent: navigator.userAgent || ''
+      }, { timeoutMs: 10000 });
+      return !!(d && d.ok);
+    }
+
+    async function subscribeChatPush() {
+      if (!supportsSystemPush()) throw new Error('当前浏览器不支持系统推送');
+      if (!__user.loggedIn || !__user.token) throw new Error('请先登录后再开启提醒');
+      const permission = Notification.permission === 'granted'
+        ? 'granted'
+        : await Notification.requestPermission();
+      if (permission !== 'granted') throw new Error('你没有允许浏览器通知权限');
+
+      const reg = await navigator.serviceWorker.ready;
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(PUSH_VAPID_PUBLIC_KEY)
+        });
+      }
+      const saved = await saveChatPushSubscription(sub);
+      if (!saved) throw new Error('订阅保存失败，请确认已执行 push_upgrade.sql');
+      return sub;
+    }
+
+    async function unsubscribeChatPush() {
+      if (!supportsSystemPush() || !__user.loggedIn || !__user.token) return;
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        if (!sub) return;
+        const endpoint = sub.endpoint;
+        await sub.unsubscribe();
+        await sbRpc('delete_push_subscription', { p_token: __user.token, p_endpoint: endpoint }, { timeoutMs: 8000 });
+      } catch (e) {
+        console.warn('[chat] unsubscribe push failed', e);
+      }
+    }
+
+    async function refreshChatPushSubscription() {
+      if (!supportsSystemPush()) return;
+      if (localStorage.getItem('blys_notif') !== 'on') return;
+      if (Notification.permission !== 'granted') return;
+      if (!__user.loggedIn || !__user.token) return;
+      try {
+        await subscribeChatPush();
+        notifEnabled = true;
+        updateNotifBtn();
+      } catch (e) {
+        console.warn('[chat] refresh push subscription failed', e);
+      }
     }
 
     function getBrowserTip() {
@@ -1152,18 +1229,17 @@
     function updateNotifBtn() {
       const btn = document.getElementById('chatNotifBtn');
       if (!btn) return;
+      if (notifEnabled) {
+        btn.textContent = '🔔 已开启';
+        btn.classList.add('on');
+        btn.title = '系统弹窗提醒已开启';
+        return;
+      }
       // 优先显示「页内提醒」状态（任何浏览器都生效，且可持久化）
       if (inAppNotifOn) {
         btn.textContent = '📬 页内提醒';
         btn.classList.add('on');
         btn.title = '页内未读提醒已开启（切走再回来会看到未读横幅）';
-        return;
-      }
-      // 系统通知可用（真正授权过）
-      if (notifEnabled) {
-        btn.textContent = '🔔 已开启';
-        btn.classList.add('on');
-        btn.title = '新消息弹窗提醒（已开启）';
         return;
       }
       // 未开启
@@ -1177,31 +1253,39 @@
     }
 
     async function toggleChatNotification() {
-      if (inAppNotifOn) {
+      if (notifEnabled || inAppNotifOn) {
         // 关闭提醒
         inAppNotifOn = false;
         localStorage.setItem('blys_notif_inapp', 'off');
         notifEnabled = false;
         localStorage.setItem('blys_notif', 'off');
+        unsubscribeChatPush();
         updateNotifBtn();
         return;
       }
-      // 开启：优先用「页内未读提醒」（可靠、可持久化，国产浏览器都支持）
+      if (!__user.loggedIn) {
+        openAuthModal();
+        return;
+      }
+
+      // 开启：优先尝试系统 Web Push，失败再退回页内提醒
       inAppNotifOn = true;
       localStorage.setItem('blys_notif_inapp', 'on');
-      // 若系统通知确实已授权，额外开启（OPPO/vivo/小米自带浏览器通常不授权，不影响页内提醒）
-      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+      try {
+        await subscribeChatPush();
         notifEnabled = true;
         localStorage.setItem('blys_notif', 'on');
-      } else {
+      } catch (e) {
+        console.warn('[chat] system push unavailable', e);
         notifEnabled = false;
+        localStorage.setItem('blys_notif', 'off');
       }
       updateNotifBtn();
       unreadCounts = { public: 0, vip: 0 };
       updateUnreadBadges();
       if (!notifEnabled) {
         const bname = getBrowserName();
-        alert('已开启「页内提醒」。' + bname + '不支持系统弹窗，但你切走再回来时，会看到未读横幅和频道红点提醒。\n\n想收到真正的锁屏弹窗，请用手机上的 Chrome 或 Edge 打开本页并「添加到桌面」。');
+        alert('已开启「页内提醒」。' + bname + '暂时无法开启系统弹窗，但你切走再回来时，会看到未读横幅和频道红点提醒。\n\n想收到真正的锁屏弹窗，请用手机上的 Edge/Chrome 打开本页并「添加到桌面」，允许通知权限后再开启提醒。');
       }
     }
 
@@ -1253,6 +1337,16 @@
         }
       } catch (e) { /* 回退到普通通知 */ }
       try { new Notification(title, { body }); } catch (e) { /* 忽略 */ }
+    }
+
+    async function triggerChatPushNotification(task) {
+      if (!task || !task.payload || !__user.loggedIn || !__user.token) return;
+      await callEdge('notify-chat', {
+        token: __user.token,
+        room: task.room,
+        content: task.payload.p_content || '',
+        image: !!task.payload.p_image
+      });
     }
 
     // 页面离开时清理轮询
