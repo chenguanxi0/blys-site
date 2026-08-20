@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082021" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082024" />
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23e23b3b'/%3E%3Cstop offset='100%25' stop-color='%23f87171'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='18' cy='18' r='17' fill='url(%23g)'/%3E%3Ctext x='18' y='23' text-anchor='middle' fill='white' font-family='-apple-system,PingFang SC,Microsoft YaHei,sans-serif' font-size='18' font-weight='700'%3E白%3C/text%3E%3C/svg%3E" />
 </head>
@@ -187,17 +187,18 @@
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082020"></script>
+  <script src="assets/app.js?v=2026082024"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
     let chatPollTimer = null;
     let chatOnlineTimer = null;
     let chatHeartbeatTimer = null;
+    let chatSendWatchdogTimer = null;
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    console.log('[chat] build v2026082021 (incremental + history paging + optimistic send + schema cache safe + error surfacing)');
+    console.log('[chat] build v2026082024 (fix optimistic send dedupe + send timeout)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
     let lastSeenTs = { public: 0, vip: 0 };
@@ -247,6 +248,8 @@
       await switchChatRoom(preferredRoom, { skipUserRefresh: true });
       // 启动轮询
       startChatPoll();
+      // 发送兜底：防止乐观气泡停在“发送中”但投递未启动
+      startChatSendWatchdog();
       // 启动在线人数
       startOnlineTracking();
       // 注册通知（新消息手机弹窗提醒）
@@ -656,9 +659,10 @@
       const canRecall = isMe && !pending && !failed && !m.recalled_at && m.id && m.created_at && (Date.now() - new Date(m.created_at).getTime() <= 2 * 60 * 1000);
       const recalled = !!m.recalled_at;
       const stateCls = pending ? ' chat-msg-pending' : (failed ? ' chat-msg-failed' : '');
+      const pendingText = m.__sendState || '发送中…';
       const timeHtml = failed
         ? `<span class="chat-msg-state chat-msg-state-failed">发送失败 <button type="button" class="chat-retry-btn" onclick="retryChatSend('${esc(m.id)}')">重试</button></span>`
-        : (pending ? '<span class="chat-msg-state">发送中…</span>' : `<span class="chat-msg-time">${time}</span>`);
+        : (pending ? `<span class="chat-msg-state">${esc(pendingText)}</span>` : `<span class="chat-msg-time">${time}</span>`);
       return `<div class="chat-msg ${isMe ? 'chat-msg-me' : 'chat-msg-other'}${stateCls}" data-message-id="${esc(m.id || '')}" data-room="${esc(room)}">
         ${canRecall ? `<button class="chat-recall-btn" type="button" onclick="recallChatMessage('${esc(m.id)}')">撤回</button>` : ''}
         <div class="chat-msg-avatar">${name.charAt(0).toUpperCase()}</div>
@@ -688,7 +692,7 @@
         }
       }
       // 轮询拉回的可能正是自己"发送中"的那条：就地替换占位消息，避免重复两条
-      if (message && message.user_email === ((__user && __user.email) || '')) {
+      if (message && !message.__pending && message.user_email === ((__user && __user.email) || '')) {
         const key = chatSendKey(room, (message.content || '').trim(), message.image || '');
         const tempId = chatPendingKeys.get(key);
         if (tempId) {
@@ -876,7 +880,8 @@
         reply_to_content: quote && quote.content ? quote.content : null,
         reply_to_image: quote && quote.image ? quote.image : null,
         created_at: new Date().toISOString(),
-        __pending: true
+        __pending: true,
+        __sendState: '发送中…'
       };
       const key = chatSendKey(room, content, image);
 
@@ -884,28 +889,40 @@
       input.value = '';
       clearChatImage();
       clearChatQuote();
-      chatPendingSends.set(tempId, { key, room, message: optimistic, payload });
+      chatPendingSends.set(tempId, { key, room, message: optimistic, payload, createdAt: Date.now(), delivering: false, attempts: 0 });
       chatPendingKeys.set(key, tempId);
-      appendChatMessage(optimistic, room);
+      try {
+        appendChatMessage(optimistic, room);
+      } catch (e) {
+        console.error('[chat] optimistic append failed, continue delivery', e);
+      }
 
       // 后台发送，不阻塞输入框；发送按钮保持可用，允许连续发言
+      updateChatPendingState(tempId, '发送中…');
       deliverChatMessage(tempId);
+      window.setTimeout(() => deliverChatMessage(tempId), 800);
+      window.setTimeout(() => {
+        if (chatPendingSends.has(tempId)) markChatSendFailed(tempId, '发送超时，请点重试');
+      }, 18000);
     }
 
     // 实际把消息发到服务器，成功后把本地占位消息替换为真实消息
     async function deliverChatMessage(tempId) {
       const task = chatPendingSends.get(tempId);
       if (!task) return;
-      console.log('[chat] deliverChatMessage start', tempId);
+      if (task.delivering) return;
+      task.delivering = true;
+      task.attempts = (task.attempts || 0) + 1;
+      task.lastAttemptAt = Date.now();
+      console.log('[chat] deliverChatMessage start', tempId, 'attempt=', task.attempts);
+      updateChatPendingState(tempId, task.attempts > 1 ? '重试发送中…' : '发送中…');
       try {
         // 写操作可能受 Supabase 冷启动/网络影响而变慢，加超时兜底：
         // 避免 fetch 挂起导致气泡永久停在“发送中…”。超时则转失败可重试。
-        const d = await Promise.race([
-          sbRpc('send_message', task.payload),
-          new Promise((_, rej) => setTimeout(() => rej(new Error('send_message 超时')), 15000))
-        ]);
+        const d = await sbRpc('send_message', task.payload, { timeoutMs: 15000 });
         console.log('[chat] send_message response', d);
         if (d && d.ok) {
+          updateChatPendingState(tempId, '发送成功…');
           finalizeChatSend(tempId, d.id || d.message_id || null);
         } else {
           const status = (d && d._status) ? ' [HTTP ' + d._status + ']' : '';
@@ -915,7 +932,39 @@
       } catch (e) {
         console.error('[chat] deliverChatMessage error', e);
         markChatSendFailed(tempId, (e && e.message) ? e.message : '网络异常');
+      } finally {
+        const latest = chatPendingSends.get(tempId);
+        if (latest) latest.delivering = false;
       }
+    }
+
+    function updateChatPendingState(tempId, text) {
+      const task = chatPendingSends.get(tempId);
+      if (task && task.message) task.message.__sendState = text;
+      const box = document.getElementById('chatMessages');
+      const node = box && box.querySelector('[data-message-id="' + tempId + '"]');
+      const state = node && node.querySelector('.chat-msg-state');
+      if (state) state.textContent = text;
+    }
+
+    function startChatSendWatchdog() {
+      if (chatSendWatchdogTimer) clearInterval(chatSendWatchdogTimer);
+      chatSendWatchdogTimer = setInterval(() => {
+        const now = Date.now();
+        chatPendingSends.forEach((task, tempId) => {
+          if (!task || task.message.__failed) return;
+          const age = now - (task.createdAt || now);
+          const lastAttemptAge = now - (task.lastAttemptAt || 0);
+          if (!task.delivering && (!task.lastAttemptAt || lastAttemptAge > 5000) && (task.attempts || 0) < 2) {
+            console.warn('[chat] watchdog redeliver pending send', tempId, 'age=', age);
+            deliverChatMessage(tempId);
+            return;
+          }
+          if (age > 20000) {
+            markChatSendFailed(tempId, '发送超时，请点重试');
+          }
+        });
+      }, 2000);
     }
 
     // 发送成功：把占位消息就地换成带真实 id 的消息（可撤回、可被引用）
@@ -944,6 +993,8 @@
       if (!task) return;
       task.message.__pending = false;
       task.message.__failed = true;
+      task.message.__sendState = '';
+      task.delivering = false;
       task.error = detail;
       const box = document.getElementById('chatMessages');
       const node = box && box.querySelector('[data-message-id="' + tempId + '"]');
@@ -957,6 +1008,9 @@
       if (!task) return;
       task.message.__failed = false;
       task.message.__pending = true;
+      task.createdAt = Date.now();
+      task.delivering = false;
+      task.lastAttemptAt = 0;
       const box = document.getElementById('chatMessages');
       const node = box && box.querySelector('[data-message-id="' + tempId + '"]');
       if (node) node.outerHTML = renderChatMessageHtml(task.message, task.room);
@@ -1198,6 +1252,7 @@
       if (chatPollTimer) clearInterval(chatPollTimer);
       if (chatOnlineTimer) clearInterval(chatOnlineTimer);
       if (chatHeartbeatTimer) clearInterval(chatHeartbeatTimer);
+      if (chatSendWatchdogTimer) clearInterval(chatSendWatchdogTimer);
     });
   </script>
 </body>

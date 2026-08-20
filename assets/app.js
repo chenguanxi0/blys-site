@@ -690,19 +690,30 @@ const USER_TOKEN_KEY = "blys_user_token";
 const ADMIN_TOKEN_KEY = "blys_admin_token";
 
 // 调用 Supabase RPC
-async function sbRpc(fn, params){
+async function sbRpc(fn, params, options){
   let r;
+  const timeoutMs = options && options.timeoutMs ? Number(options.timeoutMs) : 0;
+  let controller = null;
+  let timeoutId = null;
+  if (timeoutMs > 0 && typeof AbortController !== "undefined") {
+    controller = new AbortController();
+    timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  }
   try {
     r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON, "Authorization": "Bearer " + SUPABASE_ANON },
-      body: JSON.stringify(params || {})
+      body: JSON.stringify(params || {}),
+      signal: controller ? controller.signal : undefined
     });
   } catch (e) {
     // 网络层失败（DNS/TLS/被墙/跨域未配置）：透出真实错误，便于定位
-    const err = new Error("网络请求失败：" + (e && e.message ? e.message : String(e)));
+    const isTimeout = e && e.name === "AbortError";
+    const err = new Error(isTimeout ? `请求超时：${fn} ${timeoutMs}ms 未返回` : "网络请求失败：" + (e && e.message ? e.message : String(e)));
     err._status = 0;
     throw err;
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
   }
   const text = await r.text();
   let d;
