@@ -1426,6 +1426,27 @@ body.chat-body .footer { display:none; }
   color: #64748b;
 }
 .nav-links a::after { display: none; }
+.nav-dropdown { position: relative; }
+.nav-dropdown-trigger {
+  display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px;
+  border: 0; border-radius: 9px; background: transparent; color: #64748b;
+  font: 500 13px/1.2 inherit; cursor: pointer; white-space: nowrap;
+}
+.nav-dropdown-trigger:hover, .nav-dropdown.open .nav-dropdown-trigger { background: #fff; color: var(--ink); }
+.nav-dropdown-chevron {
+  width: 7px; height: 7px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg) translateY(-2px); transition: transform .18s ease;
+}
+.nav-dropdown.open .nav-dropdown-chevron { transform: rotate(225deg) translate(-1px, -1px); }
+.nav-dropdown-menu {
+  display: none; position: absolute; z-index: 130; top: calc(100% + 7px); right: 0; min-width: 112px;
+  padding: 6px; border: 1px solid var(--line); border-radius: 11px; background: #fff;
+  box-shadow: 0 12px 28px rgba(15,23,42,.14);
+}
+.nav-dropdown.open .nav-dropdown-menu { display: block; }
+.nav-dropdown-menu a { display: block; padding: 8px 10px; border-radius: 8px; }
+.nav-dropdown-menu a:hover, .nav-dropdown-menu a.active { background: var(--brand-light); color: var(--brand); }
+
 .nav-links a:hover { background: #fff; color: var(--ink); }
 .nav-links a.active { background: #fff; color: var(--brand); box-shadow: 0 1px 4px rgba(15,23,42,.08); }
 .nav-links a.active::after { display: none; }
@@ -1437,7 +1458,11 @@ body.chat-body .footer { display:none; }
   cursor:pointer; font:600 13px/1.2 inherit; white-space:nowrap;
 }
 .user-menu-name { max-width:128px; overflow:hidden; text-overflow:ellipsis; }
-.user-menu-chevron { font-size:16px; line-height:10px; }
+.user-menu-chevron {
+  width: 7px; height: 7px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg) translateY(-2px); transition: transform .18s ease;
+}
+.user-menu-trigger[aria-expanded="true"] .user-menu-chevron { transform: rotate(225deg) translate(-1px, -1px); }
 .user-menu-dropdown {
   display:none; position:absolute; z-index:120; top:calc(100% + 8px); right:0; min-width:156px;
   padding:8px; border:1px solid var(--line); border-radius:12px; background:#fff;
@@ -1504,18 +1529,23 @@ body.chat-body .footer { display:none; }
   .nav-links a { padding: 11px 12px; font-size: 14px; }
   .nav-links a:hover, .nav-links a.active { background: var(--brand-light); color: var(--brand); box-shadow: none; }
   .nav-toggle { display: block; flex: 0 0 auto; }
-  .vip-status { max-width: 160px; overflow: hidden; }
+  .vip-status { max-width: 220px; overflow: visible; }
   .vip-status .vip-badge { max-width: 112px; }
-  .vip-status .checkin-btn { display: none; }
   .online-counter { display: none; }
+  .nav-dropdown-menu { position: static; margin-top: 4px; box-shadow: none; border-color: #eef2f7; }
+  .nav-dropdown.open { background: #fff; border-radius: 10px; }
+  .nav-dropdown.open .nav-dropdown-menu { display: block; }
+  .nav-dropdown-trigger { width: 100%; justify-content: space-between; text-align: left; padding: 11px 12px; font-size: 14px; }
+  .nav-dropdown-menu a { padding: 10px 12px; font-size: 13px; }
 }
 
 @media (max-width: 560px) {
   .nav-inner { padding: 8px 12px; }
   .brand-name { font-size: 14px; }
   .brand-logo { width: 32px; height: 32px; font-size: 16px; }
-  .vip-status { max-width: 142px; }
+  .vip-status { max-width: 190px; }
   .user-menu-trigger { max-width:118px; padding:6px 8px; font-size:11px; }
+  .nav-dropdown-trigger { font-size: 13px; }
   .user-menu-name { max-width:82px; }
   .vip-open { padding: 7px 10px; font-size: 12px; }
   .nav-links { left: 8px; right: 8px; }

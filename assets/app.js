@@ -783,13 +783,13 @@ function renderUserStatus(){
   if (!el) return;
   if (__user.loggedIn){
     const tag = __user.isVip ? `⭐ 会员至 ${fmtDateStr(new Date(__user.vipExpire))}` : "普通用户";
-    let html = `<div class="user-menu">
+    let html = `<button class="vip-open checkin-btn" id="checkinBtn" onclick="doCheckin()" title="每日签到领积分">📅 签到</button>
+    <div class="user-menu">
       <button class="user-menu-trigger" id="userMenuTrigger" type="button" onclick="toggleUserMenu(event)" aria-expanded="false" aria-haspopup="true">
-        <span class="user-menu-name">${esc(__user.nickname || __user.email || "用户")}</span><span class="user-menu-chevron">⌄</span>
+        <span class="user-menu-name">${esc(__user.nickname || __user.email || "用户")}</span><span class="user-menu-chevron" aria-hidden="true"></span>
       </button>
       <div class="user-menu-dropdown" id="userMenuDropdown">
         <div class="user-menu-status">${tag}</div>
-        <button class="vip-open checkin-btn" id="checkinBtn" onclick="doCheckin(); closeUserMenu()" title="每日签到领积分">📅 签到</button>
         <span class="vip-badge points-badge" id="userPointsBadge" title="当前积分，可兑换会员专享内容">🪙 <b id="userPointsNum">0</b> 分</span>
         ${__user.isAdmin ? `<button class="vip-open" onclick="location.href='admin.html'">后台</button>` : ''}
         <button class="vip-open logout-btn" onclick="logoutUser()">退出登录</button>

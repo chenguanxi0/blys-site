@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>短线核心：市场大局观 · 白鹿原上-交易笔记</title>
-  <link rel="stylesheet" href="../assets/styles.css" />
+  <link rel="stylesheet" href="../assets/styles.css?v=2026082014" />
   <link rel="icon" type="image/png" href="../assets/favicon.png" />
   <style>
     .tutorial { max-width:800px; margin:0 auto; padding:20px; }
@@ -68,11 +68,20 @@
     </a>
     <div class="nav-right">
       <nav class="nav-links" id="navLinks">
-        <a href="../index.html#tools">工具箱</a>
-        <a href="../index.html#diary">实盘日记</a>
+        <a href="../chat.html">聊天室</a>
+        <a href="../daily.html">每日复盘</a>
+        <a href="../diary.html">实盘日记</a>
+        <a href="../index.html#vip">心得分享</a>
         <a href="../index.html#vipzone">会员专享</a>
-        <a href="../index.html#vip">会员课程</a>
+        <div class="nav-dropdown">
+          <button class="nav-dropdown-trigger" type="button">关于<span class="nav-dropdown-chevron" aria-hidden="true"></span></button>
+          <div class="nav-dropdown-menu">
+            <a href="../index.html#about">关于我</a>
+            <a href="../changelog.html">更新日志</a>
+          </div>
+        </div>
       </nav>
+      <div class="vip-status" id="vipStatus"></div>
       <button class="nav-toggle" id="navToggle" aria-label="菜单" aria-expanded="false">☰</button>
     </div>
   </div>
@@ -82,6 +91,19 @@
     var toggle = document.getElementById('navToggle');
     var links = document.getElementById('navLinks');
     if (!toggle || !links) return;
+    var dropdowns = document.querySelectorAll('.nav-dropdown');
+    dropdowns.forEach(function (dropdown) {
+      var trigger = dropdown.querySelector('.nav-dropdown-trigger');
+      if (!trigger) return;
+      trigger.addEventListener('click', function (event) {
+        event.preventDefault(); event.stopPropagation();
+        dropdowns.forEach(function (item) { if (item !== dropdown) item.classList.remove('open'); });
+        dropdown.classList.toggle('open');
+      });
+    });
+    document.addEventListener('click', function () {
+      dropdowns.forEach(function (item) { item.classList.remove('open'); });
+    });
     toggle.dataset.navReady = '1';
     toggle.addEventListener('click', function (event) {
       event.preventDefault();
@@ -104,7 +126,7 @@
 </script>
 
 <main class="tutorial gate-content">
-  <a class="back-link" href="../index.html#vip">← 返回课程列表</a>
+  <a class="back-link" href="../index.html#vip">← 返回心得分享</a>
 
   <h1>🧭 短线核心：市场大局观</h1>
   <p class="sub">不盯单只票的涨跌，先看清自己站在什么样的「天时、地利」里。约 15 分钟阅读</p>
@@ -326,7 +348,7 @@
   <p>&copy; 2026 白鹿原上-交易笔记 · blys.top ｜ 本内容为个人分享，不构成投资建议</p>
 </footer>
 
-<script src="../assets/app.js?v=2026082013"></script>
+<script src="../assets/app.js?v=2026082014"></script>
 <script>
 // 盘前检查清单进度
 document.querySelectorAll('#preCheckList li').forEach(function(li){
