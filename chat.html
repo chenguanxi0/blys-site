@@ -1139,6 +1139,7 @@
     }
 
     function getNotifErrorText(err) {
+      const name = err && err.name ? String(err.name) : '';
       const msg = err && err.message ? String(err.message) : '';
       if (!supportsSystemPush()) return '当前环境不支持系统弹窗推送';
       if (typeof Notification !== 'undefined' && Notification.permission === 'denied') return '系统通知权限已被禁止';
@@ -1146,9 +1147,9 @@
       if (msg.includes('请先登录')) return '请先登录后再开启提醒';
       if (msg.includes('没有允许浏览器通知权限')) return '系统通知权限没有允许';
       if (msg.includes('订阅保存失败')) return '推送订阅保存失败，服务器没有记住这台手机';
-      if (msg.includes('Registration failed')) return '浏览器注册系统弹窗失败';
+      if (msg.includes('Registration failed')) return '浏览器注册系统弹窗失败' + (name ? '（' + name + '）' : '');
       if (msg.includes('Permission denied')) return '系统通知权限没有允许';
-      return '系统弹窗开启失败，已退回页内提醒';
+      return '系统弹窗开启失败，已退回页内提醒' + (name ? '（' + name + '）' : '');
     }
 
     function setNotifDiag(msg) {
@@ -1177,7 +1178,21 @@
       return !!(d && d.ok);
     }
 
-    async function subscribeChatPush() {
+    async function clearChatPushSubscription(reg) {
+      try {
+        const sub = await reg.pushManager.getSubscription();
+        if (!sub) return;
+        const endpoint = sub.endpoint;
+        await sub.unsubscribe();
+        if (__user && __user.loggedIn && __user.token && endpoint) {
+          await sbRpc('delete_push_subscription', { p_token: __user.token, p_endpoint: endpoint }, { timeoutMs: 8000 });
+        }
+      } catch (e) {
+        console.warn('[chat] clear push subscription failed', e);
+      }
+    }
+
+    async function subscribeChatPush(retryMode) {
       if (!supportsSystemPush()) throw new Error('当前浏览器不支持系统推送');
       if (!__user.loggedIn || !__user.token) throw new Error('请先登录后再开启提醒');
       const permission = Notification.permission === 'granted'
@@ -1186,16 +1201,23 @@
       if (permission !== 'granted') throw new Error('你没有允许浏览器通知权限');
 
       const reg = await navigator.serviceWorker.ready;
-      let sub = await reg.pushManager.getSubscription();
-      if (!sub) {
-        sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(PUSH_VAPID_PUBLIC_KEY)
-        });
+      try {
+        let sub = await reg.pushManager.getSubscription();
+        if (!sub) {
+          sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(PUSH_VAPID_PUBLIC_KEY)
+          });
+        }
+        const saved = await saveChatPushSubscription(sub);
+        if (!saved) throw new Error('订阅保存失败，请确认已执行 push_upgrade.sql');
+        return sub;
+      } catch (e) {
+        if (retryMode === 'after-reset') throw e;
+        console.warn('[chat] subscribe failed, retry after reset', e);
+        await clearChatPushSubscription(reg);
+        return subscribeChatPush('after-reset');
       }
-      const saved = await saveChatPushSubscription(sub);
-      if (!saved) throw new Error('订阅保存失败，请确认已执行 push_upgrade.sql');
-      return sub;
     }
 
     async function unsubscribeChatPush() {
