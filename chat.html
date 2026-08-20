@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082010" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082013" />
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23e23b3b'/%3E%3Cstop offset='100%25' stop-color='%23f87171'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='18' cy='18' r='17' fill='url(%23g)'/%3E%3Ctext x='18' y='23' text-anchor='middle' fill='white' font-family='-apple-system,PingFang SC,Microsoft YaHei,sans-serif' font-size='18' font-weight='700'%3E白%3C/text%3E%3C/svg%3E" />
 </head>
@@ -169,7 +169,7 @@
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082010"></script>
+  <script src="assets/app.js?v=2026082013"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -582,6 +582,39 @@
       }
     }
 
+    function renderChatMessageHtml(m, room) {
+      const myEmail = (__user && __user.email) || '';
+      const isMe = m.user_email === myEmail;
+      const time = m.created_at ? fmtDateTime(m.created_at) : '';
+      const name = esc(m.user_nickname || m.user_email?.split('@')[0] || '匿名');
+      chatMessageCache.set(`${room}:${m.id}`, m);
+      const canRecall = isMe && !m.recalled_at && m.id && m.created_at && (Date.now() - new Date(m.created_at).getTime() <= 2 * 60 * 1000);
+      const recalled = !!m.recalled_at;
+      return `<div class="chat-msg ${isMe ? 'chat-msg-me' : 'chat-msg-other'}" data-message-id="${esc(m.id || '')}" data-room="${esc(room)}">
+        ${canRecall ? `<button class="chat-recall-btn" type="button" onclick="recallChatMessage('${esc(m.id)}')">撤回</button>` : ''}
+        <div class="chat-msg-avatar">${name.charAt(0).toUpperCase()}</div>
+        <div class="chat-msg-body">
+          <div class="chat-msg-meta">
+            <span class="chat-msg-name">${name}</span>
+            <span class="chat-msg-time">${time}</span>
+          </div>
+          ${recalled ? '<div class="chat-recalled">消息已撤回</div>' : renderChatMessageContent(m)}
+        </div>
+      </div>`;
+    }
+
+    function appendChatMessage(message, room) {
+      const box = document.getElementById('chatMessages');
+      if (!box || room !== currentRoom) return;
+      const empty = box.querySelector('.chat-empty, .chat-loading');
+      if (empty) box.innerHTML = '';
+      const wasNearBottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 60;
+      box.insertAdjacentHTML('beforeend', renderChatMessageHtml(message, room));
+      if (wasNearBottom || message.user_email === ((__user && __user.email) || '')) {
+        box.scrollTop = box.scrollHeight;
+      }
+    }
+
     function renderChatMessages(list, room, isFirst) {
       const box = document.getElementById('chatMessages');
       if (!box) return;
@@ -590,26 +623,7 @@
         return;
       }
 
-      const myEmail = (__user && __user.email) || '';
-      const html = list.map(m => {
-        const isMe = m.user_email === myEmail;
-        const time = m.created_at ? fmtDateTime(m.created_at) : '';
-        const name = esc(m.user_nickname || m.user_email?.split('@')[0] || '匿名');
-        chatMessageCache.set(`${room}:${m.id}`, m);
-        const canRecall = isMe && !m.recalled_at && m.id && m.created_at && (Date.now() - new Date(m.created_at).getTime() <= 2 * 60 * 1000);
-        const recalled = !!m.recalled_at;
-        return `<div class="chat-msg ${isMe ? 'chat-msg-me' : 'chat-msg-other'}" data-message-id="${esc(m.id || '')}" data-room="${esc(room)}">
-          ${canRecall ? `<button class="chat-recall-btn" type="button" onclick="recallChatMessage('${esc(m.id)}')">撤回</button>` : ''}
-          <div class="chat-msg-avatar">${name.charAt(0).toUpperCase()}</div>
-          <div class="chat-msg-body">
-            <div class="chat-msg-meta">
-              <span class="chat-msg-name">${name}</span>
-              <span class="chat-msg-time">${time}</span>
-            </div>
-            ${recalled ? '<div class="chat-recalled">消息已撤回</div>' : renderChatMessageContent(m)}
-          </div>
-        </div>`;
-      }).join('');
+      const html = list.map(m => renderChatMessageHtml(m, room)).join('');
 
       // 如果内容没变，不滚动（避免打断用户阅读）
       const shouldScroll = box.scrollTop + box.clientHeight >= box.scrollHeight - 60;
@@ -730,10 +744,22 @@
         const d = await sbRpc('send_message', payload);
         console.log('[chat] send_message response', d);
         if (d && d.ok) {
+          const sentMessage = {
+            id: d.id || d.message_id || ('local-' + Date.now()),
+            user_email: __user.email,
+            user_nickname: __user.nickname || __user.email?.split('@')[0] || '我',
+            content,
+            image,
+            reply_to_id: pendingChatQuote && pendingChatQuote.id ? pendingChatQuote.id : null,
+            reply_to_nickname: pendingChatQuote && pendingChatQuote.nickname ? pendingChatQuote.nickname : null,
+            reply_to_content: pendingChatQuote && pendingChatQuote.content ? pendingChatQuote.content : null,
+            reply_to_image: pendingChatQuote && pendingChatQuote.image ? pendingChatQuote.image : null,
+            created_at: new Date().toISOString()
+          };
           input.value = '';
           clearChatImage();
           clearChatQuote();
-          loadChatMessages(currentRoom, { isFirst: true });
+          appendChatMessage(sentMessage, currentRoom);
         } else {
           const detail = d && (d.msg || d.message || d.error || d.details || JSON.stringify(d));
           alert('发送失败：' + (detail || '未知错误'));

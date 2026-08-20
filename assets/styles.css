@@ -615,7 +615,9 @@ a { color: inherit; text-decoration: none; transition: color var(--transition); 
 
 @media (max-width: 860px) {
   .nav-right { gap: 10px; }
-  .vip-status .vip-badge { font-size: 12px; padding: 4px 8px; }
+  .user-menu-trigger { max-width:132px; padding:6px 8px; font-size:12px; }
+  .user-menu-name { max-width:92px; }
+  .user-menu-dropdown { right:-2px; }
   .online-counter { display: none; } /* 小屏隐藏在线人数 */
 }
 
@@ -1312,8 +1314,9 @@ body.chat-body .footer { display:none; }
 }
 .chat-quoted-label { color:#64748b; font-size:11px; font-weight:700; }
 .chat-quoted-text { color:#64748b; font-size:12px; line-height:1.45; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.chat-msg-me .chat-quoted-message { border-left-color:rgba(255,255,255,.7); background:rgba(255,255,255,.16); }
-.chat-msg-me .chat-quoted-label, .chat-msg-me .chat-quoted-text { color:rgba(255,255,255,.82); }
+.chat-msg-me .chat-quoted-message { border-left-color:#f97316; background:#fff7ed; }
+.chat-msg-me .chat-quoted-label { color:#c2410c; }
+.chat-msg-me .chat-quoted-text { color:#334155; }
 .chat-msg-other { -webkit-touch-callout:none; }
 .chat-msg-quoted .chat-msg-text, .chat-msg-quoted .chat-msg-img { animation:chatQuoteFlash .5s ease; }
 .chat-recall-btn {
@@ -1427,11 +1430,23 @@ body.chat-body .footer { display:none; }
 .nav-links a.active { background: #fff; color: var(--brand); box-shadow: 0 1px 4px rgba(15,23,42,.08); }
 .nav-links a.active::after { display: none; }
 .vip-status { gap: 6px; }
-.vip-status .vip-badge {
-  max-width: 154px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.user-menu { position: relative; }
+.user-menu-trigger {
+  display:flex; align-items:center; gap:6px; max-width:170px; padding:7px 10px;
+  border:1px solid #fde68a; border-radius:999px; background:#fffbeb; color:#92400e;
+  cursor:pointer; font:600 13px/1.2 inherit; white-space:nowrap;
 }
+.user-menu-name { max-width:128px; overflow:hidden; text-overflow:ellipsis; }
+.user-menu-chevron { font-size:16px; line-height:10px; }
+.user-menu-dropdown {
+  display:none; position:absolute; z-index:120; top:calc(100% + 8px); right:0; min-width:156px;
+  padding:8px; border:1px solid var(--line); border-radius:12px; background:#fff;
+  box-shadow:0 12px 30px rgba(15,23,42,.16); flex-direction:column; gap:6px;
+}
+.user-menu-dropdown.open { display:flex; }
+.user-menu-status { padding:4px 6px 6px; color:#92400e; font-size:12px; border-bottom:1px solid #f1f5f9; white-space:nowrap; }
+.user-menu-dropdown .points-badge { display:block; text-align:center; }
+.user-menu-dropdown .vip-open { width:100%; }
 .vip-open { padding: 7px 13px; font-size: 13px; }
 .online-counter { padding: 4px 8px; }
 .nav-toggle {
@@ -1499,9 +1514,9 @@ body.chat-body .footer { display:none; }
   .nav-inner { padding: 8px 12px; }
   .brand-name { font-size: 14px; }
   .brand-logo { width: 32px; height: 32px; font-size: 16px; }
-  .vip-status { max-width: 124px; }
-  .vip-status .vip-badge { max-width: 86px; padding: 5px 7px; font-size: 11px; }
-  .vip-status .points-badge { display: none; }
+  .vip-status { max-width: 142px; }
+  .user-menu-trigger { max-width:118px; padding:6px 8px; font-size:11px; }
+  .user-menu-name { max-width:82px; }
   .vip-open { padding: 7px 10px; font-size: 12px; }
   .nav-links { left: 8px; right: 8px; }
   .nav-links.open { grid-template-columns: 1fr 1fr; }
