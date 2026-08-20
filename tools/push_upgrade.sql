@@ -66,4 +66,46 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+CREATE OR REPLACE FUNCTION public.get_chat_push_targets(
+  p_token TEXT,
+  p_room TEXT
+) RETURNS TABLE(
+  endpoint TEXT,
+  subscription JSONB
+) AS $$
+DECLARE
+  v_user public.profiles%rowtype;
+BEGIN
+  SELECT * INTO v_user FROM public.profiles WHERE token = p_token;
+  IF NOT FOUND THEN
+    RETURN;
+  END IF;
+
+  IF p_room = 'vip' AND (v_user.vip_expire IS NULL OR v_user.vip_expire <= now()) THEN
+    RETURN;
+  END IF;
+
+  RETURN QUERY
+  SELECT ps.endpoint, ps.subscription
+  FROM public.push_subscriptions ps
+  JOIN public.profiles p ON p.token = ps.user_token
+  WHERE ps.user_token <> p_token
+    AND (
+      p_room <> 'vip'
+      OR (p.vip_expire IS NOT NULL AND p.vip_expire > now())
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION public.delete_push_subscription_by_endpoint(
+  p_endpoint TEXT
+) RETURNS JSONB AS $$
+BEGIN
+  DELETE FROM public.push_subscriptions
+  WHERE endpoint = p_endpoint;
+
+  RETURN jsonb_build_object('ok', true);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 NOTIFY pgrst, 'reload schema';

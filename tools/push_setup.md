@@ -10,12 +10,11 @@ web/tools/push_upgrade.sql
 
 作用：创建 `push_subscriptions` 表，以及前端保存/删除订阅用的 RPC。
 
-## 2. 添加 Edge Function Secrets
+## 2. 添加 Edge Function Secret
 
 在 Supabase Project Settings -> Edge Functions -> Secrets 添加：
 
 ```text
-SUPABASE_SERVICE_ROLE_KEY = 你的 Supabase service_role key
 VAPID_PRIVATE_KEY = Web Push VAPID private key
 ```
 

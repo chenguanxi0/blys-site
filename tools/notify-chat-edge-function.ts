@@ -3,7 +3,6 @@
 // 部署：Supabase Dashboard → Edge Functions → New function
 //       名称填 notify-chat → 粘贴本文件 → Deploy
 // Secrets：
-//   SUPABASE_SERVICE_ROLE_KEY = Supabase service_role key
 //   VAPID_PRIVATE_KEY = Web Push VAPID private key
 // 说明：前端发消息成功后调用本函数；函数校验发送者身份，
 //       再给同房间其他已订阅用户发送系统通知。
@@ -12,7 +11,7 @@
 import webpush from "npm:web-push@3.6.7";
 
 const SUPABASE_URL = "https://ojioiglffglyuellvcex.supabase.co";
-const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+const SUPABASE_ANON = "sb_publishable_rGCr3ILVWQpvpURhctuYQg_K_jC-WHV";
 const VAPID_PUBLIC_KEY = "BA2xT4Y1plL6c9JNmBJI8aqp_vjxrnOG1-p-nhazGbm_QGnnuq8A7hbYbBIpZKd3MQ3-jx0EfXZGnKYQQuFHFac";
 const VAPID_PRIVATE_KEY = Deno.env.get("VAPID_PRIVATE_KEY") || "";
 
@@ -29,27 +28,26 @@ function json(data: unknown, status = 200) {
   });
 }
 
-function dbHeaders() {
+function apiHeaders() {
   return {
-    "apikey": SUPABASE_SERVICE_ROLE_KEY,
-    "Authorization": "Bearer " + SUPABASE_SERVICE_ROLE_KEY,
+    "apikey": SUPABASE_ANON,
+    "Authorization": "Bearer " + SUPABASE_ANON,
     "Content-Type": "application/json",
   };
 }
 
-async function dbGet(path: string) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    headers: dbHeaders(),
+async function rpc(fn: string, params: Record<string, unknown>) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+    method: "POST",
+    headers: apiHeaders(),
+    body: JSON.stringify(params || {}),
   });
   if (!res.ok) throw new Error(`db ${res.status}`);
   return await res.json();
 }
 
 async function dbDeleteEndpoint(endpoint: string) {
-  await fetch(`${SUPABASE_URL}/rest/v1/push_subscriptions?endpoint=eq.${encodeURIComponent(endpoint)}`, {
-    method: "DELETE",
-    headers: dbHeaders(),
-  });
+  await rpc("delete_push_subscription_by_endpoint", { p_endpoint: endpoint });
 }
 
 function cleanText(text: string, max = 80) {
@@ -64,7 +62,7 @@ async function handler(req: Request) {
   if (req.method !== "POST") return json({ ok: false, msg: "method not allowed" }, 405);
 
   try {
-    if (!SUPABASE_SERVICE_ROLE_KEY || !VAPID_PRIVATE_KEY) {
+    if (!VAPID_PRIVATE_KEY) {
       return json({ ok: false, msg: "push secrets missing" }, 500);
     }
 
@@ -76,15 +74,11 @@ async function handler(req: Request) {
 
     if (!token) return json({ ok: false, msg: "missing token" }, 401);
 
-    const senders = await dbGet(`profiles?select=token,email,nickname,vip_expire&token=eq.${encodeURIComponent(token)}&limit=1`);
-    const sender = Array.isArray(senders) ? senders[0] : null;
-    if (!sender) return json({ ok: false, msg: "invalid token" }, 401);
-    if (room === "vip") {
-      const expire = sender.vip_expire ? new Date(sender.vip_expire).getTime() : 0;
-      if (!expire || expire <= Date.now()) return json({ ok: false, msg: "vip only" }, 403);
-    }
+    const profile = await rpc("get_profile", { p_token: token });
+    if (!profile || !profile.ok) return json({ ok: false, msg: "invalid token" }, 401);
+    if (room === "vip" && !profile.is_vip) return json({ ok: false, msg: "vip only" }, 403);
 
-    const name = cleanText(sender.nickname || (sender.email ? String(sender.email).split("@")[0] : "群友"), 24);
+    const name = cleanText(profile.nickname || (profile.email ? String(profile.email).split("@")[0] : "群友"), 24);
     const preview = content || (hasImage ? "[图片]" : "新消息");
     const title = room === "vip" ? "会员群聊有新消息" : "注册用户群聊有新消息";
     const payload = JSON.stringify({
@@ -96,20 +90,7 @@ async function handler(req: Request) {
       url: `/chat.html?room=${room}`,
     });
 
-    const subs = await dbGet(`push_subscriptions?select=endpoint,user_token,subscription&user_token=neq.${encodeURIComponent(token)}&limit=1000`);
-    let targets = Array.isArray(subs) ? subs : [];
-
-    if (room === "vip" && targets.length) {
-      const tokens = Array.from(new Set(targets.map((s) => s.user_token).filter(Boolean)));
-      const tokenList = tokens.map((t) => `"${String(t).replace(/"/g, '\\"')}"`).join(",");
-      const vipProfiles = await dbGet(`profiles?select=token,vip_expire&token=in.(${tokenList})`);
-      const vipSet = new Set(
-        (Array.isArray(vipProfiles) ? vipProfiles : [])
-          .filter((p) => p.vip_expire && new Date(p.vip_expire).getTime() > Date.now())
-          .map((p) => p.token),
-      );
-      targets = targets.filter((s) => vipSet.has(s.user_token));
-    }
+    const targets = await rpc("get_chat_push_targets", { p_token: token, p_room: room });
 
     webpush.setVapidDetails("mailto:noreply@blys.site", VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
