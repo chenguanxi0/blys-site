@@ -1,7 +1,8 @@
--- 聊天室升级 SQL：图片消息 + 引用回复 + 在线人数
+-- 聊天室升级 SQL：图片消息 + 引用回复 + 撤回 + 增量拉取 + 在线人数
 -- 在 Supabase SQL Editor 中执行一次即可
+-- 重要：本脚本会先删除同名 RPC 的所有重载版本，避免 PostgREST schema cache 里残留旧签名导致 404
 
--- 1. messages 表增加图片与引用字段
+-- 0. messages 表增加图片与引用字段
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS image TEXT;
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_id UUID;
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_nickname TEXT;
@@ -9,10 +10,16 @@ ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_content TEXT;
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_image TEXT;
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS recalled_at TIMESTAMPTZ;
 
--- 2. 改造 send_message，支持可选图片与引用参数
-DROP FUNCTION IF EXISTS send_message(text, text, text);
-DROP FUNCTION IF EXISTS send_message(text, text, text, text);
-DROP FUNCTION IF EXISTS send_message(text, text, text, text, uuid);
+-- 1. 清理并重建 send_message（参数顺序：p_token, p_room, p_content, p_image, p_reply_to_id）
+DO $$
+DECLARE r RECORD;
+BEGIN
+  FOR r IN SELECT oid::regprocedure AS sig FROM pg_proc WHERE proname = 'send_message'
+  LOOP
+    EXECUTE format('DROP FUNCTION IF EXISTS %s CASCADE', r.sig);
+  END LOOP;
+END $$;
+
 CREATE OR REPLACE FUNCTION send_message(
   p_token TEXT,
   p_room TEXT,
@@ -59,13 +66,20 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 3. 增加撤回时间字段
--- （已在上方统一补充，避免重复执行时报错）
+-- 2. 清理并重建 recall_message（参数顺序：p_token, p_message_id）
+DO $$
+DECLARE r RECORD;
+BEGIN
+  FOR r IN SELECT oid::regprocedure AS sig FROM pg_proc WHERE proname = 'recall_message'
+  LOOP
+    EXECUTE format('DROP FUNCTION IF EXISTS %s CASCADE', r.sig);
+  END LOOP;
+END $$;
 
--- 4. 撤回自己的消息：发送后2分钟内允许撤回
-DROP FUNCTION IF EXISTS recall_message(text, uuid);
-CREATE OR REPLACE FUNCTION recall_message(p_token TEXT, p_message_id UUID)
-RETURNS JSONB AS $$
+CREATE OR REPLACE FUNCTION recall_message(
+  p_token TEXT,
+  p_message_id UUID
+) RETURNS JSONB AS $$
 DECLARE
   v_user RECORD;
   v_message RECORD;
@@ -98,11 +112,22 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 5. 改造 list_messages，返回图片与引用字段，并支持增量拉取
-DROP FUNCTION IF EXISTS list_messages(text);
-DROP FUNCTION IF EXISTS list_messages(text, integer);
-CREATE OR REPLACE FUNCTION list_messages(p_room TEXT, p_limit INTEGER DEFAULT 100, p_after TIMESTAMPTZ DEFAULT NULL, p_before TIMESTAMPTZ DEFAULT NULL)
-RETURNS TABLE(
+-- 3. 清理并重建 list_messages（参数顺序：p_room, p_limit, p_after, p_before）
+DO $$
+DECLARE r RECORD;
+BEGIN
+  FOR r IN SELECT oid::regprocedure AS sig FROM pg_proc WHERE proname = 'list_messages'
+  LOOP
+    EXECUTE format('DROP FUNCTION IF EXISTS %s CASCADE', r.sig);
+  END LOOP;
+END $$;
+
+CREATE OR REPLACE FUNCTION list_messages(
+  p_room TEXT,
+  p_limit INTEGER DEFAULT 100,
+  p_after TIMESTAMPTZ DEFAULT NULL,
+  p_before TIMESTAMPTZ DEFAULT NULL
+) RETURNS TABLE(
   id UUID,
   user_email TEXT,
   user_nickname TEXT,
@@ -176,3 +201,6 @@ BEGIN
     AND (p_room IS NULL OR room = p_room));
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 7. 强制刷新 PostgREST schema cache（关键！）
+NOTIFY pgrst, 'reload schema';
