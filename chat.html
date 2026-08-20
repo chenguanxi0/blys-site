@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082026" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082027" />
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23e23b3b'/%3E%3Cstop offset='100%25' stop-color='%23f87171'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='18' cy='18' r='17' fill='url(%23g)'/%3E%3Ctext x='18' y='23' text-anchor='middle' fill='white' font-family='-apple-system,PingFang SC,Microsoft YaHei,sans-serif' font-size='18' font-weight='700'%3E白%3C/text%3E%3C/svg%3E" />
 </head>
@@ -187,7 +187,7 @@
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082026"></script>
+  <script src="assets/app.js?v=2026082027"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -199,7 +199,7 @@
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    console.log('[chat] build v2026082026 (web push notifications + optimistic send)');
+    console.log('[chat] build v2026082027 (verified web push subscription + optimistic send)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
     let lastSeenTs = { public: 0, vip: 0 };
@@ -1116,12 +1116,12 @@
       // 唯一可靠的持久化依据：页内未读提醒（任何浏览器都生效，刷新后能记住）
       // 系统通知仅作为“锦上添花”，不用来判断“是否记住”
       inAppNotifOn = localStorage.getItem('blys_notif_inapp') === 'on';
-      notifEnabled = inAppNotifOn && (typeof Notification !== 'undefined' && Notification.permission === 'granted');
+      notifEnabled = false;
       updateNotifBtn();
       document.addEventListener('visibilitychange', () => {
         if (document.hidden) return;
         inAppNotifOn = localStorage.getItem('blys_notif_inapp') === 'on';
-        notifEnabled = inAppNotifOn && (typeof Notification !== 'undefined' && Notification.permission === 'granted');
+        if (!notifEnabled) refreshChatPushSubscription();
         updateNotifBtn();
         // 回到页面：展示未读横幅
         showUnreadBanner();
@@ -1189,15 +1189,19 @@
 
     async function refreshChatPushSubscription() {
       if (!supportsSystemPush()) return;
-      if (localStorage.getItem('blys_notif') !== 'on') return;
+      if (localStorage.getItem('blys_notif') !== 'on' && localStorage.getItem('blys_notif_inapp') !== 'on') return;
       if (Notification.permission !== 'granted') return;
       if (!__user.loggedIn || !__user.token) return;
       try {
         await subscribeChatPush();
         notifEnabled = true;
+        localStorage.setItem('blys_notif', 'on');
         updateNotifBtn();
       } catch (e) {
+        notifEnabled = false;
+        localStorage.setItem('blys_notif', 'off');
         console.warn('[chat] refresh push subscription failed', e);
+        updateNotifBtn();
       }
     }
 
