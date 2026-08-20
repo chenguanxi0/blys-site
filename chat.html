@@ -1141,19 +1141,20 @@
     function getNotifErrorText(err) {
       const name = err && err.name ? String(err.name) : '';
       const msg = err && err.message ? String(err.message) : '';
+      const raw = msg ? '：' + msg : '';
       if (!supportsSystemPush()) return '当前环境不支持系统弹窗推送';
       if (typeof Notification !== 'undefined' && Notification.permission === 'denied') return '系统通知权限已被禁止';
-      if (msg.includes('SW rebuild failed')) return '重建推送组件失败' + (name ? '（' + name + '）' : '');
-      if (msg.includes('SW ready failed')) return '读取推送组件失败' + (name ? '（' + name + '）' : '');
-      if (msg.includes('Get subscription failed')) return '读取旧推送订阅失败' + (name ? '（' + name + '）' : '');
+      if (msg.includes('SW rebuild failed')) return '重建推送组件失败' + (name ? '（' + name + '）' : '') + raw;
+      if (msg.includes('SW ready failed')) return '读取推送组件失败' + (name ? '（' + name + '）' : '') + raw;
+      if (msg.includes('Get subscription failed')) return '读取旧推送订阅失败' + (name ? '（' + name + '）' : '') + raw;
       if (msg.includes('不支持系统推送')) return '当前浏览器不支持系统弹窗推送';
       if (msg.includes('请先登录')) return '请先登录后再开启提醒';
       if (msg.includes('没有允许浏览器通知权限')) return '系统通知权限没有允许';
       if (msg.includes('订阅保存失败')) return '推送订阅保存失败，服务器没有记住这台手机';
-      if (msg.includes('Registration failed')) return '浏览器注册系统弹窗失败' + (name ? '（' + name + '）' : '');
-      if (msg.includes('Subscription failed')) return '浏览器创建推送订阅失败' + (name ? '（' + name + '）' : '');
+      if (msg.includes('Registration failed')) return '浏览器注册系统弹窗失败' + (name ? '（' + name + '）' : '') + raw;
+      if (msg.includes('Subscription failed')) return '浏览器创建推送订阅失败' + (name ? '（' + name + '）' : '') + raw;
       if (msg.includes('Permission denied')) return '系统通知权限没有允许';
-      return '系统弹窗开启失败，已退回页内提醒' + (name ? '（' + name + '）' : '');
+      return '系统弹窗开启失败，已退回页内提醒' + (name ? '（' + name + '）' : '') + raw;
     }
 
     function setNotifDiag(msg) {
