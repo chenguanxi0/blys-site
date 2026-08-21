@@ -4,6 +4,8 @@
   "webDir": "mobile_www",
   "bundledWebRuntime": false,
   "server": {
+    "url": "https://blys.site",
+    "cleartext": false,
     "androidScheme": "https"
   }
 }
