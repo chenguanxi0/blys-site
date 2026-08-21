@@ -141,11 +141,6 @@
         </div>
         <div class="chat-input-wrap" id="chatInputWrap" style="display:none;">
           <div class="chat-input-col" style="position:relative;">
-            <div class="chat-input-tools">
-              <button class="chat-tool-btn" type="button" onclick="toggleEmojiPanel(event)" title="表情">😊</button>
-              <button class="chat-tool-btn" type="button" onclick="document.getElementById('chatImgInput').click()" title="发送图片" aria-label="发送图片"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M3 17l5-5 4 4 3-3 6 6"/></svg></button>
-              <input type="file" id="chatImgInput" accept="image/*" style="display:none;" onchange="onChatImageSelected(this)" />
-            </div>
             <div class="chat-img-preview" id="chatImgPreview">
               <img id="chatImgPreviewThumb" src="" alt="preview" />
               <span id="chatImgPreviewName">图片</span>
@@ -158,9 +153,16 @@
               </div>
               <button class="chat-tool-btn" type="button" onclick="clearChatQuote()" title="取消引用" aria-label="取消引用">✕</button>
             </div>
-            <textarea id="chatInput" class="chat-input" placeholder="文明发言，禁止荐股与广告…" maxlength="500" autocomplete="off" rows="2"></textarea>
+            <div class="chat-compose-row">
+              <div class="chat-input-tools">
+                <button class="chat-tool-btn" type="button" onclick="toggleEmojiPanel(event)" title="表情">😊</button>
+                <button class="chat-tool-btn" type="button" onclick="document.getElementById('chatImgInput').click()" title="发送图片" aria-label="发送图片"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M3 17l5-5 4 4 3-3 6 6"/></svg></button>
+                <input type="file" id="chatImgInput" accept="image/*" style="display:none;" onchange="onChatImageSelected(this)" />
+              </div>
+              <textarea id="chatInput" class="chat-input" placeholder="文明发言，禁止荐股与广告…" maxlength="500" autocomplete="off" rows="1"></textarea>
+            </div>
           </div>
-          <button class="btn btn-primary" id="chatSendBtn" onclick="sendChatMessage()">发送</button>
+          <button class="btn btn-primary chat-send-btn" id="chatSendBtn" onclick="sendChatMessage()">发送</button>
         </div>
       </div>
     </div>
@@ -287,9 +289,11 @@
         });
         input.addEventListener('input', () => {
           input.style.height = 'auto';
-          input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+          input.style.height = Math.min(input.scrollHeight, 96) + 'px';
+          updateChatComposerState();
         });
         input.addEventListener('paste', handleChatPaste);
+        updateChatComposerState();
       }
       // 绑定头部淡出滚动效果
       bindChatHeadFade();
@@ -799,6 +803,14 @@
       if (input) input.placeholder = '文明发言，禁止荐股与广告…';
     }
 
+    function updateChatComposerState() {
+      const input = document.getElementById('chatInput');
+      const sendBtn = document.getElementById('chatSendBtn');
+      const hasContent = !!(input && (input.value || '').trim());
+      const hasImage = !!pendingChatImage;
+      if (sendBtn) sendBtn.classList.toggle('is-visible', hasContent || hasImage);
+    }
+
     function bindChatQuoteActions() {
       const box = document.getElementById('chatMessages');
       if (!box || box.__chatQuoteBound) return;
@@ -903,8 +915,10 @@
 
       // 乐观渲染：先清空输入框并立即上屏，用户无需等待网络往返
       input.value = '';
+      input.style.height = 'auto';
       clearChatImage();
       clearChatQuote();
+      updateChatComposerState();
       chatPendingSends.set(tempId, { key, room, message: optimistic, payload, createdAt: Date.now(), delivering: false, attempts: 0 });
       chatPendingKeys.set(key, tempId);
       try {
@@ -1083,6 +1097,7 @@
         if (thumb) thumb.src = base64;
         if (nameEl) nameEl.textContent = name;
         if (preview) preview.classList.add('active');
+        updateChatComposerState();
       }).catch(err => {
         alert('图片处理失败: ' + (err && err.message || '未知错误'));
         clearChatImage();
@@ -1097,6 +1112,7 @@
       if (thumb) thumb.src = '';
       const input = document.getElementById('chatImgInput');
       if (input) input.value = '';
+      updateChatComposerState();
     }
 
     function compressChatImage(file, maxWidth, quality) {
@@ -1164,6 +1180,8 @@
     }
 
     function initNativeChatNotification() {
+      const diagEl = document.getElementById('chatNotifDiag');
+      if (diagEl) diagEl.hidden = true;
       inAppNotifOn = false;
       notifEnabled = localStorage.getItem('blys_native_push_switch') !== 'off';
       updateNotifBtn();
@@ -1213,6 +1231,7 @@
       lines.push('设备令牌：' + (diag.tokenPresent ? (diag.tokenPreview || '已获取') : '未获取'));
       lines.push('服务器绑定：' + (diag.tokenSavedToServer ? '成功' : '未确认'));
       if (diag.firebaseTokenError) lines.push('Firebase取token：' + diag.firebaseTokenError);
+      lines.push('本地通知自检：' + (diag.localAlertSelfTestAt ? (diag.localAlertSelfTestOk ? '成功 ' : '失败 ') + formatDiagDateTime(diag.localAlertSelfTestAt) : '未测试'));
       lines.push('最近收到推送：' + (diag.lastPushReceivedAt ? formatDiagDateTime(diag.lastPushReceivedAt) : '暂无'));
       lines.push('前台弹窗补发：' + (diag.lastForegroundPopupAt ? formatDiagDateTime(diag.lastForegroundPopupAt) : '暂无'));
       if (diag.lastError) lines.push('最近错误：' + diag.lastError);
