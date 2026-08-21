@@ -8,16 +8,19 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082103" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082104" />
   <style>
-    html.blys-native-app body.chat-body { --app-safe-top: max(42px, env(safe-area-inset-top)); }
+    html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
     html.blys-native-app body.chat-body .nav { padding-top: var(--app-safe-top); }
     html.blys-native-app body.chat-body .chat-tabs-wrapper { top: calc(64px + var(--app-safe-top)); }
-    html.blys-native-app body.chat-body .chat-box { top: calc(128px + var(--app-safe-top)); height: calc(100dvh - 128px - var(--app-safe-top)); }
+    html.blys-native-app body.chat-body .chat-box { top: calc(124px + var(--app-safe-top)); height: calc(100dvh - 124px - var(--app-safe-top)); }
+    .chat-load-failed { padding:28px 14px; }
+    .chat-empty-actions { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:12px; }
+    .chat-empty-actions .btn-small { min-height:34px; padding:7px 12px; border-radius:10px; font-size:13px; }
     @media (max-width:560px) {
       html.blys-native-app body.chat-body .chat-tabs-wrapper { top: calc(64px + var(--app-safe-top)); }
-      html.blys-native-app body.chat-body .chat-box { top: calc(122px + var(--app-safe-top)); height: calc(100dvh - 122px - var(--app-safe-top)); }
+      html.blys-native-app body.chat-body .chat-box { top: calc(116px + var(--app-safe-top)); height: calc(100dvh - 116px - var(--app-safe-top)); }
       html.blys-native-app body.chat-body .brand-logo { width:36px; height:36px; font-size:17px; }
       html.blys-native-app body.chat-body .brand-name { max-width:138px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
       html.blys-native-app body.chat-body .vip-status { max-width:108px; }
@@ -211,8 +214,8 @@
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082103"></script>
-  <script src="assets/mobile-app.js?v=2026082103"></script>
+  <script src="assets/app.js?v=2026082104"></script>
+  <script src="assets/mobile-app.js?v=2026082104"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -460,8 +463,24 @@
       const banner = document.getElementById('chatUnreadBanner');
       if (banner && unreadCounts.public + unreadCounts.vip === 0) banner.hidden = true;
       loadChatMessages(room);
+      setTimeout(() => {
+        if (room !== currentRoom || !messagesBox || !messagesBox.querySelector('.chat-loading')) return;
+        messagesBox.innerHTML = renderChatLoadFailed(room, '网络较慢，消息还没有返回');
+      }, 22000);
       refreshOnlineCount();
       sendHeartbeat();
+    }
+
+    function renderChatLoadFailed(room, message) {
+      const isVip = room === 'vip';
+      const switchBtn = isVip ? '<button class="btn btn-secondary btn-small" type="button" onclick="switchChatRoom(\'public\')">切到注册群聊</button>' : '';
+      return '<div class="chat-empty chat-load-failed">' +
+        '<div>消息加载失败：' + esc(message || '请求超时') + '</div>' +
+        '<div class="chat-empty-actions">' +
+          '<button class="btn btn-primary btn-small" type="button" onclick="loadChatMessages(currentRoom, { isFirst: true })">重新加载</button>' +
+          switchBtn +
+        '</div>' +
+      '</div>';
     }
 
     function setChatLoginLoading(isLoading) {
@@ -502,37 +521,35 @@
       if (isFirst) box.innerHTML = '<div class="chat-loading">加载消息中…</div>';
       // 首屏/失败自动重试：网络抖动或 Supabase 冷启动时，避免“进来没内容”
       const retryLater = () => {
-        if (retry < 3) setTimeout(() => {
+        if (retry < 2) setTimeout(() => {
           if (room === currentRoom) loadChatMessages(room, { retry: retry + 1, history: opts.history });
         }, 1500);
       };
 
       try {
         console.log('[chat] loadChatMessages start', room, 'isFirst=', isFirst, 'history=', !!opts.history, 'retry=', retry);
-        // 首屏只拉最近 30 条（更快）；轮询只拉增量；历史分页向上拉更早的 30 条
+        // 首屏尽量轻，尤其 App WebView 遇到图片消息较多时更容易稳定出来。
         const isHistory = !!opts.history;
+        const isNativeApp = !!(window.BLYS_APP && window.BLYS_APP.isNativeApp);
         const rpcParams = { p_room: room };
         if (isHistory) {
           rpcParams.p_limit = 30;
           rpcParams.p_before = chatTsToIso(chatOldestTs[room]);
         } else if (isFirst) {
-          rpcParams.p_limit = 30;
+          rpcParams.p_limit = isNativeApp ? 12 : 20;
         } else {
           rpcParams.p_limit = 100;
           rpcParams.p_after = chatTsToIso(lastSeenTs[room]);
         }
-        const d = await Promise.race([
-          sbRpc('list_messages', rpcParams),
-          new Promise((_, rej) => setTimeout(() => rej(new Error('list_messages timeout')), 12000))
-        ]);
+        const d = await sbRpc('list_messages', rpcParams, { timeoutMs: isFirst ? 18000 : 12000 });
         console.log('[chat] list_messages response', room, d);
         if (loadSeq !== chatLoadSeq || room !== currentRoom) return;
         // list_messages 返回表，直接是数组；也兼容返回 {ok:true, list:[]} 的情况
         const list = Array.isArray(d) ? d : (d && d.list);
         if (!Array.isArray(list)) {
           console.warn('[chat] list_messages not array', d);
-          if (retry < 3) { retryLater(); return; }
-          if (isFirst) box.innerHTML = '<div class="chat-empty">暂无消息，来做第一个发言的人吧～</div>';
+          if (retry < 2) { retryLater(); return; }
+          if (isFirst) box.innerHTML = renderChatLoadFailed(room, '接口返回格式异常');
           return;
         }
 
@@ -547,7 +564,7 @@
           if (list.length) {
             const minTs = list.reduce((mn, m) => Math.min(mn, m.created_at ? new Date(m.created_at).getTime() : 0), Infinity);
             chatOldestTs[room] = minTs;
-            chatHasMore[room] = list.length >= 30;
+            chatHasMore[room] = list.length >= rpcParams.p_limit;
           }
         } else {
           // 增量：只把新消息追加到列表底部，不再重建整个列表
@@ -578,8 +595,8 @@
         }
       } catch (e) {
         console.error('[chat] loadChatMessages error', e);
-        if (retry < 3) { retryLater(); return; }
-        if (isFirst) box.innerHTML = '<div class="chat-empty">消息加载失败：' + esc(e && e.message ? e.message : String(e)) + '</div>';
+        if (retry < 2) { retryLater(); return; }
+        if (isFirst) box.innerHTML = renderChatLoadFailed(room, e && e.message ? e.message : String(e));
       }
     }
 
@@ -1177,7 +1194,7 @@
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082103', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082104', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -1349,7 +1366,7 @@
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082103', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082104', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
