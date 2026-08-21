@@ -1194,7 +1194,7 @@
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082104', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082106', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -1366,7 +1366,7 @@
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082104', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082106', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
@@ -1453,10 +1453,11 @@
       const isWeChat = /MicroMessenger/i.test(ua);
       const isQQ = /QQ\//i.test(ua) || /Qzone/i.test(ua);
       const isTikTok = /douyin|aweme|tiktok/i.test(ua);
-      if (isWeChat) return '微信内置浏览器不支持网页通知。请点右上角「···」→「在浏览器打开」，用 Chrome/Edge 打开本页后开启提醒，或把站点「添加到桌面」作为 App 使用。';
-      if (isQQ) return 'QQ 内置浏览器不支持网页通知。请在系统浏览器（Chrome/Edge）中打开本页后开启提醒。';
-      if (isTikTok) return '抖音内置浏览器不支持网页通知。请在系统浏览器（Chrome/Edge）中打开本页后开启提醒。';
-      return '你的浏览器（OPPO/vivo/小米等手机自带浏览器）默认关闭了网页通知接口，系统级弹窗无法开启。可改用手机上的 Chrome 或 Edge 打开本页并「添加到桌面」，即可收到锁屏弹窗；或直接开启「页内提醒」，离开再回来时会看到未读提示。';
+      const mobileTip = '苹果手机请用 Safari 把网站添加到主屏幕，然后从桌面图标进入聊天室后开启提醒；安卓手机请使用群里的 App 开启 App 提醒。';
+      if (isWeChat) return '微信内置浏览器不支持网页通知。请点右上角「···」→「在浏览器打开」后再按教程操作。' + mobileTip;
+      if (isQQ) return 'QQ 内置浏览器不支持网页通知。请换到系统浏览器后再按教程操作。' + mobileTip;
+      if (isTikTok) return '抖音内置浏览器不支持网页通知。请换到系统浏览器后再按教程操作。' + mobileTip;
+      return '当前浏览器暂时无法开启系统弹窗，已为你开启「页内提醒」。' + mobileTip;
     }
 
     function getBrowserName() {
@@ -1592,7 +1593,7 @@
       updateUnreadBadges();
       if (!notifEnabled) {
         const bname = getBrowserName();
-        alert('已开启「页内提醒」。' + bname + '暂时无法开启系统弹窗，但你切走再回来时，会看到未读横幅和频道红点提醒。\n\n想收到真正的锁屏弹窗，请用手机上的 Edge/Chrome 打开本页并「添加到桌面」，允许通知权限后再开启提醒。');
+        alert('已开启「页内提醒」。' + bname + '暂时无法开启系统弹窗，但你切走再回来时，会看到未读横幅和频道红点提醒。\n\n苹果手机：请用 Safari 把网站添加到主屏幕，然后一定要从桌面图标进入聊天室，再点击开启提醒。\n\n安卓手机：请使用群里的 App 开启 App 提醒。');
       }
     }
 
