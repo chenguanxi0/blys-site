@@ -463,7 +463,8 @@
     return result;
   }
 
-  async function enableNativePush() {
+  async function enableNativePush(options) {
+    const opts = options || {};
     localStorage.setItem(APP_SWITCH_KEY, 'on');
     APP_BRIDGE.initPromise = null;
     const getui = getGetuiPushPlugin();
@@ -472,7 +473,7 @@
     }
     writeDiag({ switchWanted: true, switchChangedAt: nowIso(), tokenSaveMessage: '正在开启 App 提醒...' });
     const result = await bootstrapNativePush();
-    if (getui && typeof getui.testLocalNotification === 'function') {
+    if (!opts.skipSelfTest && getui && typeof getui.testLocalNotification === 'function') {
       try {
         const testResult = await getui.testLocalNotification();
         writeDiag({
@@ -517,6 +518,12 @@
       }
     }
     return { ok: true };
+  }
+
+  async function resetNativePush() {
+    await disableNativePush();
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    return await enableNativePush({ skipSelfTest: true });
   }
 
   async function getDiagnostics() {
@@ -564,6 +571,7 @@
     ensureNativePush,
     enableNotifications: enableNativePush,
     disableNotifications: disableNativePush,
+    resetNotifications: resetNativePush,
     getDiagnostics,
     getNativeToken: function () { return APP_BRIDGE.token || localStorage.getItem(APP_TOKEN_KEY) || ''; },
     getLastError: function () { return localStorage.getItem('blys_native_push_error') || ''; },

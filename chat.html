@@ -215,7 +215,7 @@
   </footer>
 
   <script src="assets/app.js?v=2026082104"></script>
-  <script src="assets/mobile-app.js?v=2026082104"></script>
+  <script src="assets/mobile-app.js?v=2026082110"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -1188,7 +1188,7 @@
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082109', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082110', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -1215,6 +1215,7 @@
       inAppNotifOn = false;
       notifEnabled = localStorage.getItem('blys_native_push_switch') !== 'off';
       cleanupNativeAppWebPushSubscription();
+      scheduleNativeNotificationAutoReset('init');
       updateNotifBtn();
       refreshNativeNotifDiag();
       document.addEventListener('visibilitychange', () => {
@@ -1227,6 +1228,7 @@
       window.addEventListener('blys:user:change', () => {
         cleanupNativeAppWebPushSubscription();
         setTimeout(cleanupNativeAppWebPushSubscription, 1200);
+        scheduleNativeNotificationAutoReset('user-change');
       });
       window.addEventListener('blys:native-push-diag', () => {
         refreshNativeNotifDiag();
@@ -1249,6 +1251,41 @@
         }
       } catch (e) {
         console.warn('[chat] cleanup native app web push failed', e);
+      }
+    }
+
+    let nativeAutoResetRunning = false;
+    function scheduleNativeNotificationAutoReset(reason) {
+      if (!isNativeNotificationApp()) return;
+      setTimeout(() => autoResetNativeNotification(reason), reason === 'init' ? 1600 : 300);
+    }
+
+    async function autoResetNativeNotification(reason) {
+      if (!isNativeNotificationApp()) return;
+      if (!__user || !__user.loggedIn || !__user.token) return;
+      if (nativeAutoResetRunning) return;
+      const key = 'blys_native_auto_reset_' + __user.token + '_2026082110';
+      if (sessionStorage.getItem(key) === 'done') return;
+      nativeAutoResetRunning = true;
+      try {
+        sessionStorage.setItem(key, 'done');
+        setNotifDiag('正在刷新 App 提醒...');
+        await cleanupNativeAppWebPushSubscription();
+        if (window.BLYS_APP && typeof window.BLYS_APP.resetNotifications === 'function') {
+          await window.BLYS_APP.resetNotifications();
+        } else if (window.BLYS_APP && typeof window.BLYS_APP.enableNotifications === 'function') {
+          await window.BLYS_APP.enableNotifications({ skipSelfTest: true });
+        }
+        notifEnabled = true;
+        localStorage.setItem('blys_native_push_switch', 'on');
+        await refreshNativeNotifDiag();
+      } catch (e) {
+        sessionStorage.removeItem(key);
+        console.warn('[chat] native notification auto reset failed', reason, e);
+        setNotifDiag('App 提醒自动刷新失败：' + ((e && e.message) ? e.message : 'unknown'));
+      } finally {
+        nativeAutoResetRunning = false;
+        updateNotifBtn();
       }
     }
 
@@ -1385,7 +1422,7 @@
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082109', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082110', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
