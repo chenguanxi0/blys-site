@@ -1239,6 +1239,9 @@
         for (const reg of regs) {
           try { await clearChatPushSubscription(reg); } catch (e) {}
         }
+        if (__user && __user.loggedIn && __user.token) {
+          try { await sbRpc('delete_push_subscriptions_for_user', { p_token: __user.token }, { timeoutMs: 8000 }); } catch (e) {}
+        }
       } catch (e) {
         console.warn('[chat] cleanup native app web push failed', e);
       }

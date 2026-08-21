@@ -41,6 +41,11 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'msg', '订阅信息无效');
   END IF;
 
+  DELETE FROM public.push_subscriptions
+  WHERE user_token = p_token
+    AND COALESCE(user_agent, '') = COALESCE(p_user_agent, '')
+    AND endpoint <> v_endpoint;
+
   INSERT INTO public.push_subscriptions(endpoint, user_token, subscription, user_agent, created_at, updated_at, last_seen_at)
   VALUES (v_endpoint, p_token, p_subscription, p_user_agent, now(), now(), now())
   ON CONFLICT (endpoint) DO UPDATE SET
@@ -86,14 +91,26 @@ BEGIN
   END IF;
 
   RETURN QUERY
-  SELECT ps.endpoint, ps.subscription
+  SELECT DISTINCT ON (ps.user_token, COALESCE(ps.user_agent, '')) ps.endpoint, ps.subscription
   FROM public.push_subscriptions ps
   JOIN public.profiles p ON p.token = ps.user_token
   WHERE ps.user_token <> p_token
     AND (
       p_room <> 'vip'
       OR (p.vip_expire IS NOT NULL AND p.vip_expire > now())
-    );
+    )
+  ORDER BY ps.user_token, COALESCE(ps.user_agent, ''), ps.updated_at DESC;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION public.delete_push_subscriptions_for_user(
+  p_token TEXT
+) RETURNS JSONB AS $$
+BEGIN
+  DELETE FROM public.push_subscriptions
+  WHERE user_token = p_token;
+
+  RETURN jsonb_build_object('ok', true);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

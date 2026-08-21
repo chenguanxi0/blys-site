@@ -37,6 +37,12 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'msg', 'device token 无效');
   END IF;
 
+  DELETE FROM public.native_push_tokens
+  WHERE user_token = p_token
+    AND platform = COALESCE(NULLIF(trim(p_platform), ''), 'android')
+    AND COALESCE(user_agent, '') = COALESCE(p_user_agent, '')
+    AND device_token <> trim(p_device_token);
+
   INSERT INTO public.native_push_tokens(device_token, user_token, platform, user_agent, created_at, updated_at, last_seen_at)
   VALUES (trim(p_device_token), p_token, COALESCE(NULLIF(trim(p_platform), ''), 'android'), p_user_agent, now(), now(), now())
   ON CONFLICT (device_token) DO UPDATE SET
@@ -82,7 +88,7 @@ BEGIN
   END IF;
 
   RETURN QUERY
-  SELECT npt.device_token, npt.platform
+  SELECT DISTINCT ON (npt.user_token, npt.platform, COALESCE(npt.user_agent, '')) npt.device_token, npt.platform
   FROM public.native_push_tokens npt
   JOIN public.profiles p ON p.token = npt.user_token
   WHERE npt.user_token <> p_token
@@ -90,7 +96,8 @@ BEGIN
       p_room <> 'vip'
       OR COALESCE(p.is_admin, false)
       OR (p.vip_expire IS NOT NULL AND p.vip_expire > now())
-    );
+    )
+  ORDER BY npt.user_token, npt.platform, COALESCE(npt.user_agent, ''), npt.updated_at DESC;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
