@@ -575,12 +575,6 @@
         if (!isFirst && !isHistory) {
           const fresh = list.filter(m => m.user_email !== myEmail);
           if (fresh.length) {
-            if (document.hidden && notifEnabled) {
-              const latest = fresh[fresh.length - 1];
-              const name = latest.user_nickname || (latest.user_email ? latest.user_email.split('@')[0] : '群友');
-              const preview = (latest.content || '').trim() || (latest.image ? '[图片]' : '新消息');
-              notifyNewMessage(room, name, preview, fresh.length);
-            }
             if (inAppNotifOn && (document.hidden || currentRoom !== room)) {
               unreadCounts[room] = (unreadCounts[room] || 0) + fresh.length;
               updateUnreadBadges();
@@ -1194,7 +1188,7 @@
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082106', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082107', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -1366,7 +1360,7 @@
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082106', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082107', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
