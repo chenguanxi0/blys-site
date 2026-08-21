@@ -1188,7 +1188,7 @@
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082107', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082108', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -1214,6 +1214,7 @@
       if (diagEl) diagEl.hidden = true;
       inAppNotifOn = false;
       notifEnabled = localStorage.getItem('blys_native_push_switch') !== 'off';
+      cleanupNativeAppWebPushSubscription();
       updateNotifBtn();
       refreshNativeNotifDiag();
       document.addEventListener('visibilitychange', () => {
@@ -1225,6 +1226,22 @@
       window.addEventListener('blys:native-push-diag', () => {
         refreshNativeNotifDiag();
       });
+    }
+
+    async function cleanupNativeAppWebPushSubscription() {
+      if (!isNativeNotificationApp()) return;
+      localStorage.removeItem('blys_notif');
+      localStorage.removeItem('blys_notif_inapp');
+      inAppNotifOn = false;
+      try {
+        if (!('serviceWorker' in navigator)) return;
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (const reg of regs) {
+          try { await clearChatPushSubscription(reg); } catch (e) {}
+        }
+      } catch (e) {
+        console.warn('[chat] cleanup native app web push failed', e);
+      }
     }
 
     function supportsSystemPush() {
@@ -1360,7 +1377,7 @@
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082107', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082108', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
@@ -1538,6 +1555,7 @@
               btn.disabled = true;
             }
             setNotifDiag('正在开启 App 提醒，请稍等...');
+            await cleanupNativeAppWebPushSubscription();
             await withTimeout(window.BLYS_APP.enableNotifications(), 12000, 'enable notifications');
             notifEnabled = true;
             localStorage.setItem('blys_native_push_switch', 'on');
