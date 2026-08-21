@@ -1,10 +1,10 @@
-const CACHE_NAME = 'blys-v11';
+const CACHE_NAME = 'blys-v12';
 const ASSETS = [
   '/',
   '/index.html',
   '/chat.html?v=2026082107',
   '/daily.html',
-  '/diary.html',
+  '/diary.html?v=2026082102',
   '/changelog.html',
   '/notification-guide.html?v=2026082105',
   '/assets/styles.css?v=2026082104',
