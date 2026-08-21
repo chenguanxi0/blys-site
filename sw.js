@@ -1,4 +1,4 @@
-const CACHE_NAME = 'blys-v5';
+const CACHE_NAME = 'blys-v6';
 const ASSETS = [
   '/',
   '/index.html',
@@ -6,6 +6,7 @@ const ASSETS = [
   '/daily.html',
   '/diary.html',
   '/changelog.html',
+  '/notification-guide.html',
   '/assets/styles.css?v=2026082102',
   '/assets/app.js',
   '/assets/favicon.png'

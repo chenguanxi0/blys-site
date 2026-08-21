@@ -33,6 +33,7 @@
             <button class="nav-dropdown-trigger" type="button">关于<span class="nav-dropdown-chevron" aria-hidden="true"></span></button>
             <div class="nav-dropdown-menu">
               <a href="index.html#about">关于我</a>
+              <a href="notification-guide.html">弹窗教程</a>
               <a href="changelog.html">更新日志</a>
             </div>
           </div>
@@ -185,7 +186,7 @@
       <p class="muted">输入博主发放的激活码，会员有效期将绑定到你的邮箱账户。</p>
       <div class="form-row">
         <label>激活码</label>
-        <input id="redeemCode" type="text" placeholder="如 BLYS-VIP-30" style="text-transform:uppercase" />
+        <input id="redeemCode" type="text" placeholder="请输入你收到的专属激活码" style="text-transform:uppercase" autocomplete="off" />
       </div>
       <div id="redeemMsg" class="result"></div>
       <button class="btn btn-primary btn-block" onclick="doRedeem()">兑换</button>

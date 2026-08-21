@@ -10,6 +10,7 @@ const entries = [
   'daily.html',
   'diary.html',
   'changelog.html',
+  'notification-guide.html',
   'admin.html',
   'manifest.json',
   'sw.js',
