@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082104" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082113" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -730,6 +730,31 @@
       return box.scrollTop + box.clientHeight >= box.scrollHeight - (distance || 80);
     }
 
+    function getChatScrollAnchor(box) {
+      if (!box) return null;
+      const boxTop = box.getBoundingClientRect().top;
+      const nodes = Array.from(box.querySelectorAll('.chat-msg'));
+      for (const node of nodes) {
+        const rect = node.getBoundingClientRect();
+        if (rect.bottom > boxTop + 8) {
+          return {
+            id: node.getAttribute('data-message-id') || '',
+            offset: rect.top - boxTop
+          };
+        }
+      }
+      return null;
+    }
+
+    function restoreChatScrollAnchor(box, anchor) {
+      if (!box || !anchor || !anchor.id) return;
+      const node = box.querySelector('[data-message-id="' + String(anchor.id).replace(/"/g, '\\"') + '"]');
+      if (!node) return;
+      const boxTop = box.getBoundingClientRect().top;
+      const currentOffset = node.getBoundingClientRect().top - boxTop;
+      box.scrollTop += currentOffset - anchor.offset;
+    }
+
     function appendChatMessage(message, room, options) {
       options = options || {};
       const box = document.getElementById('chatMessages');
@@ -783,12 +808,23 @@
       if (!box || !list || !list.length) { chatHasMore[room] = false; return; }
       // list 为降序（最新在前），转成升序以便按时间顺序插入顶部
       const ordered = list.slice().reverse();
-      const prevHeight = box.scrollHeight;
-      const prevTop = box.scrollTop;
+      const anchor = getChatScrollAnchor(box);
       const html = ordered.map(m => renderChatMessageHtml(m, room)).join('');
       box.insertAdjacentHTML('afterbegin', html);
-      // 补偿：顶部插入后，把滚动位置下移新增高度，避免画面跳动
-      box.scrollTop = prevTop + (box.scrollHeight - prevHeight);
+      const inserted = Array.from(box.querySelectorAll('.chat-msg')).slice(0, ordered.length);
+      // 固定当前可见消息的位置，图片解码后高度变化也要继续校准几次。
+      restoreChatScrollAnchor(box, anchor);
+      requestAnimationFrame(() => restoreChatScrollAnchor(box, anchor));
+      setTimeout(() => restoreChatScrollAnchor(box, anchor), 80);
+      setTimeout(() => restoreChatScrollAnchor(box, anchor), 220);
+      setTimeout(() => restoreChatScrollAnchor(box, anchor), 520);
+      inserted.forEach(node => {
+        node.querySelectorAll('img').forEach(img => {
+          img.addEventListener('load', () => restoreChatScrollAnchor(box, anchor), { once: true });
+          img.addEventListener('error', () => restoreChatScrollAnchor(box, anchor), { once: true });
+          if (img.complete) restoreChatScrollAnchor(box, anchor);
+        });
+      });
       const minTs = ordered.reduce((mn, m) => Math.min(mn, m.created_at ? new Date(m.created_at).getTime() : 0), Infinity);
       chatOldestTs[room] = Math.min(chatOldestTs[room] || Infinity, minTs);
       chatHasMore[room] = list.length >= 30;
@@ -1205,7 +1241,7 @@
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082112', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082113', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
           scheduleBrowserNotificationAutoReset('init');
         }).catch(() => {});
@@ -1476,7 +1512,7 @@
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082112', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082113', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
