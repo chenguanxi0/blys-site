@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>管理后台 · 白鹿原上-交易笔记</title>
-  <link rel="stylesheet" href="assets/styles.css" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082114" />
   <style>
     body { background:#f1f5f9; }
     .admin { max-width:1000px; margin:0 auto; padding:30px 16px 60px; }
@@ -31,6 +31,12 @@
     .cmt-bar { display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; align-items:center; }
     .cmt-bar input, .cmt-bar select { padding:6px 10px; border:1px solid #d1d5db; border-radius:6px; font-size:13px; }
     .cmt-bar input { flex:1; min-width:150px; }
+    .member-tools { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; align-items:end; margin-bottom:12px; }
+    .member-tools label { display:flex; flex-direction:column; gap:5px; font-size:12px; color:#64748b; }
+    .member-tools input { padding:8px 10px; border:1px solid #d1d5db; border-radius:8px; font-size:13px; }
+    .code-result { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px; font-size:13px; line-height:1.7; margin:12px 0; display:none; }
+    .admin-table button.secondary { background:#475569; }
+    @media (max-width:720px){ .member-tools { grid-template-columns:1fr 1fr; } }
     .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.4); display:none; align-items:center; justify-content:center; z-index:100; }
     .modal-backdrop.open { display:flex; }
     .modal-box { background:#fff; border-radius:12px; padding:24px; width:90%; max-width:360px; box-shadow:0 8px 30px rgba(0,0,0,.15); }
@@ -66,6 +72,20 @@
       <div class="panel">
         <h2>👥 用户列表</h2>
         <div class="table-wrap" id="userList">加载中…</div>
+      </div>
+
+      <div class="panel">
+        <h2>⭐ 会员续费</h2>
+        <div class="member-tools">
+          <label>天数<input type="number" id="codeDays" value="30" min="1" max="3660"></label>
+          <label>数量<input type="number" id="codeCount" value="1" min="1" max="100"></label>
+          <label>指定邮箱（可空）<input type="email" id="codeEmail" placeholder="留空则任何账号可兑换"></label>
+          <label>备注<input type="text" id="codeNote" placeholder="如 9月续费"></label>
+        </div>
+        <button class="btn btn-primary" onclick="createMemberCodes()">生成续费码</button>
+        <button class="btn btn-secondary" onclick="loadMemberCodes()">刷新列表</button>
+        <div class="code-result" id="codeResult"></div>
+        <div class="table-wrap" id="memberCodeList">加载中…</div>
       </div>
 
       <div class="panel">
@@ -126,7 +146,7 @@
       loadAll();
     }
 
-    async function loadAll(){ await loadStats(); await loadUsers(); await loadComments(); }
+    async function loadAll(){ await loadStats(); await loadUsers(); await loadMemberCodes(); await loadComments(); }
 
     async function loadStats(){
       const d = await sbRpc('admin_stats', { p_admin_token: getTok() });
@@ -143,7 +163,50 @@
       if(!d || !d.ok){ box.innerHTML = '<p>加载失败：' + (d&&d.msg) + '</p>'; return; }
       if(!d.list.length){ box.innerHTML = '<p>暂无用户</p>'; return; }
       box.innerHTML = '<table class="admin-table"><tr><th>昵称</th><th>邮箱</th><th>注册时间</th><th>会员</th><th>到期</th><th>操作</th></tr>' +
-        d.list.map(u=>`<tr><td>${esc(u.nickname||'')}</td><td class="email">${esc(u.email||'')}</td><td>${u.created_at?fmt(u.created_at):'-'}</td><td>${u.is_vip?'是':'否'}</td><td>${u.vip_expire?fmt(u.vip_expire):'-'}</td><td><button onclick="openVipModal('${esc(u.email||'')}')">设会员</button></td></tr>`).join('') +
+        d.list.map(u=>`<tr><td>${esc(u.nickname||'')}</td><td class="email">${esc(u.email||'')}</td><td>${u.created_at?fmt(u.created_at):'-'}</td><td>${u.is_vip?'是':'否'}</td><td>${u.vip_expire?fmt(u.vip_expire):'-'}</td><td><button onclick="openVipModal('${esc(u.email||'')}')">设会员</button> <button class="secondary" onclick="extendVip('${esc(u.email||'')}',30)">续30天</button> <button class="secondary" onclick="prefillCodeEmail('${esc(u.email||'')}')">给续费码</button></td></tr>`).join('') +
+        '</table>';
+    }
+
+    function prefillCodeEmail(email){
+      document.getElementById('codeEmail').value = email || '';
+      document.getElementById('codeDays').value = 30;
+      document.getElementById('codeCount').value = 1;
+      document.getElementById('codeNote').value = '会员续费';
+      document.getElementById('codeEmail').scrollIntoView({ behavior:'smooth', block:'center' });
+    }
+
+    async function extendVip(email, days){
+      if(!email) return;
+      if(!confirm('确认给 ' + email + ' 顺延 ' + days + ' 天会员？')) return;
+      const d = await sbRpc('admin_extend_vip', { p_admin_token:getTok(), p_email:email, p_days:days });
+      alert(d && d.ok ? ('已续费，到期：' + fmt(d.vip_expire)) : ('失败：' + ((d&&d.msg)||'未知错误')));
+      loadStats(); loadUsers();
+    }
+
+    async function createMemberCodes(){
+      const days = Number(document.getElementById('codeDays').value || 30);
+      const count = Number(document.getElementById('codeCount').value || 1);
+      const email = (document.getElementById('codeEmail').value || '').trim();
+      const note = (document.getElementById('codeNote').value || '').trim();
+      const result = document.getElementById('codeResult');
+      result.style.display = 'block';
+      result.textContent = '生成中…';
+      const d = await sbRpc('admin_create_member_codes', { p_admin_token:getTok(), p_days:days, p_count:count, p_assigned_email:email || null, p_note:note || null });
+      if(!d || !d.ok){ result.textContent = '失败：' + ((d&&d.msg)||'未知错误'); return; }
+      const codes = Array.isArray(d.codes) ? d.codes : [];
+      result.innerHTML = '<b>已生成：</b><br>' + codes.map(c => '<code>' + esc(c) + '</code>').join('<br>');
+      loadMemberCodes();
+    }
+
+    async function loadMemberCodes(){
+      const box = document.getElementById('memberCodeList');
+      if(!box) return;
+      const d = await sbRpc('admin_list_member_codes', { p_admin_token:getTok() });
+      if(!d || !d.ok){ box.innerHTML = '<p>加载失败：' + ((d&&d.msg)||'请先执行数据库升级脚本') + '</p>'; return; }
+      const list = d.list || [];
+      if(!list.length){ box.innerHTML = '<p>暂无续费码</p>'; return; }
+      box.innerHTML = '<table class="admin-table"><tr><th>激活码</th><th>天数</th><th>指定邮箱</th><th>状态</th><th>使用人</th><th>备注</th><th>创建时间</th></tr>' +
+        list.map(c=>`<tr><td><code>${esc(c.code)}</code></td><td>${c.days}</td><td class="email">${esc(c.assigned_email||'-')}</td><td>${c.used_at?'已用':(c.active?'可用':'停用')}</td><td class="email">${esc(c.used_by||'-')}</td><td>${esc(c.note||'')}</td><td>${fmt(c.created_at)}</td></tr>`).join('') +
         '</table>';
     }
 

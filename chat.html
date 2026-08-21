@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082113" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082114" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -142,6 +142,11 @@
           <span class="chat-tab-sub">VIP 专属</span>
           <span class="chat-tab-badge" id="badge-vip" hidden>0</span>
         </button>
+        <button class="chat-tab" data-room="private" onclick="switchChatRoom('private')">
+          ✉️ 私聊
+          <span class="chat-tab-sub">只和白鹿原上</span>
+          <span class="chat-tab-badge" id="badge-private" hidden>0</span>
+        </button>
       </div>
     </div>
 
@@ -227,12 +232,15 @@
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    console.log('[chat] build v2026082027 (verified web push subscription + optimistic send)');
+    console.log('[chat] build v2026082114 (private chat + member renewal base)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
-    let lastSeenTs = { public: 0, vip: 0 };
-    let chatOldestTs = { public: 0, vip: 0 };
-    let chatHasMore = { public: true, vip: true };
+    let lastSeenTs = { public: 0, vip: 0, private: 0 };
+    let chatOldestTs = { public: 0, vip: 0, private: 0 };
+    let chatHasMore = { public: true, vip: true, private: true };
+    let currentPrivateConversationId = '';
+    let currentPrivateTitle = '';
+    let privateConversations = [];
     // 乐观发送：点击发送即先本地渲染，后台再同步到服务器
     // tempId -> { key, room, message, payload }
     const chatPendingSends = new Map();
@@ -251,7 +259,7 @@
     let notifEnabled = false;
     let inAppNotifOn = false;
     let notifDiagMsg = '';
-    let unreadCounts = { public: 0, vip: 0 };
+    let unreadCounts = { public: 0, vip: 0, private: 0 };
     const PUSH_VAPID_PUBLIC_KEY = 'BA2xT4Y1plL6c9JNmBJI8aqp_vjxrnOG1-p-nhazGbm_QGnnuq8A7hbYbBIpZKd3MQ3-jx0EfXZGnKYQQuFHFac';
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -454,6 +462,27 @@
         }
       }
 
+      if (room === 'private') {
+        if (!__user.loggedIn) {
+          if (chatBox) chatBox.style.display = 'flex';
+          if (vipLock) vipLock.style.display = 'none';
+          if (messagesBox) messagesBox.innerHTML = '<div class="chat-empty">登录后可以和白鹿原上私聊</div>';
+          updateChatInputState();
+          return;
+        }
+        if (options.keepPrivate && currentPrivateConversationId) {
+          if (chatBox) chatBox.style.display = 'flex';
+          if (vipLock) vipLock.style.display = 'none';
+          if (messagesBox) messagesBox.style.display = 'block';
+          if (inputArea) inputArea.style.display = 'block';
+          updateChatInputState();
+          return;
+        }
+        if (messagesBox) messagesBox.innerHTML = '<div class="chat-loading">加载私聊中…</div>';
+        await openPrivateRoom();
+        return;
+      }
+
       if (chatBox) chatBox.style.display = 'flex';
       if (vipLock) vipLock.style.display = 'none';
       if (messagesBox) messagesBox.style.display = 'block';
@@ -464,7 +493,7 @@
       // 切到该频道即视为已读，清掉其未读角标
       if (unreadCounts[room]) { unreadCounts[room] = 0; updateUnreadBadges(); }
       const banner = document.getElementById('chatUnreadBanner');
-      if (banner && unreadCounts.public + unreadCounts.vip === 0) banner.hidden = true;
+      if (banner && unreadCounts.public + unreadCounts.vip + unreadCounts.private === 0) banner.hidden = true;
       loadChatMessages(room);
       setTimeout(() => {
         if (room !== currentRoom || !messagesBox || !messagesBox.querySelector('.chat-loading')) return;
@@ -472,6 +501,122 @@
       }, 22000);
       refreshOnlineCount();
       sendHeartbeat();
+    }
+
+    function isBlysAdminUser(user) {
+      user = user || __user || {};
+      return !!(user.isAdmin || user.email === '491788533@qq.com' || user.nickname === '白鹿原上');
+    }
+
+    function isBlysAdminIdentity(email, nickname) {
+      return email === '491788533@qq.com' || nickname === '白鹿原上';
+    }
+
+    async function openPrivateRoom() {
+      const box = document.getElementById('chatMessages');
+      const inputArea = document.getElementById('chatInputArea');
+      if (!__user.loggedIn) {
+        if (box) box.innerHTML = '<div class="chat-empty">登录后可以和白鹿原上私聊</div>';
+        updateChatInputState();
+        return;
+      }
+      if (isBlysAdminUser()) {
+        currentPrivateConversationId = '';
+        currentPrivateTitle = '';
+        if (inputArea) inputArea.style.display = 'none';
+        await loadPrivateConversations();
+      } else {
+        if (inputArea) inputArea.style.display = 'block';
+        await startPrivateChat(__user.email, __user.nickname || __user.email, { silent: true });
+      }
+    }
+
+    async function loadPrivateConversations() {
+      const box = document.getElementById('chatMessages');
+      if (box) box.innerHTML = '<div class="chat-loading">加载私聊列表中…</div>';
+      try {
+        const d = await sbRpc('list_private_conversations', { p_token: __user.token }, { timeoutMs: 12000 });
+        if (!d || !d.ok || !Array.isArray(d.list)) {
+          if (box) box.innerHTML = renderPrivateEmpty('私聊列表加载失败');
+          return;
+        }
+        privateConversations = d.list || [];
+        unreadCounts.private = privateConversations.reduce((sum, c) => sum + (Number(c.admin_unread) || 0), 0);
+        updateUnreadBadges();
+        renderPrivateConversationList();
+      } catch (e) {
+        if (box) box.innerHTML = renderPrivateEmpty(e && e.message ? e.message : '私聊列表加载失败');
+      }
+    }
+
+    function renderPrivateEmpty(text) {
+      const hint = isBlysAdminUser()
+        ? '用户在群聊点击你的头像，或者你点击用户头像后，会自动建立私聊。'
+        : '这里用于和白鹿原上私聊，其他用户之间不能互相私聊。';
+      return '<div class="chat-empty private-empty"><b>' + esc(text || '暂无私聊') + '</b><p>' + esc(hint) + '</p></div>';
+    }
+
+    function renderPrivateConversationList() {
+      const box = document.getElementById('chatMessages');
+      if (!box) return;
+      if (!privateConversations.length) {
+        box.innerHTML = renderPrivateEmpty('暂无私聊会话');
+        return;
+      }
+      box.innerHTML = '<div class="private-list">' + privateConversations.map(c => {
+        const unread = Number(c.admin_unread || 0);
+        const title = c.user_nickname || c.user_email || '用户';
+        const last = c.last_message || '还没有消息';
+        const time = c.last_message_at ? fmtDateTime(c.last_message_at) : '';
+        return '<button class="private-thread" type="button" onclick="openPrivateConversation(&quot;' + esc(c.id) + '&quot;)">' +
+          '<span class="private-thread-avatar">' + esc(String(title).charAt(0).toUpperCase()) + '</span>' +
+          '<span class="private-thread-main"><b>' + esc(title) + '</b><small>' + esc(last) + '</small></span>' +
+          '<span class="private-thread-side">' + (unread ? '<em>' + unread + '</em>' : '') + '<small>' + esc(time) + '</small></span>' +
+        '</button>';
+      }).join('') + '</div>';
+    }
+
+    async function openPrivateConversation(conversationId) {
+      const conv = privateConversations.find(c => String(c.id) === String(conversationId));
+      if (!conv) return;
+      currentPrivateConversationId = conv.id;
+      currentPrivateTitle = conv.user_nickname || conv.user_email || '用户';
+      currentRoom = 'private';
+      lastSeenTs.private = 0;
+      chatOldestTs.private = 0;
+      chatHasMore.private = true;
+      const inputArea = document.getElementById('chatInputArea');
+      if (inputArea) inputArea.style.display = 'block';
+      updateChatInputState();
+      await loadChatMessages('private', { isFirst: true });
+      try { await sbRpc('mark_private_read', { p_token: __user.token, p_conversation_id: currentPrivateConversationId }); } catch(e) {}
+    }
+
+    async function startPrivateChat(email, nickname, options) {
+      options = options || {};
+      if (!__user.loggedIn) { openAuthModal(); return; }
+      if (!isBlysAdminUser() && !isBlysAdminIdentity(email, nickname) && email !== __user.email) {
+        alert('私聊只开放和白鹿原上沟通，用户之间不能互相私聊');
+        return;
+      }
+      try {
+        const targetEmail = isBlysAdminUser() ? email : __user.email;
+        const d = await sbRpc('get_private_conversation', { p_token: __user.token, p_user_email: targetEmail }, { timeoutMs: 12000 });
+        if (!d || !d.ok) {
+          if (!options.silent) alert((d && d.msg) || '私聊打开失败');
+          return;
+        }
+        currentPrivateConversationId = d.id;
+        currentPrivateTitle = isBlysAdminUser() ? (d.user_nickname || nickname || d.user_email) : '白鹿原上';
+        lastSeenTs.private = 0;
+        chatOldestTs.private = 0;
+        chatHasMore.private = true;
+        await switchChatRoom('private', { skipUserRefresh: true, keepPrivate: true });
+        await loadChatMessages('private', { isFirst: true });
+        try { await sbRpc('mark_private_read', { p_token: __user.token, p_conversation_id: currentPrivateConversationId }); } catch(e) {}
+      } catch (e) {
+        if (!options.silent) alert('私聊打开失败：' + (e && e.message ? e.message : '网络异常'));
+      }
     }
 
     function renderChatLoadFailed(room, message) {
@@ -515,6 +660,7 @@
     }
 
     async function loadChatMessages(room, opts) {
+      if (room === 'private') return loadPrivateMessages(opts || {});
       opts = opts || {};
       const isHistory = !!opts.history;
       const loadSeq = isHistory ? chatLoadSeq : ++chatLoadSeq;
@@ -595,6 +741,70 @@
         console.error('[chat] loadChatMessages error', e);
         if (retry < 2) { retryLater(); return; }
         if (isFirst) box.innerHTML = renderChatLoadFailed(room, e && e.message ? e.message : String(e));
+      }
+    }
+
+    async function loadPrivateMessages(opts) {
+      opts = opts || {};
+      const box = document.getElementById('chatMessages');
+      if (!box) return;
+      if (!currentPrivateConversationId) {
+        if (isBlysAdminUser()) { await loadPrivateConversations(); return; }
+        const d = await sbRpc('get_private_conversation', { p_token: __user.token, p_user_email: __user.email }, { timeoutMs: 12000 });
+        if (!d || !d.ok) { box.innerHTML = renderPrivateEmpty((d && d.msg) || '私聊打开失败'); return; }
+        currentPrivateConversationId = d.id;
+        currentPrivateTitle = '白鹿原上';
+      }
+      const isHistory = !!opts.history;
+      const loadSeq = isHistory ? chatLoadSeq : ++chatLoadSeq;
+      const retry = opts.retry || 0;
+      const isFirst = opts.isFirst || box.querySelector('.chat-loading') != null;
+      if (isFirst) box.innerHTML = '<div class="chat-loading">加载私聊中…</div>';
+      const retryLater = () => {
+        if (retry < 2) setTimeout(() => {
+          if (currentRoom === 'private') loadPrivateMessages(Object.assign({}, opts, { retry: retry + 1 }));
+        }, 1500);
+      };
+      try {
+        const shouldStickToBottom = isFirst || (!isHistory && isChatNearBottom(box, 100) && Date.now() > chatUserReadingHistoryUntil);
+        const rpcParams = { p_token: __user.token, p_conversation_id: currentPrivateConversationId };
+        if (isHistory) {
+          rpcParams.p_limit = 30;
+          rpcParams.p_before = chatTsToIso(chatOldestTs.private);
+        } else if (isFirst) {
+          rpcParams.p_limit = (window.BLYS_APP && window.BLYS_APP.isNativeApp) ? 12 : 20;
+        } else {
+          rpcParams.p_limit = 100;
+          rpcParams.p_after = chatTsToIso(lastSeenTs.private);
+        }
+        const d = await sbRpc('list_private_messages', rpcParams, { timeoutMs: isFirst ? 18000 : 12000 });
+        if ((!isHistory && loadSeq !== chatLoadSeq) || currentRoom !== 'private') return;
+        const list = Array.isArray(d) ? d : (d && d.list);
+        if (!Array.isArray(list)) {
+          if (retry < 2) { retryLater(); return; }
+          if (isFirst) box.innerHTML = renderChatLoadFailed('private', '私聊接口返回异常');
+          return;
+        }
+        if (isHistory) {
+          prependChatHistory(list, 'private');
+        } else if (isFirst) {
+          renderChatMessages(list.slice().reverse(), 'private', true);
+          if (!list.length) box.innerHTML = '<div class="chat-empty">这里是你和' + esc(currentPrivateTitle || '白鹿原上') + '的私聊</div>';
+          if (list.length) {
+            const minTs = list.reduce((mn, m) => Math.min(mn, m.created_at ? new Date(m.created_at).getTime() : 0), Infinity);
+            chatOldestTs.private = minTs;
+            chatHasMore.private = list.length >= rpcParams.p_limit;
+          }
+        } else {
+          for (const m of list) appendChatMessage(m, 'private', { stickToBottom: shouldStickToBottom });
+        }
+        if (!isHistory && list.length) {
+          const maxTs = list.reduce((mx, m) => Math.max(mx, m.created_at ? new Date(m.created_at).getTime() : 0), 0);
+          lastSeenTs.private = Math.max(lastSeenTs.private || 0, maxTs);
+        }
+      } catch (e) {
+        if (retry < 2) { retryLater(); return; }
+        if (isFirst) box.innerHTML = renderChatLoadFailed('private', e && e.message ? e.message : '私聊加载失败');
       }
     }
 
@@ -705,16 +915,18 @@
       chatMessageCache.set(`${room}:${m.id}`, m);
       const pending = !!m.__pending;
       const failed = !!m.__failed;
-      const canRecall = isMe && !pending && !failed && !m.recalled_at && m.id && m.created_at && (Date.now() - new Date(m.created_at).getTime() <= 2 * 60 * 1000);
+      const canRecall = room !== 'private' && isMe && !pending && !failed && !m.recalled_at && m.id && m.created_at && (Date.now() - new Date(m.created_at).getTime() <= 2 * 60 * 1000);
       const recalled = !!m.recalled_at;
       const stateCls = pending ? ' chat-msg-pending' : (failed ? ' chat-msg-failed' : '');
       const pendingText = m.__sendState || '发送中…';
       const timeHtml = failed
         ? `<span class="chat-msg-state chat-msg-state-failed">发送失败 <button type="button" class="chat-retry-btn" onclick="retryChatSend('${esc(m.id)}')">重试</button></span>`
         : (pending ? `<span class="chat-msg-state">${esc(pendingText)}</span>` : `<span class="chat-msg-time">${time}</span>`);
+      const avatarEmail = encodeURIComponent(m.user_email || '');
+      const avatarName = encodeURIComponent(m.user_nickname || m.user_email?.split('@')[0] || '匿名');
       return `<div class="chat-msg ${isMe ? 'chat-msg-me' : 'chat-msg-other'}${stateCls}" data-message-id="${esc(m.id || '')}" data-room="${esc(room)}">
         ${canRecall ? `<button class="chat-recall-btn" type="button" onclick="recallChatMessage('${esc(m.id)}')">撤回</button>` : ''}
-        <div class="chat-msg-avatar">${name.charAt(0).toUpperCase()}</div>
+        <button class="chat-msg-avatar" type="button" title="${isMe ? '自己' : '发起私聊'}" onclick="startPrivateFromMessage('${avatarEmail}','${avatarName}')">${name.charAt(0).toUpperCase()}</button>
         <div class="chat-msg-body">
           <div class="chat-msg-meta">
             <span class="chat-msg-name">${name}</span>
@@ -723,6 +935,19 @@
           ${recalled ? '<div class="chat-recalled">消息已撤回</div>' : renderChatMessageContent(m)}
         </div>
       </div>`;
+    }
+
+    function startPrivateFromMessage(encodedEmail, encodedName) {
+      const email = decodeURIComponent(encodedEmail || '');
+      const nickname = decodeURIComponent(encodedName || '');
+      if (!email) return;
+      if (!__user.loggedIn) { openAuthModal(); return; }
+      if (email === __user.email) return;
+      if (!isBlysAdminUser() && !isBlysAdminIdentity(email, nickname)) {
+        alert('私聊只开放和白鹿原上沟通，用户之间不能互相私聊');
+        return;
+      }
+      startPrivateChat(email, nickname);
     }
 
     function isChatNearBottom(box, distance) {
@@ -961,6 +1186,7 @@
     async function sendChatMessage() {
       if (!__user.loggedIn) { openAuthModal(); return; }
       if (currentRoom === 'vip' && !__user.isVip) { openRedeemModal(); return; }
+      if (currentRoom === 'private') { sendPrivateMessage(); return; }
 
       const input = document.getElementById('chatInput');
       const content = (input.value || '').trim();
@@ -1016,6 +1242,67 @@
       window.setTimeout(() => {
         if (chatPendingSends.has(tempId)) markChatSendFailed(tempId, '发送超时，请点重试');
       }, 18000);
+    }
+
+    async function sendPrivateMessage() {
+      if (!__user.loggedIn) { openAuthModal(); return; }
+      if (!currentPrivateConversationId) {
+        await openPrivateRoom();
+        if (!currentPrivateConversationId) return;
+      }
+      const input = document.getElementById('chatInput');
+      const content = (input.value || '').trim();
+      const image = pendingChatImage;
+      if (!content && !image) return;
+      if (content.length > 500) { alert('单条消息最多 500 字'); return; }
+      const quote = pendingChatQuote;
+      const payload = {
+        p_token: __user.token,
+        p_conversation_id: currentPrivateConversationId,
+        p_content: content,
+        p_image: image || null,
+        p_reply_to_id: quote && quote.id ? quote.id : null
+      };
+      const tempId = 'pending-private-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+      const optimistic = {
+        id: tempId,
+        user_email: __user.email,
+        user_nickname: __user.nickname || __user.email?.split('@')[0] || '我',
+        content,
+        image,
+        reply_to_id: quote && quote.id ? quote.id : null,
+        reply_to_nickname: quote && quote.nickname ? quote.nickname : null,
+        reply_to_content: quote && quote.content ? quote.content : null,
+        reply_to_image: quote && quote.image ? quote.image : null,
+        created_at: new Date().toISOString(),
+        __pending: true,
+        __sendState: '发送中…'
+      };
+      input.value = '';
+      input.style.height = 'auto';
+      clearChatImage();
+      clearChatQuote();
+      updateChatComposerState();
+      try { appendChatMessage(optimistic, 'private'); } catch (e) {}
+      try {
+        const d = await sbRpc('send_private_message', payload, { timeoutMs: 15000 });
+        if (d && d.ok) {
+          const box = document.getElementById('chatMessages');
+          const node = box && box.querySelector('[data-message-id="' + tempId + '"]');
+          if (node) node.outerHTML = renderChatMessageHtml(Object.assign({}, optimistic, { id: d.id, __pending: false }), 'private');
+          lastSeenTs.private = Math.max(lastSeenTs.private || 0, new Date(optimistic.created_at).getTime());
+        } else {
+          const box = document.getElementById('chatMessages');
+          const node = box && box.querySelector('[data-message-id="' + tempId + '"]');
+          if (node) node.outerHTML = renderChatMessageHtml(Object.assign({}, optimistic, { __pending: false, __failed: true }), 'private');
+          alert((d && d.msg) || '私聊发送失败');
+        }
+      } catch (e) {
+        const box = document.getElementById('chatMessages');
+        const node = box && box.querySelector('[data-message-id="' + tempId + '"]');
+        if (node) node.outerHTML = renderChatMessageHtml(Object.assign({}, optimistic, { __pending: false, __failed: true }), 'private');
+        alert('私聊发送失败：' + (e && e.message ? e.message : '网络异常'));
+      }
     }
 
     // 实际把消息发到服务器，成功后把本地占位消息替换为真实消息
@@ -1241,7 +1528,7 @@
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082113', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082114', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
           scheduleBrowserNotificationAutoReset('init');
         }).catch(() => {});
@@ -1512,7 +1799,7 @@
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082113', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082114', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
@@ -1736,7 +2023,7 @@
         setNotifDiag(getNotifErrorText(e));
       }
       updateNotifBtn();
-      unreadCounts = { public: 0, vip: 0 };
+      unreadCounts = { public: 0, vip: 0, private: 0 };
       updateUnreadBadges();
       if (!notifEnabled) {
         const bname = getBrowserName();
@@ -1747,14 +2034,14 @@
     function dismissUnreadBanner() {
       const banner = document.getElementById('chatUnreadBanner');
       if (banner) banner.hidden = true;
-      unreadCounts = { public: 0, vip: 0 };
+      unreadCounts = { public: 0, vip: 0, private: 0 };
       updateUnreadBadges();
       const box = document.getElementById('chatMessages');
       if (box) box.scrollTop = box.scrollHeight;
     }
 
     function showUnreadBanner() {
-      const total = (Number(unreadCounts.public) || 0) + (Number(unreadCounts.vip) || 0);
+      const total = (Number(unreadCounts.public) || 0) + (Number(unreadCounts.vip) || 0) + (Number(unreadCounts.private) || 0);
       const banner = document.getElementById('chatUnreadBanner');
       if (!banner) return;
       if (inAppNotifOn && total > 0) {
@@ -1766,7 +2053,7 @@
     }
 
     function updateUnreadBadges() {
-      ['public', 'vip'].forEach(room => {
+      ['public', 'vip', 'private'].forEach(room => {
         const el = document.getElementById('badge-' + room);
         if (!el) return;
         const n = unreadCounts[room] || 0;
@@ -1782,7 +2069,7 @@
     }
 
     async function notifyNewMessage(room, name, preview, count) {
-      const title = room === 'vip' ? '⭐ 会员群聊 · 白鹿原上' : '🌐 注册群聊 · 白鹿原上';
+      const title = room === 'private' ? '✉️ 私聊 · 白鹿原上' : (room === 'vip' ? '⭐ 会员群聊 · 白鹿原上' : '🌐 注册群聊 · 白鹿原上');
       const body = (count > 1 ? `[${count}条新消息] ` : '') + name + '：' + preview;
       try {
         if ('serviceWorker' in navigator) {
