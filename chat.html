@@ -101,7 +101,7 @@
           </div>
           <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
             <button class="chat-notif-btn" id="chatNotifBtn" type="button" onclick="toggleChatNotification()" title="新消息弹窗提醒">🔕 开启提醒</button>
-            <div id="chatNotifDiag" style="max-width:280px; font-size:12px; line-height:1.4; color:#7a8699; text-align:right;"></div>
+            <div id="chatNotifDiag" style="max-width:280px; font-size:12px; line-height:1.4; color:#7a8699; text-align:right;">诊断载入中...</div>
           </div>
         </div>
       </div>
@@ -289,6 +289,7 @@
           input.style.height = 'auto';
           input.style.height = Math.min(input.scrollHeight, 160) + 'px';
         });
+        input.addEventListener('paste', handleChatPaste);
       }
       // 绑定头部淡出滚动效果
       bindChatHeadFade();
@@ -1036,11 +1037,34 @@
     function onChatImageSelected(input) {
       const file = input.files && input.files[0];
       if (!file) return;
-      if (!file.type.startsWith('image/')) { alert('请选择图片文件'); input.value = ''; return; }
-      if (file.size > 8 * 1024 * 1024) { alert('图片最大支持 8MB'); input.value = ''; return; }
+      prepareChatImageFile(file).finally(() => { input.value = ''; });
+    }
+
+    function handleChatPaste(event) {
+      const items = event.clipboardData && event.clipboardData.items;
+      if (!items || !items.length) return;
+
+      let imageFile = null;
+      for (const item of items) {
+        if (item && item.kind === 'file' && item.type && item.type.startsWith('image/')) {
+          imageFile = item.getAsFile();
+          break;
+        }
+      }
+      if (!imageFile) return;
+
+      event.preventDefault();
+      const ext = (imageFile.type.split('/')[1] || 'png').replace(/[^a-z0-9]/gi, '').toLowerCase() || 'png';
+      const pastedFile = new File([imageFile], `粘贴图片.${ext}`, { type: imageFile.type });
+      prepareChatImageFile(pastedFile);
+    }
+
+    function prepareChatImageFile(file) {
+      if (!file.type.startsWith('image/')) { alert('请选择图片文件'); return Promise.resolve(); }
+      if (file.size > 8 * 1024 * 1024) { alert('图片最大支持 8MB'); return Promise.resolve(); }
 
       // 压缩：最大宽度 720，质量 0.7，控制 base64 在合理范围
-      compressChatImage(file, 720, 0.7).then(({ base64, name }) => {
+      return compressChatImage(file, 720, 0.7).then(({ base64, name }) => {
         // base64 超过 600KB 时再次压缩
         const roughSize = Math.round(base64.length * 0.75);
         if (roughSize > 600 * 1024) {
@@ -1062,7 +1086,7 @@
       }).catch(err => {
         alert('图片处理失败: ' + (err && err.message || '未知错误'));
         clearChatImage();
-      }).finally(() => { input.value = ''; });
+      });
     }
 
     function clearChatImage() {
@@ -1113,6 +1137,10 @@
 
     // ===== 新消息提醒 =====
     function initChatNotification() {
+      if (window.BLYS_APP && typeof window.BLYS_APP.isNativeApp === 'function' && window.BLYS_APP.isNativeApp()) {
+        initNativeChatNotification();
+        return;
+      }
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('sw.js?v=2026082028').then(() => {
           refreshChatPushSubscription();
@@ -1135,8 +1163,74 @@
       });
     }
 
+    function initNativeChatNotification() {
+      inAppNotifOn = false;
+      notifEnabled = localStorage.getItem('blys_native_push_switch') !== 'off';
+      updateNotifBtn();
+      refreshNativeNotifDiag();
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) return;
+        refreshNativeNotifDiag();
+        showUnreadBanner();
+        loadChatMessages(currentRoom);
+      });
+      window.addEventListener('blys:native-push-diag', () => {
+        refreshNativeNotifDiag();
+      });
+    }
+
     function supportsSystemPush() {
       return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+    }
+
+    function isNativeNotificationApp() {
+      return !!(window.BLYS_APP && typeof window.BLYS_APP.isNativeApp === 'function' && window.BLYS_APP.isNativeApp());
+    }
+
+    function formatDiagDateTime(value) {
+      if (!value) return '';
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return String(value);
+      const pad = (n) => String(n).padStart(2, '0');
+      return d.getMonth() + 1 + '-' + d.getDate() + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+    }
+
+    function getNativeDiagText(diag) {
+      if (!diag) return 'App 诊断读取中...';
+      const lines = [];
+      lines.push(diag.switchWanted ? '原生推送开关：开启' : '原生推送开关：关闭');
+      lines.push('登录状态：' + (diag.loggedIn ? '已登录' : '未登录'));
+      lines.push('推送服务：' + (diag.pushProvider === 'getui' || diag.pushProvider === 'getui_android' ? '个推' : (diag.pushProvider === 'firebase_android' ? 'Firebase' : '未确认')));
+      if (diag.getuiPlugin) {
+        lines.push('个推配置：' + (diag.getuiConfigured ? '已配置' : '未配置AppId'));
+        lines.push('个推CID：' + (diag.getuiCidPresent ? '已获取' : '未获取'));
+        lines.push('个推开关：' + (diag.getuiPushTurnedOn ? '开启' : '未确认'));
+        if (diag.getuiLastEvent) lines.push('个推事件：' + diag.getuiLastEvent);
+      }
+      lines.push('推送权限：' + (diag.nativePermission || '未读取'));
+      lines.push('弹窗权限：' + (diag.localPermission || '未读取'));
+      if (diag.pushProvider !== 'getui') lines.push('Google服务：' + (typeof diag.googlePlayServicesAvailable === 'boolean' ? (diag.googlePlayServicesAvailable ? '可用' : '不可用') : '未读取'));
+      lines.push('设备令牌：' + (diag.tokenPresent ? (diag.tokenPreview || '已获取') : '未获取'));
+      lines.push('服务器绑定：' + (diag.tokenSavedToServer ? '成功' : '未确认'));
+      if (diag.firebaseTokenError) lines.push('Firebase取token：' + diag.firebaseTokenError);
+      lines.push('最近收到推送：' + (diag.lastPushReceivedAt ? formatDiagDateTime(diag.lastPushReceivedAt) : '暂无'));
+      lines.push('前台弹窗补发：' + (diag.lastForegroundPopupAt ? formatDiagDateTime(diag.lastForegroundPopupAt) : '暂无'));
+      if (diag.lastError) lines.push('最近错误：' + diag.lastError);
+      return lines.join('\n');
+    }
+
+    async function refreshNativeNotifDiag() {
+      if (!isNativeNotificationApp()) return;
+      const el = document.getElementById('chatNotifDiag');
+      if (!el) return;
+      try {
+        const diag = await window.BLYS_APP.getDiagnostics();
+        notifEnabled = !!diag.switchWanted;
+        setNotifDiag(getNativeDiagText(diag));
+        updateNotifBtn();
+      } catch (e) {
+        setNotifDiag('App 诊断读取失败：' + ((e && e.message) ? e.message : 'unknown'));
+      }
     }
 
     function getNotifErrorText(err) {
@@ -1163,6 +1257,7 @@
       const el = document.getElementById('chatNotifDiag');
       if (!el) return;
       el.textContent = notifDiagMsg;
+      el.style.whiteSpace = isNativeNotificationApp() ? 'pre-line' : 'normal';
     }
 
     function urlBase64ToUint8Array(base64String) {
@@ -1326,6 +1421,19 @@
     function updateNotifBtn() {
       const btn = document.getElementById('chatNotifBtn');
       if (!btn) return;
+      if (isNativeNotificationApp()) {
+        if (notifEnabled) {
+          btn.textContent = '🔔 App提醒已开';
+          btn.classList.add('on');
+          btn.title = 'Android 原生推送已开启';
+        } else {
+          btn.textContent = '🔕 开启App提醒';
+          btn.classList.remove('on');
+          btn.title = '开启 Android 原生推送提醒';
+        }
+        if (!notifDiagMsg) setNotifDiag('App 诊断读取中...');
+        return;
+      }
       if (notifEnabled) {
         btn.textContent = '🔔 已开启';
         btn.classList.add('on');
@@ -1354,6 +1462,30 @@
     }
 
     async function toggleChatNotification() {
+      if (isNativeNotificationApp()) {
+        if (!__user.loggedIn) {
+          openAuthModal();
+          return;
+        }
+        try {
+          if (notifEnabled) {
+            setNotifDiag('正在关闭 App 提醒...');
+            updateNotifBtn();
+            await window.BLYS_APP.disableNotifications();
+            notifEnabled = false;
+          } else {
+            setNotifDiag('正在开启 App 提醒，请稍等...');
+            updateNotifBtn();
+            await window.BLYS_APP.enableNotifications();
+            notifEnabled = true;
+          }
+          await refreshNativeNotifDiag();
+        } catch (e) {
+          setNotifDiag('App 提醒切换失败：' + ((e && e.message) ? e.message : 'unknown'));
+          updateNotifBtn();
+        }
+        return;
+      }
       if (notifEnabled || inAppNotifOn) {
         // 关闭提醒
         inAppNotifOn = false;
@@ -1451,10 +1583,24 @@
         content: task.payload.p_content || '',
         image: !!task.payload.p_image
       };
-      await Promise.allSettled([
+      const results = await Promise.allSettled([
         callEdge('notify-chat', body),
         callEdge('notify-native-chat', body)
       ]);
+      const nativeResult = results[1];
+      if (nativeResult.status === 'fulfilled') {
+        const d = nativeResult.value || {};
+        const text = d.ok
+          ? `App推送已请求：sent=${d.sent || 0}, skipped=${d.skipped || 0}, failed=${d.failed || 0}`
+          : `App推送请求失败：${d.msg || d.message || JSON.stringify(d).slice(0, 120)}`;
+        if (isNativeNotificationApp()) setNotifDiag(text);
+        console.log('[chat] notify-native-chat result', d);
+      } else {
+        const err = nativeResult.reason;
+        const text = 'App推送调用异常：' + ((err && err.message) ? err.message : String(err || 'unknown'));
+        if (isNativeNotificationApp()) setNotifDiag(text);
+        console.warn('[chat] notify-native-chat failed', err);
+      }
     }
 
     // 页面离开时清理轮询
