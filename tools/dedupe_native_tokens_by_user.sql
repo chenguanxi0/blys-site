@@ -1,26 +1,17 @@
--- Android App 原生推送令牌
--- 执行位置：Supabase SQL Editor
+-- App 原生推送：同一账号同一平台只保留最新 token，避免一台/多台手机重复弹同一消息。
 
-CREATE TABLE IF NOT EXISTS public.native_push_tokens (
-  device_token TEXT PRIMARY KEY,
-  user_token TEXT NOT NULL REFERENCES public.profiles(token) ON DELETE CASCADE,
-  platform TEXT NOT NULL DEFAULT 'android',
-  user_agent TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  last_seen_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX IF NOT EXISTS idx_native_push_tokens_user_token
-  ON public.native_push_tokens(user_token);
-
-ALTER TABLE public.native_push_tokens ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS native_push_tokens_no_direct_read ON public.native_push_tokens;
-CREATE POLICY native_push_tokens_no_direct_read
-  ON public.native_push_tokens
-  FOR SELECT
-  USING (false);
+WITH ranked AS (
+  SELECT device_token,
+         row_number() OVER (
+           PARTITION BY user_token, platform
+           ORDER BY updated_at DESC, created_at DESC
+         ) AS rn
+  FROM public.native_push_tokens
+)
+DELETE FROM public.native_push_tokens nt
+USING ranked r
+WHERE nt.device_token = r.device_token
+  AND r.rn > 1;
 
 CREATE OR REPLACE FUNCTION public.save_native_push_token(
   p_token TEXT,
@@ -50,18 +41,6 @@ BEGIN
     user_agent = EXCLUDED.user_agent,
     updated_at = now(),
     last_seen_at = now();
-
-  RETURN jsonb_build_object('ok', true);
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-CREATE OR REPLACE FUNCTION public.delete_native_push_token(
-  p_token TEXT,
-  p_device_token TEXT
-) RETURNS JSONB AS $$
-BEGIN
-  DELETE FROM public.native_push_tokens
-  WHERE user_token = p_token AND device_token = p_device_token;
 
   RETURN jsonb_build_object('ok', true);
 END;

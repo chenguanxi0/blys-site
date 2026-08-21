@@ -16,7 +16,7 @@ WHERE ps.endpoint = r.endpoint
 WITH ranked AS (
   SELECT device_token,
          row_number() OVER (
-           PARTITION BY user_token, platform, COALESCE(user_agent, '')
+           PARTITION BY user_token, platform
            ORDER BY updated_at DESC, created_at DESC
          ) AS rn
   FROM public.native_push_tokens
@@ -122,7 +122,6 @@ BEGIN
   DELETE FROM public.native_push_tokens
   WHERE user_token = p_token
     AND platform = COALESCE(NULLIF(trim(p_platform), ''), 'android')
-    AND COALESCE(user_agent, '') = COALESCE(p_user_agent, '')
     AND device_token <> trim(p_device_token);
 
   INSERT INTO public.native_push_tokens(device_token, user_token, platform, user_agent, created_at, updated_at, last_seen_at)
@@ -158,7 +157,7 @@ BEGIN
   END IF;
 
   RETURN QUERY
-  SELECT DISTINCT ON (npt.user_token, npt.platform, COALESCE(npt.user_agent, '')) npt.device_token, npt.platform
+  SELECT DISTINCT ON (npt.user_token, npt.platform) npt.device_token, npt.platform
   FROM public.native_push_tokens npt
   JOIN public.profiles p ON p.token = npt.user_token
   WHERE npt.user_token <> p_token
@@ -167,7 +166,7 @@ BEGIN
       OR COALESCE(p.is_admin, false)
       OR (p.vip_expire IS NOT NULL AND p.vip_expire > now())
     )
-  ORDER BY npt.user_token, npt.platform, COALESCE(npt.user_agent, ''), npt.updated_at DESC;
+  ORDER BY npt.user_token, npt.platform, npt.updated_at DESC;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
