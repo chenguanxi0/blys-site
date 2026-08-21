@@ -247,6 +247,7 @@
       return (ts && ts > 0) ? new Date(ts).toISOString() : null;
     }
     let chatHistLoading = false;
+    let chatUserReadingHistoryUntil = 0;
     let notifEnabled = false;
     let inAppNotifOn = false;
     let notifDiagMsg = '';
@@ -325,6 +326,8 @@
         histBox.addEventListener('scroll', () => {
           if (Date.now() < chatSuppressHistoryUntil) return;
           if (histBox.querySelector('.chat-loading')) return;
+          const nearBottom = isChatNearBottom(histBox, 100);
+          chatUserReadingHistoryUntil = nearBottom ? 0 : Date.now() + 15000;
           if (histBox.scrollTop <= 60 && chatHasMore[currentRoom] && !chatHistLoading) {
             chatHistLoading = true;
             loadChatMessages(currentRoom, { history: true }).finally(() => {
@@ -513,7 +516,8 @@
 
     async function loadChatMessages(room, opts) {
       opts = opts || {};
-      const loadSeq = ++chatLoadSeq;
+      const isHistory = !!opts.history;
+      const loadSeq = isHistory ? chatLoadSeq : ++chatLoadSeq;
       const box = document.getElementById('chatMessages');
       if (!box) return;
       const retry = opts.retry || 0;
@@ -529,8 +533,8 @@
       try {
         console.log('[chat] loadChatMessages start', room, 'isFirst=', isFirst, 'history=', !!opts.history, 'retry=', retry);
         // 首屏尽量轻，尤其 App WebView 遇到图片消息较多时更容易稳定出来。
-        const isHistory = !!opts.history;
         const isNativeApp = !!(window.BLYS_APP && window.BLYS_APP.isNativeApp);
+        const shouldStickToBottom = isFirst || (!isHistory && isChatNearBottom(box, 100) && Date.now() > chatUserReadingHistoryUntil);
         const rpcParams = { p_room: room };
         if (isHistory) {
           rpcParams.p_limit = 30;
@@ -543,7 +547,7 @@
         }
         const d = await sbRpc('list_messages', rpcParams, { timeoutMs: isFirst ? 18000 : 12000 });
         console.log('[chat] list_messages response', room, d);
-        if (loadSeq !== chatLoadSeq || room !== currentRoom) return;
+        if ((!isHistory && loadSeq !== chatLoadSeq) || room !== currentRoom) return;
         // list_messages 返回表，直接是数组；也兼容返回 {ok:true, list:[]} 的情况
         const list = Array.isArray(d) ? d : (d && d.list);
         if (!Array.isArray(list)) {
@@ -568,7 +572,7 @@
           }
         } else {
           // 增量：只把新消息追加到列表底部，不再重建整个列表
-          for (const m of list) appendChatMessage(m, room);
+          for (const m of list) appendChatMessage(m, room, { stickToBottom: shouldStickToBottom });
         }
 
         // 未读统计：仅后台/非当前房间，且为增量拉取的新消息
@@ -721,7 +725,13 @@
       </div>`;
     }
 
-    function appendChatMessage(message, room) {
+    function isChatNearBottom(box, distance) {
+      if (!box) return true;
+      return box.scrollTop + box.clientHeight >= box.scrollHeight - (distance || 80);
+    }
+
+    function appendChatMessage(message, room, options) {
+      options = options || {};
       const box = document.getElementById('chatMessages');
       if (!box || room !== currentRoom) return;
       // 增量轮询可能重复拉回已渲染的消息（如自己刚发的），按 id 去重；
@@ -752,12 +762,18 @@
       }
       const empty = box.querySelector('.chat-empty, .chat-loading');
       if (empty) box.innerHTML = '';
-      const wasNearBottom = box.scrollTop + box.clientHeight >= box.scrollHeight - 60;
+      const wasNearBottom = typeof options.stickToBottom === 'boolean'
+        ? options.stickToBottom
+        : isChatNearBottom(box, 60);
       box.insertAdjacentHTML('beforeend', renderChatMessageHtml(message, room));
-      if (wasNearBottom || message.user_email === ((__user && __user.email) || '')) {
+      const isOwnMessage = message.user_email === ((__user && __user.email) || '');
+      const allowOwnScroll = isOwnMessage && Date.now() > chatUserReadingHistoryUntil;
+      if (wasNearBottom || allowOwnScroll) {
         box.scrollTop = box.scrollHeight;
         // 图片异步解码会撑高内容，稍后补滚一次以停留在最新
-        setTimeout(() => { box.scrollTop = box.scrollHeight; }, 120);
+        setTimeout(() => {
+          if (wasNearBottom || allowOwnScroll) box.scrollTop = box.scrollHeight;
+        }, 120);
       }
     }
 
@@ -1177,6 +1193,7 @@
       chatPollTimer = setInterval(() => {
         // VIP 房间未解锁时不轮询
         if (currentRoom === 'vip' && (!__user.loggedIn || !__user.isVip)) return;
+        if (chatHistLoading) return;
         loadChatMessages(currentRoom);
       }, 5000);
     }
@@ -1188,8 +1205,9 @@
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082110', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082112', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
+          scheduleBrowserNotificationAutoReset('init');
         }).catch(() => {});
       }
       inAppNotifOn = localStorage.getItem('blys_notif_inapp') === 'on';
@@ -1202,6 +1220,7 @@
         if (document.hidden) return;
         inAppNotifOn = localStorage.getItem('blys_notif_inapp') === 'on';
         if (!notifEnabled) refreshChatPushSubscription();
+        scheduleBrowserNotificationAutoReset('visible');
         updateNotifBtn();
         // 回到页面：展示未读横幅
         showUnreadBanner();
@@ -1251,6 +1270,41 @@
         }
       } catch (e) {
         console.warn('[chat] cleanup native app web push failed', e);
+      }
+    }
+
+    let browserAutoResetRunning = false;
+    function scheduleBrowserNotificationAutoReset(reason) {
+      if (isNativeNotificationApp()) return;
+      if (!supportsSystemPush()) return;
+      setTimeout(() => autoResetBrowserNotification(reason), reason === 'init' ? 1200 : 300);
+    }
+
+    async function autoResetBrowserNotification(reason) {
+      if (isNativeNotificationApp()) return;
+      if (!supportsSystemPush()) return;
+      if (!__user || !__user.loggedIn || !__user.token) return;
+      if (Notification.permission !== 'granted') return;
+      if (localStorage.getItem('blys_notif') !== 'on') return;
+      if (browserAutoResetRunning) return;
+      const key = 'blys_browser_auto_reset_' + __user.token + '_2026082112';
+      if (sessionStorage.getItem(key) === 'done') return;
+      browserAutoResetRunning = true;
+      try {
+        sessionStorage.setItem(key, 'done');
+        setNotifDiag('正在刷新浏览器提醒...');
+        await unsubscribeChatPush();
+        await subscribeChatPush();
+        notifEnabled = true;
+        localStorage.setItem('blys_notif', 'on');
+        setNotifDiag('系统弹窗提醒已开启');
+      } catch (e) {
+        sessionStorage.removeItem(key);
+        console.warn('[chat] browser notification auto reset failed', reason, e);
+        setNotifDiag(getNotifErrorText(e));
+      } finally {
+        browserAutoResetRunning = false;
+        updateNotifBtn();
       }
     }
 
@@ -1422,7 +1476,7 @@
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082110', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082112', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
