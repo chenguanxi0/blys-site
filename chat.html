@@ -132,21 +132,9 @@
     <!-- 频道切换：吸顶固定 -->
     <div class="chat-tabs-wrapper">
       <div class="chat-tabs">
-        <button class="chat-tab active" data-room="public" onclick="switchChatRoom('public')">
-          🌐 注册用户群聊
-          <span class="chat-tab-sub">登录即可发言</span>
-          <span class="chat-tab-badge" id="badge-public" hidden>0</span>
-        </button>
-        <button class="chat-tab" data-room="vip" onclick="switchChatRoom('vip')">
-          ⭐ 会员群聊
-          <span class="chat-tab-sub">VIP 专属</span>
-          <span class="chat-tab-badge" id="badge-vip" hidden>0</span>
-        </button>
-        <button class="chat-tab" data-room="private" onclick="switchChatRoom('private')">
-          ✉️ 私聊
-          <span class="chat-tab-sub">只和白鹿原上</span>
-          <span class="chat-tab-badge" id="badge-private" hidden>0</span>
-        </button>
+        <button class="chat-tab active" data-room="public" onclick="switchChatRoom('public')">普通群聊<span class="chat-tab-badge" id="badge-public" hidden>0</span></button>
+        <button class="chat-tab" data-room="vip" onclick="switchChatRoom('vip')">会员群聊<span class="chat-tab-badge" id="badge-vip" hidden>0</span></button>
+        <button class="chat-tab" data-room="private" onclick="switchChatRoom('private')">私聊<span class="chat-tab-badge" id="badge-private" hidden>0</span></button>
       </div>
     </div>
 
@@ -225,6 +213,7 @@
     // 聊天室页面初始化
     let currentRoom = 'public';
     let chatPollTimer = null;
+    let privatePollTimer = null;
     let chatOnlineTimer = null;
     let chatHeartbeatTimer = null;
     let chatSendWatchdogTimer = null;
@@ -232,7 +221,7 @@
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    console.log('[chat] build v2026082114 (private chat + member renewal base)');
+    console.log('[chat] build v2026082118 (private list + unread fixes)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
     let lastSeenTs = { public: 0, vip: 0, private: 0 };
@@ -440,6 +429,7 @@
       currentRoom = room;
       // 更新标签样式（用 getAttribute 避免个别浏览器 dataset 兼容性问题导致中断）
       document.querySelectorAll('.chat-tab').forEach(t => t.classList.toggle('active', t.getAttribute('data-room') === room));
+      clearRoomUnread(room);
 
       const vipLock = document.getElementById('chatVipLock');
       const chatBox = document.getElementById('chatBox');
@@ -491,7 +481,7 @@
 
       updateChatInputState();
       // 切到该频道即视为已读，清掉其未读角标
-      if (unreadCounts[room]) { unreadCounts[room] = 0; updateUnreadBadges(); }
+      clearRoomUnread(room);
       const banner = document.getElementById('chatUnreadBanner');
       if (banner && unreadCounts.public + unreadCounts.vip + unreadCounts.private === 0) banner.hidden = true;
       loadChatMessages(room);
@@ -510,6 +500,12 @@
 
     function isBlysAdminIdentity(email, nickname) {
       return email === '491788533@qq.com' || nickname === '白鹿原上';
+    }
+
+    function clearRoomUnread(room) {
+      if (!room || !unreadCounts[room]) return;
+      unreadCounts[room] = 0;
+      updateUnreadBadges();
     }
 
     async function openPrivateRoom() {
@@ -531,9 +527,10 @@
       }
     }
 
-    async function loadPrivateConversations() {
+    async function loadPrivateConversations(options) {
+      options = options || {};
       const box = document.getElementById('chatMessages');
-      if (box) box.innerHTML = '<div class="chat-loading">加载私聊列表中…</div>';
+      if (box && !options.silent) box.innerHTML = '<div class="chat-loading">加载私聊列表中…</div>';
       try {
         const d = await sbRpc('list_private_conversations', { p_token: __user.token }, { timeoutMs: 12000 });
         if (!d || !d.ok || !Array.isArray(d.list)) {
@@ -541,7 +538,10 @@
           return;
         }
         privateConversations = d.list || [];
-        unreadCounts.private = privateConversations.reduce((sum, c) => sum + (Number(c.admin_unread) || 0), 0);
+        unreadCounts.private = privateConversations.reduce((sum, c) => {
+          const unread = isBlysAdminUser() ? (Number(c.admin_unread) || 0) : (Number(c.user_unread) || 0);
+          return sum + unread;
+        }, 0);
         updateUnreadBadges();
         renderPrivateConversationList();
       } catch (e) {
@@ -551,8 +551,8 @@
 
     function renderPrivateEmpty(text) {
       const hint = isBlysAdminUser()
-        ? '用户在群聊点击你的头像，或者你点击用户头像后，会自动建立私聊。'
-        : '这里用于和白鹿原上私聊，其他用户之间不能互相私聊。';
+        ? '私聊列表会自动刷新，未读消息会显示在列表右侧。'
+        : '这里用于和站长发起私聊，列表会自动刷新。';
       return '<div class="chat-empty private-empty"><b>' + esc(text || '暂无私聊') + '</b><p>' + esc(hint) + '</p></div>';
     }
 
@@ -564,7 +564,7 @@
         return;
       }
       box.innerHTML = '<div class="private-list">' + privateConversations.map(c => {
-        const unread = Number(c.admin_unread || 0);
+        const unread = isBlysAdminUser() ? (Number(c.admin_unread) || 0) : (Number(c.user_unread) || 0);
         const title = c.user_nickname || c.user_email || '用户';
         const last = c.last_message || '还没有消息';
         const time = c.last_message_at ? fmtDateTime(c.last_message_at) : '';
@@ -590,13 +590,21 @@
       updateChatInputState();
       await loadChatMessages('private', { isFirst: true });
       try { await sbRpc('mark_private_read', { p_token: __user.token, p_conversation_id: currentPrivateConversationId }); } catch(e) {}
+      privateConversations = privateConversations.map(c => String(c.id) === String(currentPrivateConversationId)
+        ? Object.assign({}, c, isBlysAdminUser() ? { admin_unread: 0 } : { user_unread: 0 })
+        : c);
+      unreadCounts.private = privateConversations.reduce((sum, c) => {
+        const unread = isBlysAdminUser() ? (Number(c.admin_unread) || 0) : (Number(c.user_unread) || 0);
+        return sum + unread;
+      }, 0);
+      updateUnreadBadges();
     }
 
     async function startPrivateChat(email, nickname, options) {
       options = options || {};
       if (!__user.loggedIn) { openAuthModal(); return; }
       if (!isBlysAdminUser() && !isBlysAdminIdentity(email, nickname) && email !== __user.email) {
-        alert('私聊只开放和白鹿原上沟通，用户之间不能互相私聊');
+        alert('私聊只开放给站长和你自己，用户之间不能互相私聊');
         return;
       }
       try {
@@ -725,7 +733,9 @@
         if (!isFirst && !isHistory) {
           const fresh = list.filter(m => m.user_email !== myEmail);
           if (fresh.length) {
-            if (inAppNotifOn && (document.hidden || currentRoom !== room)) {
+            if (!document.hidden && currentRoom === room) {
+              clearRoomUnread(room);
+            } else if (inAppNotifOn) {
               unreadCounts[room] = (unreadCounts[room] || 0) + fresh.length;
               updateUnreadBadges();
             }
@@ -944,7 +954,7 @@
       if (!__user.loggedIn) { openAuthModal(); return; }
       if (email === __user.email) return;
       if (!isBlysAdminUser() && !isBlysAdminIdentity(email, nickname)) {
-        alert('私聊只开放和白鹿原上沟通，用户之间不能互相私聊');
+        alert('私聊只开放给站长和你自己，用户之间不能互相私聊');
         return;
       }
       startPrivateChat(email, nickname);
@@ -1519,6 +1529,15 @@
         if (chatHistLoading) return;
         loadChatMessages(currentRoom);
       }, 5000);
+      if (privatePollTimer) clearInterval(privatePollTimer);
+      privatePollTimer = setInterval(() => {
+        if (!__user.loggedIn || currentRoom !== 'private' || chatHistLoading) return;
+        if (isBlysAdminUser() && !currentPrivateConversationId) {
+          loadPrivateConversations({ silent: true });
+          return;
+        }
+        if (currentPrivateConversationId) loadPrivateMessages();
+      }, 5000);
     }
 
     // ===== 新消息提醒 =====
@@ -1528,7 +1547,7 @@
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082114', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082118', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
           scheduleBrowserNotificationAutoReset('init');
         }).catch(() => {});
@@ -1545,6 +1564,7 @@
         if (!notifEnabled) refreshChatPushSubscription();
         scheduleBrowserNotificationAutoReset('visible');
         updateNotifBtn();
+        clearRoomUnread(currentRoom);
         // 回到页面：展示未读横幅
         showUnreadBanner();
         loadChatMessages(currentRoom);
@@ -1564,6 +1584,7 @@
         if (document.hidden) return;
         cleanupNativeAppWebPushSubscription();
         refreshNativeNotifDiag();
+        clearRoomUnread(currentRoom);
         showUnreadBanner();
         loadChatMessages(currentRoom);
       });
@@ -1799,7 +1820,7 @@
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082114', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082118', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
@@ -2112,10 +2133,13 @@
     // 页面离开时清理轮询
     window.addEventListener('beforeunload', () => {
       if (chatPollTimer) clearInterval(chatPollTimer);
+      if (privatePollTimer) clearInterval(privatePollTimer);
       if (chatOnlineTimer) clearInterval(chatOnlineTimer);
       if (chatHeartbeatTimer) clearInterval(chatHeartbeatTimer);
       if (chatSendWatchdogTimer) clearInterval(chatSendWatchdogTimer);
     });
   </script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"9c945e9c8adf4848b8b5fe9ee493d669","r":1}' crossorigin="anonymous"></script>
 </body>
 </html>
+
