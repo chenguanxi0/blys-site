@@ -49,9 +49,12 @@
     .guide-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
     .guide-actions .btn { min-height: 40px; }
     .android-card { border-color: #fecaca; background: linear-gradient(180deg, #fff 0%, #fff7f7 100%); }
-    .android-card .guide-steps li:last-child {
+    .android-card .guide-steps li.must-do {
       background: #fff1f2; border: 1px solid #fecdd3; border-radius: 10px; padding: 10px;
       grid-template-columns: 28px 1fr; color: #9f1239; font-weight: 700;
+    }
+    .must-do-label {
+      display: inline-block; margin-right: 4px; color: #be123c; font-weight: 900;
     }
     @media (max-width: 860px) {
       .guide-grid { grid-template-columns: 1fr; }
@@ -154,7 +157,7 @@
 
     <div class="guide-alert">
       <span>⚠️</span>
-      <div>安卓手机差异比较大，尤其国产系统会限制后台通知。最稳的方式是：打开 App 的聊天室页面后，直接锁屏，不要先退回手机主页。</div>
+      <div>安卓手机差异比较大，尤其国产系统会限制后台通知。<b>耗电管理设置为完全允许后台行为</b>、<b>打开 App 聊天室页面后直接锁屏</b>，这两步是必做重点。</div>
     </div>
 
     <section class="guide-grid">
@@ -190,8 +193,8 @@
           <li>去系统“应用管理”里找到这个应用，进入“通知管理”。</li>
           <li>打开允许通知、置顶通知、锁屏、横幅、铃声、震动等权限。</li>
           <li>继续往下滑，看到 4 个通知类别后，逐个点进去，也全部打开锁屏、横幅、铃声、震动。</li>
-          <li>打开这个应用的“耗电管理”，设置为完全允许后台行为。</li>
-          <li>重点：使用时把软件挂在前台锁屏。也就是打开 App 的聊天室页面后直接锁屏；如果先退回手机主页再锁屏，可能收不到弹窗。</li>
+          <li class="must-do"><span><span class="must-do-label">必做重点：</span>打开这个应用的“耗电管理”，设置为“完全允许后台行为”。不设置这一步，锁屏或后台时很可能收不到弹窗。</span></li>
+          <li class="must-do"><span><span class="must-do-label">必做重点：</span>使用时把软件挂在前台锁屏。也就是打开 App 的聊天室页面后直接锁屏；如果先退回手机主页再锁屏，可能收不到弹窗。</span></li>
         </ol>
       </article>
     </section>
