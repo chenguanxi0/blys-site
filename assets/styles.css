@@ -1130,7 +1130,7 @@ a { color: inherit; text-decoration: none; transition: color var(--transition); 
 /* ========== 聊天室 ========== */
 body.chat-body { /* 可滚动文档流：标题区可划走，频道标签吸顶，聊天框占满剩余视口 */ }
 body.chat-body .nav { position: sticky; top: 0; z-index: 50; }
-html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
+html.blys-native-app body.chat-body { --app-safe-top: max(42px, env(safe-area-inset-top)); }
 html.blys-native-app body.chat-body .nav { padding-top: var(--app-safe-top); }
 html.blys-native-app body.chat-body .risk-bar { display:none; }
 html.blys-native-app body.chat-body .brand-logo { width:36px; height:36px; font-size:17px; }

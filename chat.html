@@ -9,6 +9,21 @@
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
   <link rel="stylesheet" href="assets/styles.css?v=2026082103" />
+  <style>
+    html.blys-native-app body.chat-body { --app-safe-top: max(42px, env(safe-area-inset-top)); }
+    html.blys-native-app body.chat-body .risk-bar { display:none; }
+    html.blys-native-app body.chat-body .nav { padding-top: var(--app-safe-top); }
+    html.blys-native-app body.chat-body .chat-tabs-wrapper { top: calc(64px + var(--app-safe-top)); }
+    html.blys-native-app body.chat-body .chat-box { top: calc(128px + var(--app-safe-top)); height: calc(100dvh - 128px - var(--app-safe-top)); }
+    @media (max-width:560px) {
+      html.blys-native-app body.chat-body .chat-tabs-wrapper { top: calc(64px + var(--app-safe-top)); }
+      html.blys-native-app body.chat-body .chat-box { top: calc(122px + var(--app-safe-top)); height: calc(100dvh - 122px - var(--app-safe-top)); }
+      html.blys-native-app body.chat-body .brand-logo { width:36px; height:36px; font-size:17px; }
+      html.blys-native-app body.chat-body .brand-name { max-width:138px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      html.blys-native-app body.chat-body .vip-status { max-width:108px; }
+      html.blys-native-app body.chat-body .user-menu-trigger { max-width:96px; }
+    }
+  </style>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23e23b3b'/%3E%3Cstop offset='100%25' stop-color='%23f87171'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='18' cy='18' r='17' fill='url(%23g)'/%3E%3Ctext x='18' y='23' text-anchor='middle' fill='white' font-family='-apple-system,PingFang SC,Microsoft YaHei,sans-serif' font-size='18' font-weight='700'%3E白%3C/text%3E%3C/svg%3E" />
 </head>
@@ -1490,21 +1505,37 @@
           openAuthModal();
           return;
         }
+        const btn = document.getElementById('chatNotifBtn');
+        const withTimeout = (promise, ms, label) => Promise.race([
+          promise,
+          new Promise((_, rej) => setTimeout(() => rej(new Error(label + ' timeout')), ms))
+        ]);
         try {
           if (notifEnabled) {
+            if (btn) {
+              btn.textContent = '正在关闭...';
+              btn.disabled = true;
+            }
             setNotifDiag('正在关闭 App 提醒...');
-            updateNotifBtn();
-            await window.BLYS_APP.disableNotifications();
+            await withTimeout(window.BLYS_APP.disableNotifications(), 8000, 'disable notifications');
             notifEnabled = false;
+            localStorage.setItem('blys_native_push_switch', 'off');
           } else {
+            if (btn) {
+              btn.textContent = '正在开启...';
+              btn.disabled = true;
+            }
             setNotifDiag('正在开启 App 提醒，请稍等...');
-            updateNotifBtn();
-            await window.BLYS_APP.enableNotifications();
+            await withTimeout(window.BLYS_APP.enableNotifications(), 12000, 'enable notifications');
             notifEnabled = true;
+            localStorage.setItem('blys_native_push_switch', 'on');
           }
           await refreshNativeNotifDiag();
         } catch (e) {
           setNotifDiag('App 提醒切换失败：' + ((e && e.message) ? e.message : 'unknown'));
+          updateNotifBtn();
+        } finally {
+          if (btn) btn.disabled = false;
           updateNotifBtn();
         }
         return;
