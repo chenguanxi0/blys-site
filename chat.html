@@ -207,8 +207,8 @@
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082202"></script>
-  <script src="assets/mobile-app.js?v=2026082202"></script>
+  <script src="assets/app.js?v=2026082203"></script>
+  <script src="assets/mobile-app.js?v=2026082203"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -693,9 +693,9 @@
           rpcParams.p_limit = 30;
           rpcParams.p_before = chatTsToIso(chatOldestTs[room]);
         } else if (isFirst) {
-          rpcParams.p_limit = isNativeApp ? 10 : 20;
+          rpcParams.p_limit = room === 'vip' ? (isNativeApp ? 8 : 14) : (isNativeApp ? 10 : 20);
         } else {
-          rpcParams.p_limit = isNativeApp ? 30 : 80;
+          rpcParams.p_limit = room === 'vip' ? (isNativeApp ? 20 : 50) : (isNativeApp ? 30 : 80);
           rpcParams.p_after = chatTsToIso(lastSeenTs[room]);
         }
         const d = await sbRpc('list_messages', rpcParams, { timeoutMs: isFirst ? 18000 : 12000 });
@@ -1523,6 +1523,8 @@
     function startChatPoll() {
       if (chatPollTimer) clearInterval(chatPollTimer);
       chatPollTimer = setInterval(() => {
+        // 私聊不自动轮询，避免列表/内容自己刷新；需要时切换会话或下拉历史再加载
+        if (currentRoom === 'private') return;
         // VIP 房间未解锁时不轮询
         if (currentRoom === 'vip' && (!__user.loggedIn || !__user.isVip)) return;
         if (chatHistLoading) return;
@@ -1537,7 +1539,7 @@
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082202', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082203', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -1555,7 +1557,7 @@
         clearRoomUnread(currentRoom);
         // 回到页面：展示未读横幅
         showUnreadBanner();
-        loadChatMessages(currentRoom);
+        if (currentRoom !== 'private') loadChatMessages(currentRoom);
       });
     }
 
@@ -1573,7 +1575,7 @@
         refreshNativeNotifDiag();
         clearRoomUnread(currentRoom);
         showUnreadBanner();
-        loadChatMessages(currentRoom);
+        if (currentRoom !== 'private') loadChatMessages(currentRoom);
       });
       window.addEventListener('blys:user:change', () => {
         cleanupNativeAppWebPushSubscription();
@@ -1806,7 +1808,7 @@
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082202', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082203', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
