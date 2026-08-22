@@ -1614,3 +1614,19 @@ html.blys-native-app body.chat-body .chat-box { top: calc(128px + var(--app-safe
   .nav-links { left: 8px; right: 8px; }
   .nav-links.open { grid-template-columns: 1fr 1fr; }
 }
+
+.vip-renew-modal { position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center; padding:22px; background:rgba(15,23,42,.42); backdrop-filter:blur(3px); }
+.vip-renew-card { position:relative; width:min(420px, 100%); border-radius:18px; padding:24px; background:#fff; box-shadow:0 24px 70px rgba(15,23,42,.24); border:1px solid #fee2e2; text-align:left; }
+.vip-renew-close { position:absolute; top:12px; right:12px; width:34px; height:34px; border:0; border-radius:999px; background:#f8fafc; color:#64748b; font-size:22px; line-height:1; }
+.vip-renew-kicker { display:inline-flex; margin-bottom:10px; padding:5px 9px; border-radius:999px; background:#fff1f2; color:#e11d48; font-size:12px; font-weight:700; }
+.vip-renew-card h3 { margin:0 0 8px; font-size:24px; color:#111827; }
+.vip-renew-card p { margin:0; color:#64748b; line-height:1.65; font-size:14px; }
+.vip-renew-days { margin:16px 0; padding:12px 14px; border-radius:14px; background:linear-gradient(135deg,#fff1f2,#fff7ed); color:#be123c; font-weight:800; text-align:center; font-size:18px; }
+.vip-renew-actions { display:flex; gap:10px; }
+.vip-renew-actions .btn { flex:1; min-height:42px; }
+@media (max-width:560px) {
+  .vip-renew-modal { align-items:flex-end; padding:14px; }
+  .vip-renew-card { border-radius:18px; padding:22px 18px 18px; }
+  .vip-renew-card h3 { font-size:21px; }
+  .vip-renew-actions { flex-direction:column; }
+}
