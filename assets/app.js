@@ -769,6 +769,7 @@ async function fetchUser(){
   } catch(e){ __user = { loggedIn: false }; }
   syncUserGlobals();
   renderUserStatus();
+  setTimeout(maybeShowVipRenewModal, 800);
   lockVipZones();
   initReview();
   initTutorialGate();
@@ -794,6 +795,46 @@ function goRenewVip(){
     } catch(e){}
   }
   location.href = target;
+}
+
+function getVipRenewState(){
+  const daysLeft = getVipDaysLeft();
+  if (daysLeft == null) return null;
+  if (daysLeft <= 0) return { level: "expired", daysLeft, title: "会员已到期", text: "续费后可继续进入会员群聊和会员内容。" };
+  if (daysLeft <= 7) return { level: "urgent", daysLeft, title: "会员即将到期", text: "你的会员还剩 " + daysLeft + " 天，到期后会员群聊会自动关闭。" };
+  return null;
+}
+function closeVipRenewModal(snooze){
+  const modal = document.getElementById("vipRenewModal");
+  if (modal) modal.remove();
+  if (snooze) {
+    const today = new Date().toISOString().slice(0, 10);
+    localStorage.setItem("blys_vip_renew_snooze_" + ((__user && __user.email) || "guest"), today);
+  }
+}
+function maybeShowVipRenewModal(){
+  if (!__user || !__user.loggedIn) return;
+  const state = getVipRenewState();
+  if (!state) return;
+  const today = new Date().toISOString().slice(0, 10);
+  const key = "blys_vip_renew_snooze_" + (__user.email || "guest");
+  if (localStorage.getItem(key) === today) return;
+  if (document.getElementById("vipRenewModal")) return;
+  const daysText = state.daysLeft > 0 ? "剩余 " + state.daysLeft + " 天" : "已到期";
+  const html = '<div class="vip-renew-modal" id="vipRenewModal" role="dialog" aria-modal="true">' +
+    '<div class="vip-renew-card">' +
+      '<button class="vip-renew-close" type="button" onclick="closeVipRenewModal(true)" aria-label="关闭">×</button>' +
+      '<div class="vip-renew-kicker">会员续费提醒</div>' +
+      '<h3>' + esc(state.title) + '</h3>' +
+      '<p>' + esc(state.text) + '</p>' +
+      '<div class="vip-renew-days">' + esc(daysText) + '</div>' +
+      '<div class="vip-renew-actions">' +
+        '<button class="btn btn-primary" type="button" onclick="closeVipRenewModal(true); goRenewVip();">私聊续费</button>' +
+        '<button class="btn btn-secondary" type="button" onclick="closeVipRenewModal(true)">今天不再提醒</button>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+  document.body.insertAdjacentHTML("beforeend", html);
 }
 function isAdmin(){ return __user.loggedIn && __user.isAdmin; }
 
