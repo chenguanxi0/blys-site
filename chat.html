@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082214" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082215" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -135,7 +135,7 @@
         <button class="chat-tab active" data-room="public" onclick="switchChatRoom('public')">普通群聊<span class="chat-tab-badge" id="badge-public" hidden>0</span></button>
         <button class="chat-tab" data-room="vip" onclick="switchChatRoom('vip')">
           <span>会员群聊<span class="chat-tab-badge" id="badge-vip" hidden>0</span></span>
-          <span class="chat-tab-admin-stats" id="vipTabMemberStats" hidden onclick="toggleChatMembersAdmin(event)">成员统计加载中</span>
+          <span class="chat-tab-admin-stats" id="vipTabMemberStats" hidden onclick="toggleChatMembersAdmin(event)"></span>
         </button>
         <button class="chat-tab" data-room="private" onclick="switchChatRoom('private')">私聊<span class="chat-tab-badge" id="badge-private" hidden>0</span></button>
       </div>
@@ -211,8 +211,8 @@
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082214"></script>
-  <script src="assets/mobile-app.js?v=2026082214"></script>
+  <script src="assets/app.js?v=2026082215"></script>
+  <script src="assets/mobile-app.js?v=2026082215"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -556,8 +556,20 @@
       return !!(user.isAdmin || user.email === '491788533@qq.com' || user.nickname === '白鹿原上');
     }
 
+    function updateChatAdminMode() {
+      const on = isBlysAdminUser();
+      document.body.classList.toggle('chat-admin-mode', on);
+      if (!on) {
+        chatMembersPanelOpen = false;
+        const stats = document.getElementById('vipTabMemberStats');
+        const panel = document.getElementById('chatMembersAdmin');
+        if (stats) { stats.hidden = true; stats.textContent = ''; }
+        if (panel) { panel.hidden = true; panel.innerHTML = ''; }
+      }
+    }
+
     function shouldShowMembersAdmin(room) {
-      return isBlysAdminUser() && room === 'vip';
+      return document.body.classList.contains('chat-admin-mode') && room === 'vip';
     }
 
     function updateVipTabMemberStats(data) {
@@ -1705,7 +1717,7 @@
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082214', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082215', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -1974,7 +1986,7 @@
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082214', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082215', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
