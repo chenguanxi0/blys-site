@@ -114,7 +114,7 @@ declare
   v_admin record;
 begin
   select email, nickname, is_admin into v_admin from public.profiles where token = p_admin_token;
-  if v_admin.email is null or not (coalesce(v_admin.is_admin, false) or v_admin.email = '491788533@qq.com' or v_admin.nickname = '白鹿原上') then
+  if v_admin.email is null or not (coalesce(v_admin.is_admin, false) or lower(v_admin.email) in ('491788533@qq.com', '491788533@gmail.com')) then
     return jsonb_build_object('ok', false, 'msg', '无权限');
   end if;
 
