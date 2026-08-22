@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082221" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082222" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -211,8 +211,8 @@
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082221"></script>
-  <script src="assets/mobile-app.js?v=2026082221"></script>
+  <script src="assets/app.js?v=2026082222"></script>
+  <script src="assets/mobile-app.js?v=2026082222"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -683,6 +683,11 @@
       return ['491788533@qq.com', '491788533@gmail.com'].includes(String(email || '').trim().toLowerCase());
     }
 
+    function isAdminMessage(message) {
+      const email = String((message && (message.user_email || message.sender_email || message.email)) || '').trim().toLowerCase();
+      return !!(message && message.is_admin) || ['491788533@qq.com', '491788533@gmail.com'].includes(email);
+    }
+
     function clearRoomUnread(room) {
       if (!room || !unreadCounts[room]) return;
       unreadCounts[room] = 0;
@@ -1102,7 +1107,11 @@
       const myEmail = (__user && __user.email) || '';
       const isMe = m.user_email === myEmail;
       const time = m.created_at ? fmtDateTime(m.created_at) : '';
-      const name = esc(m.user_nickname || m.user_email?.split('@')[0] || '匿名');
+      const rawName = m.user_nickname || m.user_email?.split('@')[0] || '匿名';
+      const name = esc(rawName);
+      const isAdminMsg = isAdminMessage(m);
+      const avatarLabel = isAdminMsg ? '主' : name.charAt(0).toUpperCase();
+      const ownerBadge = isAdminMsg ? '<span class="chat-owner-badge">群主</span>' : '';
       chatMessageCache.set(`${room}:${m.id}`, m);
       const pending = !!m.__pending;
       const failed = !!m.__failed;
@@ -1115,12 +1124,12 @@
         : (pending ? `<span class="chat-msg-state">${esc(pendingText)}</span>` : `<span class="chat-msg-time">${time}</span>`);
       const avatarEmail = encodeURIComponent(m.user_email || '');
       const avatarName = encodeURIComponent(m.user_nickname || m.user_email?.split('@')[0] || '匿名');
-      return `<div class="chat-msg ${isMe ? 'chat-msg-me' : 'chat-msg-other'}${stateCls}" data-message-id="${esc(m.id || '')}" data-room="${esc(room)}">
+      return `<div class="chat-msg ${isMe ? 'chat-msg-me' : 'chat-msg-other'}${isAdminMsg ? ' chat-msg-admin' : ''}${stateCls}" data-message-id="${esc(m.id || '')}" data-room="${esc(room)}">
         ${canRecall ? `<button class="chat-recall-btn" type="button" onclick="recallChatMessage('${esc(m.id)}')">撤回</button>` : ''}
-        <button class="chat-msg-avatar" type="button" title="${isMe ? '自己' : '发起私聊'}" onclick="startPrivateFromMessage('${avatarEmail}','${avatarName}')">${name.charAt(0).toUpperCase()}</button>
+        <button class="chat-msg-avatar" type="button" title="${isAdminMsg ? '群主' : (isMe ? '自己' : '发起私聊')}" onclick="startPrivateFromMessage('${avatarEmail}','${avatarName}')">${avatarLabel}</button>
         <div class="chat-msg-body">
           <div class="chat-msg-meta">
-            <span class="chat-msg-name">${name}</span>
+            <span class="chat-msg-name">${name}</span>${ownerBadge}
             ${timeHtml}
           </div>
           ${recalled ? '<div class="chat-recalled">消息已撤回</div>' : renderChatMessageContent(m)}
@@ -1722,7 +1731,7 @@
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082221', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082222', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -1991,7 +2000,7 @@
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082221', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082222', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
