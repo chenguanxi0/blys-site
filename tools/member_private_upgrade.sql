@@ -13,9 +13,6 @@ as $$
 declare
   v_ok boolean := false;
 begin
-  if length(coalesce(p_token, '')) >= 10 then
-    return true;
-  end if;
   select exists(
     select 1
     from public.profiles
@@ -82,6 +79,7 @@ returns text
 language sql stable
 as $$
   select coalesce(
+    (select email from public.profiles where lower(email) in ('491788533@qq.com', '491788533@gmail.com') order by created_at asc limit 1),
     (select email from public.profiles where coalesce(is_admin,false)=true order by created_at asc limit 1),
     '491788533@qq.com'
   );
