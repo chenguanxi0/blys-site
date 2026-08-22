@@ -216,7 +216,7 @@ begin
   select email, nickname, is_admin into v_me from public.profiles where token = p_token;
   if v_me is null then return json_build_object('ok', false, 'msg', '请先登录'); end if;
 
-  if coalesce(v_me.is_admin, false) = true or v_me.lower(email) in ('491788533@qq.com', '491788533@gmail.com') then
+  if coalesce(v_me.is_admin, false) = true or lower(v_me.email) in ('491788533@qq.com', '491788533@gmail.com') then
     v_target_email := lower(trim(coalesce(p_user_email, '')));
     if v_target_email = '' then return json_build_object('ok', false, 'msg', '请选择私聊用户'); end if;
     select email, nickname into v_target from public.profiles where lower(email) = v_target_email;
@@ -258,7 +258,7 @@ begin
   select email, nickname, is_admin into v_me from public.profiles where token = p_token;
   if v_me is null then return json_build_object('ok', false, 'msg', '请先登录'); end if;
 
-  if coalesce(v_me.is_admin, false) = true or v_me.lower(email) in ('491788533@qq.com', '491788533@gmail.com') then
+  if coalesce(v_me.is_admin, false) = true or lower(v_me.email) in ('491788533@qq.com', '491788533@gmail.com') then
     select coalesce(json_agg(row_to_json(t)), '[]'::json) into v_list
     from (
       select id, user_email, user_nickname, last_message, last_message_at, admin_unread, user_unread, updated_at
@@ -293,7 +293,7 @@ begin
   select * into v_conv from public.private_conversations where id = p_conversation_id;
   if v_conv is null then return false; end if;
   return coalesce(v_me.is_admin, false) = true
-    or v_me.lower(email) in ('491788533@qq.com', '491788533@gmail.com')
+    or lower(v_me.email) in ('491788533@qq.com', '491788533@gmail.com')
     or lower(v_me.email) = lower(v_conv.user_email);
 end;
 $$;
@@ -376,7 +376,7 @@ begin
   if v_me is null then return json_build_object('ok', false, 'msg', '请先登录'); end if;
   select * into v_conv from public.private_conversations where id = p_conversation_id;
   if v_conv is null then return json_build_object('ok', false, 'msg', '会话不存在'); end if;
-  v_is_admin := coalesce(v_me.is_admin, false) = true or v_me.lower(email) in ('491788533@qq.com', '491788533@gmail.com') ;
+  v_is_admin := coalesce(v_me.is_admin, false) = true or lower(v_me.email) in ('491788533@qq.com', '491788533@gmail.com') ;
   if not v_is_admin and lower(v_me.email) <> lower(v_conv.user_email) then
     return json_build_object('ok', false, 'msg', '普通用户只能和白鹿原上私聊');
   end if;
@@ -434,7 +434,7 @@ begin
   if not _blys_can_open_private(p_token, p_conversation_id) then
     return json_build_object('ok', false, 'msg', '无权限');
   end if;
-  v_is_admin := coalesce(v_me.is_admin, false) = true or v_me.lower(email) in ('491788533@qq.com', '491788533@gmail.com') ;
+  v_is_admin := coalesce(v_me.is_admin, false) = true or lower(v_me.email) in ('491788533@qq.com', '491788533@gmail.com') ;
   if v_is_admin then
     update public.private_conversations set admin_unread = 0 where id = p_conversation_id;
   else
