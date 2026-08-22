@@ -1678,7 +1678,16 @@ html.blys-native-app body.chat-body .chat-box { top: calc(128px + var(--app-safe
 
 .chat-members-list::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:999px; }
 
-body.chat-admin-mode .chat-tabs { min-height:54px; }
+body.chat-admin-mode .chat-tabs { min-height:76px; }
 body.chat-admin-mode .chat-tab { min-height:76px; gap:6px; }
 body:not(.chat-admin-mode) .chat-tab-admin-stats,
 body:not(.chat-admin-mode) .chat-members-admin { display:none !important; }
+
+
+/* Final override: member stats are admin-only; normal users keep one-line tabs. */
+body.chat-body:not(.chat-admin-mode) .chat-tabs { min-height:54px !important; }
+body.chat-body:not(.chat-admin-mode) .chat-tab { min-height:54px !important; gap:4px !important; }
+body.chat-body:not(.chat-admin-mode) .chat-tab-admin-stats,
+body.chat-body:not(.chat-admin-mode) .chat-members-admin { display:none !important; }
+body.chat-body.chat-admin-mode .chat-tabs { min-height:76px !important; }
+body.chat-body.chat-admin-mode .chat-tab { min-height:76px !important; }
