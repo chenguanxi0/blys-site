@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082225" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082226" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -211,8 +211,8 @@
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082225"></script>
-  <script src="assets/mobile-app.js?v=2026082225"></script>
+  <script src="assets/app.js?v=2026082226"></script>
+  <script src="assets/mobile-app.js?v=2026082226"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -228,7 +228,7 @@
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    console.log('[chat] build v2026082201 (private list + unread fixes)');
+    console.log('[chat] build v2026082226 (vip fast load + history fix)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
     let lastSeenTs = { public: 0, vip: 0, private: 0 };
@@ -495,15 +495,13 @@
       const chatBox = document.getElementById('chatBox');
       const messagesBox = document.getElementById('chatMessages');
       const inputArea = document.getElementById('chatInputArea');
-
-      // 点击 VIP 标签时主动刷新一次登录/会员状态，避免 SQL 更新后页面仍使用旧状态
+      // VIP 标签先打开消息，再后台刷新会员状态，避免首屏被个人资料请求拖慢。
       if (room === 'vip' && !options.skipUserRefresh && typeof fetchUser === 'function' && localStorage.getItem(USER_TOKEN_KEY) && !vipRefreshing) {
         vipRefreshing = true;
-        try { await fetchUser(); } catch (e) { console.warn('[chat] refresh VIP user failed', e); }
-        vipRefreshing = false;
+        fetchUser().catch(e => console.warn('[chat] refresh VIP user failed', e)).finally(() => { vipRefreshing = false; });
       }
 
-      // VIP 房间权限检查
+// VIP 房间权限检查
       if (room === 'vip') {
         if (!__user.loggedIn || !__user.isVip) {
           if (chatBox) chatBox.style.display = 'none';
@@ -545,12 +543,12 @@
       const banner = document.getElementById('chatUnreadBanner');
       if (banner && unreadCounts.public + unreadCounts.vip + unreadCounts.private === 0) banner.hidden = true;
       loadChatMessages(room);
+      setTimeout(() => { if (room === currentRoom) refreshChatMembers(); }, room === 'vip' ? 900 : 300);
       setTimeout(() => {
         if (room !== currentRoom || !messagesBox || !messagesBox.querySelector('.chat-loading')) return;
         messagesBox.innerHTML = renderChatLoadFailed(room, '网络较慢，消息还没有返回');
       }, 22000);
       refreshOnlineCount();
-      refreshChatMembers();
       sendHeartbeat();
     }
 
@@ -1238,8 +1236,15 @@
     function prependChatHistory(list, room) {
       const box = document.getElementById('chatMessages');
       if (!box || !list || !list.length) { chatHasMore[room] = false; return; }
-      // list 为降序（最新在前），转成升序以便按时间顺序插入顶部
-      const ordered = list.slice().reverse();
+      const existingIds = new Set(Array.from(box.querySelectorAll('.chat-msg')).map(node => node.getAttribute('data-message-id')).filter(Boolean));
+      // list 为降序（最新在前），转成升序以便按时间顺序插入顶部；边界重复的消息先去重。
+      const ordered = list.slice().reverse().filter(m => !m.id || !existingIds.has(String(m.id)));
+      if (!ordered.length) {
+        const oldest = list.reduce((mn, m) => Math.min(mn, m.created_at ? new Date(m.created_at).getTime() : Infinity), Infinity);
+        if (Number.isFinite(oldest)) chatOldestTs[room] = Math.min(chatOldestTs[room] || Infinity, oldest);
+        chatHasMore[room] = list.length >= 30;
+        return;
+      }
       const anchor = getChatScrollAnchor(box);
       const html = ordered.map(m => renderChatMessageHtml(m, room)).join('');
       box.insertAdjacentHTML('afterbegin', html);
@@ -1738,7 +1743,7 @@
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082225', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082226', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -2007,7 +2012,7 @@
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082225', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082226', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
