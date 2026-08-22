@@ -687,6 +687,7 @@ const SUPABASE_ANON = "sb_publishable_rGCr3ILVWQpvpURhctuYQg_K_jC-WHV";  // publ
 const USE_SUPABASE = /^https?:\/\//.test(SUPABASE_URL) && SUPABASE_ANON.length > 0;
 
 const USER_TOKEN_KEY = "blys_user_token";
+const USER_PROFILE_CACHE_KEY = "blys_user_profile_cache";
 const ADMIN_TOKEN_KEY = "blys_admin_token";
 
 // 调用 Supabase RPC
@@ -761,15 +762,24 @@ async function fetchUser(){
     const d = await sbRpc("get_profile", { p_token: token });
     if (d && d.ok){
       const isVip = !!(d.vip_expire && new Date(d.vip_expire) > new Date());
-      __user = { loggedIn: true, token, isVip, isAdmin: d.is_admin, nickname: d.nickname, email: d.email, vipExpire: d.vip_expire };
+      __user = { loggedIn: true, token, isVip, isAdmin: d.is_admin, is_admin: d.is_admin, nickname: d.nickname, email: d.email, vipExpire: d.vip_expire };
+      try { localStorage.setItem(USER_PROFILE_CACHE_KEY, JSON.stringify(__user)); } catch(e){}
     } else {
       localStorage.removeItem(USER_TOKEN_KEY);
+      localStorage.removeItem(USER_PROFILE_CACHE_KEY);
       __user = { loggedIn: false };
     }
-  } catch(e){ __user = { loggedIn: false }; }
+  } catch(e){
+    let cached = null;
+    try { cached = JSON.parse(localStorage.getItem(USER_PROFILE_CACHE_KEY) || 'null'); } catch(_e){}
+    if (cached && cached.token === token) {
+      __user = Object.assign({}, cached, { loggedIn: true, token, __cached: true });
+    } else {
+      __user = { loggedIn: false };
+    }
+  }
   syncUserGlobals();
   renderUserStatus();
-  setTimeout(maybeShowVipRenewModal, 800);
   lockVipZones();
   initReview();
   initTutorialGate();
