@@ -365,30 +365,44 @@ declare
   v_me record;
   v_conv record;
   v_is_admin boolean := false;
-  v_reply record;
+  v_has_reply boolean := false;
+  v_reply_id uuid;
+  v_reply_nickname text;
+  v_reply_content text;
+  v_reply_image text;
   v_new_id uuid;
   v_recipient text;
   v_preview text;
 begin
   select email, nickname, is_admin into v_me from public.profiles where token = p_token;
   if v_me is null then return json_build_object('ok', false, 'msg', '请先登录'); end if;
+
   select * into v_conv from public.private_conversations where id = p_conversation_id;
   if v_conv is null then return json_build_object('ok', false, 'msg', '会话不存在'); end if;
-  v_is_admin := coalesce(v_me.is_admin, false) = true or lower(v_me.email) in ('491788533@qq.com', '491788533@gmail.com') ;
+
+  v_is_admin := coalesce(v_me.is_admin, false) = true
+    or lower(v_me.email) in ('491788533@qq.com', '491788533@gmail.com');
+
   if not v_is_admin and lower(v_me.email) <> lower(v_conv.user_email) then
     return json_build_object('ok', false, 'msg', '普通用户只能和白鹿原上私聊');
   end if;
+
   if nullif(trim(coalesce(p_content, '')), '') is null and nullif(trim(coalesce(p_image, '')), '') is null then
     return json_build_object('ok', false, 'msg', '内容为空');
   end if;
 
   if p_reply_to_id is not null then
-    select id, sender_nickname, content, image into v_reply
+    select id, sender_nickname, content, image
+      into v_reply_id, v_reply_nickname, v_reply_content, v_reply_image
     from public.private_messages
-    where id = p_reply_to_id and conversation_id = p_conversation_id and recalled_at is null;
+    where id = p_reply_to_id
+      and conversation_id = p_conversation_id
+      and recalled_at is null;
+    v_has_reply := found;
   end if;
 
   v_recipient := case when v_is_admin then v_conv.user_email else _blys_admin_email() end;
+
   insert into public.private_messages(
     conversation_id, sender_email, sender_nickname, recipient_email, content, image,
     reply_to_id, reply_to_nickname, reply_to_content, reply_to_image, created_at
@@ -399,14 +413,15 @@ begin
     v_recipient,
     nullif(trim(coalesce(p_content, '')), ''),
     nullif(trim(coalesce(p_image, '')), ''),
-    case when v_reply.id is not null then v_reply.id else null end,
-    case when v_reply.id is not null then v_reply.sender_nickname else null end,
-    case when v_reply.id is not null then v_reply.content else null end,
-    case when v_reply.id is not null then v_reply.image else null end,
+    case when v_has_reply then v_reply_id else null end,
+    case when v_has_reply then v_reply_nickname else null end,
+    case when v_has_reply then v_reply_content else null end,
+    case when v_has_reply then v_reply_image else null end,
     now()
   ) returning id into v_new_id;
 
   v_preview := coalesce(nullif(trim(coalesce(p_content, '')), ''), case when p_image is not null then '[图片]' else '' end);
+
   update public.private_conversations
   set last_message = left(v_preview, 120),
       last_message_at = now(),
