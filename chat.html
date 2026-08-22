@@ -142,7 +142,7 @@
           <span><i></i> 在线 <b id="chatMemberOnline">--</b></span>
         </div>
         <div class="chat-member-list" id="chatMemberList"></div>
-      </div>
+      <div class="chat-members-admin" id="chatMembersAdmin" hidden></div>
     </div>
 
     <!-- 聊天窗口 -->
@@ -223,6 +223,7 @@
     let chatOnlineTimer = null;
     let chatHeartbeatTimer = null;
     let chatSendWatchdogTimer = null;
+    let chatMembersTimer = null;
     let chatSuppressHistoryUntil = 0;
     let pendingChatImage = null;
     let pendingChatQuote = null;
@@ -553,6 +554,59 @@
     function isBlysAdminUser(user) {
       user = user || __user || {};
       return !!(user.isAdmin || user.email === '491788533@qq.com' || user.nickname === '白鹿原上');
+    }
+
+    function isBlysAdminIdentity
+    function shouldShowMembersAdmin(room) {
+      return isBlysAdminUser() && (room === 'public' || room === 'vip');
+    }
+
+    async function loadChatMembersAdmin(room) {
+      const el = document.getElementById('chatMembersAdmin');
+      if (!el) return;
+      if (!shouldShowMembersAdmin(room)) {
+        el.hidden = true;
+        el.innerHTML = '';
+        return;
+      }
+      el.hidden = false;
+      if (!el.innerHTML) el.innerHTML = '<div class="chat-members-loading">成员统计加载中...</div>';
+      try {
+        const d = await sbRpc('chat_room_members', { p_room: room }, { timeoutMs: 8000 });
+        if (!d || !d.ok) {
+          el.innerHTML = '<div class="chat-members-loading">成员统计加载失败</div>';
+          return;
+        }
+        const list = Array.isArray(d.list) ? d.list : [];
+        const chips = list.map(m => {
+          const email = esc(m.email || '');
+          const nick = esc(m.nickname || m.email || '用户');
+          const online = m.online ? ' online' : '';
+          return '<span class="chat-member-chip' + online + '" title="' + email + '">' +
+            '<span class="chat-member-dot"></span><b>' + nick.slice(0, 1) + '</b><em>' + nick + '</em>' +
+            '<button type="button" onclick="removeChatRoomMember(\'' + escJs(room) + '\',\'' + escJs(m.email || '') + '\',\'' + escJs(nick) + '\')" title="从统计列表移除">×</button>' +
+          '</span>';
+        }).join('');
+        el.innerHTML = '<div class="chat-members-summary">总人数 <b>' + (Number(d.total) || 0) + '</b><span></span>在线 <b>' + (Number(d.online) || 0) + '</b></div>' +
+          '<div class="chat-members-list">' + (chips || '<span class="chat-members-loading">暂无成员</span>') + '</div>';
+      } catch (e) {
+        el.innerHTML = '<div class="chat-members-loading">成员统计加载失败</div>';
+      }
+    }
+
+    async function removeChatRoomMember(room, email, nickname) {
+      if (!isBlysAdminUser() || !email) return;
+      if (!confirm('从当前群聊成员统计里移除 ' + (nickname || email) + '？')) return;
+      const d = await sbRpc('admin_remove_chat_room_member', { p_admin_token: __user.token, p_room: room, p_user_email: email }, { timeoutMs: 8000 });
+      if (!d || !d.ok) {
+        alert((d && d.msg) || '移除失败');
+        return;
+      }
+      loadChatMembersAdmin(currentRoom);
+    }
+
+    function escJs(s) {
+      return String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r?\n/g, ' ');
     }
 
     function isBlysAdminIdentity(email, nickname) {
@@ -1587,6 +1641,7 @@
         if (currentRoom === 'vip' && (!__user.loggedIn || !__user.isVip)) return;
         if (chatHistLoading) return;
         loadChatMessages(currentRoom);
+        if (shouldShowMembersAdmin(currentRoom)) loadChatMembersAdmin(currentRoom);
       }, 5000);
     }
 
