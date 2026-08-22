@@ -130,3 +130,26 @@ end;
 $$ language plpgsql security definer;
 
 notify pgrst, 'reload schema';
+
+
+-- 轻量统计：只返回总人数/在线人数，不返回成员列表，用于会员群聊标签第二行
+create or replace function public.chat_room_member_counts(p_room text)
+returns jsonb as $$
+declare
+  v_total int;
+  v_online int;
+begin
+  select count(*) into v_total
+  from public.chat_room_members m
+  where m.room = p_room;
+
+  select count(distinct m.user_email) into v_online
+  from public.chat_room_members m
+  join public.online_users o on lower(o.user_email) = lower(m.user_email) and o.room = p_room
+  where m.room = p_room and o.last_seen > now() - interval '2 minutes';
+
+  return jsonb_build_object('ok', true, 'total', coalesce(v_total, 0), 'online', coalesce(v_online, 0));
+end;
+$$ language plpgsql security definer;
+
+notify pgrst, 'reload schema';
