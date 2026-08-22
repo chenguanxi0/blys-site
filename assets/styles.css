@@ -1630,3 +1630,24 @@ html.blys-native-app body.chat-body .chat-box { top: calc(128px + var(--app-safe
   .vip-renew-card h3 { font-size:21px; }
   .vip-renew-actions { flex-direction:column; }
 }
+
+.chat-members-panel { display:flex; align-items:center; gap:10px; min-height:48px; margin:0 0 8px; padding:8px 10px; border:1px solid var(--line); border-radius:12px; background:rgba(255,255,255,.86); box-shadow:0 8px 20px rgba(15,23,42,.05); overflow:hidden; }
+.chat-members-panel[hidden] { display:none; }
+.chat-members-summary { display:flex; gap:8px; align-items:center; flex:0 0 auto; color:#64748b; font-size:12px; white-space:nowrap; }
+.chat-members-summary b { color:#111827; font-size:14px; }
+.chat-members-summary i { display:inline-block; width:8px; height:8px; border-radius:999px; background:#22c55e; box-shadow:0 0 0 3px rgba(34,197,94,.14); margin-right:4px; vertical-align:middle; }
+.chat-member-list { display:flex; align-items:center; gap:8px; min-width:0; overflow-x:auto; scrollbar-width:none; }
+.chat-member-list::-webkit-scrollbar { display:none; }
+.chat-member-chip { display:flex; align-items:center; gap:6px; flex:0 0 auto; max-width:116px; padding:4px 8px 4px 4px; border:1px solid #eef2f7; border-radius:999px; background:#f8fafc; color:#64748b; font-size:12px; }
+.chat-member-chip.online { background:#f0fdf4; border-color:#bbf7d0; color:#166534; }
+.chat-member-avatar { position:relative; display:grid; place-items:center; width:26px; height:26px; border-radius:999px; background:linear-gradient(135deg,#ef4444,#fb7185); color:#fff; font-weight:800; font-size:12px; }
+.chat-member-avatar i { position:absolute; right:-1px; bottom:-1px; width:8px; height:8px; border-radius:999px; background:#cbd5e1; border:2px solid #fff; }
+.chat-member-chip.online .chat-member-avatar i { background:#22c55e; }
+.chat-member-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.chat-member-empty { color:#94a3b8; font-size:12px; }
+@media (max-width:560px) {
+  .chat-members-panel { margin:0 0 6px; padding:7px 8px; border-radius:10px; }
+  .chat-members-summary { gap:6px; font-size:11px; }
+  .chat-member-chip { max-width:92px; font-size:11px; padding-right:7px; }
+  .chat-member-avatar { width:24px; height:24px; }
+}
