@@ -780,6 +780,21 @@ function emitUserChange(){
 }
 
 function isVIP(){ return __user.loggedIn && __user.isVip; }
+function getVipDaysLeft(){
+  if (!__user || !__user.vipExpire) return null;
+  const expire = new Date(__user.vipExpire);
+  if (Number.isNaN(expire.getTime())) return null;
+  return Math.max(0, Math.ceil((expire.getTime() - Date.now()) / 86400000));
+}
+function goRenewVip(){
+  const target = "chat.html#private";
+  if (location.pathname.endsWith("/chat.html") || location.pathname.endsWith("/chat")) {
+    try {
+      if (typeof switchChatRoom === "function") { switchChatRoom("private"); return; }
+    } catch(e){}
+  }
+  location.href = target;
+}
 function isAdmin(){ return __user.loggedIn && __user.isAdmin; }
 
 function logoutUser(){
@@ -817,15 +832,22 @@ function renderUserStatus(){
   const el = document.getElementById("vipStatus");
   if (!el) return;
   if (__user.loggedIn){
+    const daysLeft = getVipDaysLeft();
     const tag = __user.isVip ? `⭐ 会员至 ${fmtDateStr(new Date(__user.vipExpire))}` : "普通用户";
+    const vipCountdown = __user.isVip && daysLeft != null
+      ? `<div class="vip-expiry ${daysLeft <= 7 ? 'urgent' : ''}">会员还剩 <b>${daysLeft}</b> 天${daysLeft <= 7 ? '，请及时续费' : ''}</div>`
+      : '';
+    const renewBtn = __user.isVip && daysLeft != null && daysLeft <= 7
+      ? `<button class="vip-open renew-btn" onclick="goRenewVip()">私聊续费</button>`
+      : '';
     let html = `<button class="vip-open checkin-btn" id="checkinBtn" onclick="doCheckin()" title="每日签到领积分">📅 签到</button>
     <div class="user-menu">
       <button class="user-menu-trigger" id="userMenuTrigger" type="button" onclick="toggleUserMenu(event)" aria-expanded="false" aria-haspopup="true">
         <span class="user-menu-name">${esc(__user.nickname || __user.email || "用户")}</span><span class="user-menu-chevron" aria-hidden="true"></span>
       </button>
       <div class="user-menu-dropdown" id="userMenuDropdown">
-        <div class="user-menu-status">${tag}</div>
-        <span class="vip-badge points-badge" id="userPointsBadge" title="当前积分，可兑换会员专享内容">🪙 <b id="userPointsNum">0</b> 分</span>
+        <div class="user-menu-status">${tag}</div>\n        ${vipCountdown}\n        <span class="vip-badge points-badge" id="userPointsBadge" title="当前积分，可兑换会员专享内容">🪙 <b id="userPointsNum">0</b> 分</span>
+        ${renewBtn}
         ${__user.isAdmin ? `<button class="vip-open" onclick="location.href='admin.html'">后台</button>` : ''}
         <button class="vip-open logout-btn" onclick="logoutUser()">退出登录</button>
       </div>
