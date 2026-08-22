@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082227" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082228" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -211,8 +211,8 @@
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082227"></script>
-  <script src="assets/mobile-app.js?v=2026082227"></script>
+  <script src="assets/app.js?v=2026082228"></script>
+  <script src="assets/mobile-app.js?v=2026082228"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -228,7 +228,7 @@
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    console.log('[chat] build v2026082227 (vip admin faster first paint)');
+    console.log('[chat] build v2026082228 (vip history light pages)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
     let lastSeenTs = { public: 0, vip: 0, private: 0 };
@@ -882,7 +882,7 @@
         const shouldStickToBottom = isFirst || (!isHistory && isChatNearBottom(box, 100) && Date.now() > chatUserReadingHistoryUntil);
         const rpcParams = { p_room: room };
         if (isHistory) {
-          rpcParams.p_limit = 30;
+          rpcParams.p_limit = room === 'vip' ? 8 : 30;
           rpcParams.p_before = chatTsToIso(chatOldestTs[room]);
         } else if (isFirst) {
           rpcParams.p_limit = room === 'vip' ? 6 : (isNativeApp ? 10 : 20);
@@ -906,7 +906,7 @@
 
         if (isHistory) {
           // 历史分页：把更早的消息插入列表顶部，并维持当前阅读位置
-          prependChatHistory(list, room);
+          prependChatHistory(list, room, rpcParams.p_limit);
         } else if (isFirst) {
           // 首屏：最近 30 条为降序，翻转后整列表渲染，并滚到最新
           renderChatMessages(list.slice().reverse(), room, true);
@@ -1233,7 +1233,7 @@
     }
 
     // 历史分页：把更早的消息插入到列表顶部，并维持用户当前阅读位置
-    function prependChatHistory(list, room) {
+    function prependChatHistory(list, room, pageLimit) {
       const box = document.getElementById('chatMessages');
       if (!box || !list || !list.length) { chatHasMore[room] = false; return; }
       const existingIds = new Set(Array.from(box.querySelectorAll('.chat-msg')).map(node => node.getAttribute('data-message-id')).filter(Boolean));
@@ -1242,7 +1242,7 @@
       if (!ordered.length) {
         const oldest = list.reduce((mn, m) => Math.min(mn, m.created_at ? new Date(m.created_at).getTime() : Infinity), Infinity);
         if (Number.isFinite(oldest)) chatOldestTs[room] = Math.min(chatOldestTs[room] || Infinity, oldest);
-        chatHasMore[room] = list.length >= 30;
+        chatHasMore[room] = list.length >= (pageLimit || 30);
         return;
       }
       const anchor = getChatScrollAnchor(box);
@@ -1264,7 +1264,7 @@
       });
       const minTs = ordered.reduce((mn, m) => Math.min(mn, m.created_at ? new Date(m.created_at).getTime() : 0), Infinity);
       chatOldestTs[room] = Math.min(chatOldestTs[room] || Infinity, minTs);
-      chatHasMore[room] = list.length >= 30;
+      chatHasMore[room] = list.length >= (pageLimit || 30);
     }
 
     function renderChatMessages(list, room, isFirst) {
@@ -1743,7 +1743,7 @@
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082227', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082228', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -2012,7 +2012,7 @@
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082227', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082228', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
