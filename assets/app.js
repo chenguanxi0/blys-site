@@ -1992,3 +1992,42 @@ function initReview(){
 window.addEventListener('popstate', () => {
   if(document.getElementById('reviewRoot')) loadFullReport();
 });
+
+
+// 全站记住上次页面：首页 HTML 被 CDN 缓存时也由 app.js 兜底
+function blysRememberCurrentPage(){
+  try {
+    var name = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+    if (['chat.html','daily.html','diary.html'].indexOf(name) >= 0) {
+      localStorage.setItem('blys_last_page', name);
+    }
+  } catch(e){}
+}
+function blysEnhanceHomeEntry(){
+  try {
+    var name = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+    var isHome = name === '' || name === 'index.html';
+    if (!isHome) { blysRememberCurrentPage(); return; }
+    var params = new URLSearchParams(location.search);
+    var last = localStorage.getItem('blys_last_page') || '';
+    if (last === 'chat.html' && params.get('home') !== '1') {
+      location.replace('chat.html');
+      return;
+    }
+    var grid = document.querySelector('.hero .entry-grid');
+    if (!grid) return;
+    var existing = grid.querySelector('a[href="chat.html"]');
+    if (!existing) {
+      existing = document.createElement('a');
+      existing.className = 'entry-card';
+      existing.href = 'chat.html';
+      existing.innerHTML = '<div class="entry-icon">💬</div><div class="entry-body"><h3>聊天室</h3><p>和站友交流观点、分享经验。注册用户可发言，会员群聊为 VIP 专属，也可以在这里和站长私聊。</p><span class="entry-go">进入聊天室 →</span></div>';
+    }
+    if (grid.firstElementChild !== existing) grid.insertBefore(existing, grid.firstElementChild);
+  } catch(e){}
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', blysEnhanceHomeEntry);
+} else {
+  blysEnhanceHomeEntry();
+}
