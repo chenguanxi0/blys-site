@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082222" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082223" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -211,8 +211,8 @@
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082222"></script>
-  <script src="assets/mobile-app.js?v=2026082222"></script>
+  <script src="assets/app.js?v=2026082223"></script>
+  <script src="assets/mobile-app.js?v=2026082223"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -557,7 +557,7 @@
     function isBlysAdminUser(user) {
       user = user || __user || {};
       const email = String(user.email || '').trim().toLowerCase();
-      return !!(user.isAdmin || ['491788533@qq.com', '491788533@gmail.com'].includes(email));
+      return !!(user.isAdmin || user.is_admin || ['491788533@qq.com', '491788533@gmail.com'].includes(email));
     }
 
     function updateChatAdminMode() {
@@ -789,19 +789,26 @@
     async function startPrivateChat(email, nickname, options) {
       options = options || {};
       if (!__user.loggedIn) { openAuthModal(); return; }
-      if (!isBlysAdminUser() && !isBlysAdminIdentity(email, nickname) && email !== __user.email) {
+      const targetInputEmail = String(email || '').trim().toLowerCase();
+      const myEmail = String(__user.email || '').trim().toLowerCase();
+      const adminNow = isBlysAdminUser();
+      if (!targetInputEmail) {
+        if (!options.silent) alert('私聊打开失败：没有找到对方邮箱');
+        return;
+      }
+      if (!adminNow && !isBlysAdminIdentity(targetInputEmail, nickname) && targetInputEmail !== myEmail) {
         alert('私聊只开放给站长和你自己，用户之间不能互相私聊');
         return;
       }
       try {
-        const targetEmail = isBlysAdminUser() ? email : __user.email;
+        const targetEmail = adminNow ? targetInputEmail : myEmail;
         const d = await sbRpc('get_private_conversation', { p_token: __user.token, p_user_email: targetEmail }, { timeoutMs: 12000 });
         if (!d || !d.ok) {
           if (!options.silent) alert((d && d.msg) || '私聊打开失败');
           return;
         }
         currentPrivateConversationId = d.id;
-        currentPrivateTitle = isBlysAdminUser() ? (d.user_nickname || nickname || d.user_email) : '白鹿原上';
+        currentPrivateTitle = adminNow ? (d.user_nickname || nickname || d.user_email) : '白鹿原上';
         lastSeenTs.private = 0;
         chatOldestTs.private = 0;
         chatHasMore.private = true;
@@ -1731,7 +1738,7 @@
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082222', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082223', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -2000,7 +2007,7 @@
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082222', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082223', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
