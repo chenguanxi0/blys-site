@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082210" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082211" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -217,8 +217,8 @@
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082210"></script>
-  <script src="assets/mobile-app.js?v=2026082210"></script>
+  <script src="assets/app.js?v=2026082211"></script>
+  <script src="assets/mobile-app.js?v=2026082211"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -229,6 +229,7 @@
     let chatMembersTimer = null;
     let chatMembersPanelOpen = false;
     let chatMembersStatsCache = null;
+    let chatMembersStatsTimer = null;
     let chatSuppressHistoryUntil = 0;
     let pendingChatImage = null;
     let pendingChatQuote = null;
@@ -591,6 +592,28 @@
       const el = document.getElementById('chatMembersAdmin');
       if (el) el.hidden = !chatMembersPanelOpen;
       if (chatMembersPanelOpen) loadChatMembersAdmin('vip', { forcePanel: true });
+      else scheduleVipMemberStats('vip');
+    }
+
+    function scheduleVipMemberStats(room) {
+      clearTimeout(chatMembersStatsTimer);
+      if (!shouldShowMembersAdmin(room)) {
+        updateVipTabMemberStats(null);
+        return;
+      }
+      updateVipTabMemberStats(chatMembersStatsCache);
+      chatMembersStatsTimer = setTimeout(() => loadVipMemberCounts(), 1500);
+    }
+
+    async function loadVipMemberCounts() {
+      if (!shouldShowMembersAdmin('vip')) return;
+      try {
+        const d = await sbRpc('chat_room_member_counts', { p_room: 'vip' }, { timeoutMs: 5000 });
+        if (d && d.ok) {
+          chatMembersStatsCache = Object.assign({}, chatMembersStatsCache || {}, d);
+          updateVipTabMemberStats(chatMembersStatsCache);
+        }
+      } catch (e) {}
     }
 
     async function loadChatMembersAdmin(room, options) {
@@ -1677,7 +1700,7 @@
         if (currentRoom === 'vip' && (!__user.loggedIn || !__user.isVip)) return;
         if (chatHistLoading) return;
         loadChatMessages(currentRoom);
-        if (shouldShowMembersAdmin(currentRoom)) loadChatMembersAdmin('vip');
+        if (shouldShowMembersAdmin(currentRoom) && chatMembersPanelOpen) loadChatMembersAdmin('vip');
       }, 5000);
     }
 
@@ -1688,7 +1711,7 @@
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082210', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082211', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -1957,7 +1980,7 @@
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082210', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082211', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
