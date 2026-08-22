@@ -202,5 +202,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 7. 强制刷新 PostgREST schema cache（关键！）
+-- 7. 聊天消息查询索引：加速会员群聊首屏、增量和历史分页
+CREATE INDEX IF NOT EXISTS idx_messages_room_created_at ON public.messages(room, created_at DESC);
+
+-- 8. 强制刷新 PostgREST schema cache（关键！）
 NOTIFY pgrst, 'reload schema';
