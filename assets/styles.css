@@ -1173,12 +1173,12 @@ body.chat-body .footer { display:none; }
 
 .chat-tabs-wrapper { position:sticky; top:64px; z-index:20; background:var(--bg); padding:8px 0; }
 html.blys-native-app body.chat-body .chat-tabs-wrapper { top: calc(64px + var(--app-safe-top)); }
-.chat-tabs { display:flex; gap:10px; margin:0; min-height:76px; align-items:stretch; }
+.chat-tabs { display:flex; gap:10px; margin:0; min-height:54px; align-items:stretch; }
 .chat-tab {
-  flex:1; min-height:76px; padding:10px 10px; border:1px solid var(--line); border-radius:12px;
+  flex:1; min-height:54px; padding:10px 10px; border:1px solid var(--line); border-radius:12px;
   background:#fff; cursor:pointer; text-align:center; transition: all var(--transition);
   font-size:14px; color:var(--muted); line-height:1.25;
-  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
 }
 .chat-tab:hover { border-color:var(--brand); }
 .chat-tab.active {
@@ -1398,7 +1398,7 @@ html.blys-native-app body.chat-body .chat-box { top: calc(128px + var(--app-safe
   .chat-head { flex-direction:column; align-items:flex-start; gap:8px; margin-bottom:10px; }
   .chat-head .section-head h1 { font-size:20px; }
   .chat-head-actions { width:100%; }
-  .chat-tabs { min-height:76px; }
+  .chat-tabs { min-height:54px; }
   .chat-tabs-wrapper { top:64px; padding:6px 0; }
   html.blys-native-app body.chat-body .chat-tabs-wrapper { top: calc(64px + var(--app-safe-top)); }
   .chat-box { top:122px; height:calc(100dvh - 122px); min-height:320px; }
@@ -1408,7 +1408,7 @@ html.blys-native-app body.chat-body .chat-box { top: calc(128px + var(--app-safe
   .chat-msg-body { max-width:78%; }
   .chat-msg-text { font-size:13px; padding:8px 10px; }
   .chat-msg-img { max-height:180px; }
-  .chat-tab { min-height:76px; padding:8px 6px; font-size:13px; }
+  .chat-tab { min-height:54px; padding:8px 6px; font-size:13px; }
   .chat-input-wrap .btn { padding:10px 14px; }
   .chat-emoji-panel { width:92vw; max-width:320px; bottom:100px; }
 }
@@ -1677,3 +1677,8 @@ html.blys-native-app body.chat-body .chat-box { top: calc(128px + var(--app-safe
 .chat-members-admin { display:block; margin-top:8px; padding:10px; border:1px solid #fee2e2; border-radius:12px; background:#fff; box-shadow:0 8px 18px rgba(15,23,42,.05); overflow:hidden; }
 
 .chat-members-list::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:999px; }
+
+body.chat-admin-mode .chat-tabs { min-height:54px; }
+body.chat-admin-mode .chat-tab { min-height:76px; gap:6px; }
+body:not(.chat-admin-mode) .chat-tab-admin-stats,
+body:not(.chat-admin-mode) .chat-members-admin { display:none !important; }
