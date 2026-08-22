@@ -1638,7 +1638,7 @@ html.blys-native-app body.chat-body .chat-box { top: calc(128px + var(--app-safe
 .chat-members-summary i { display:inline-block; width:8px; height:8px; border-radius:999px; background:#22c55e; box-shadow:0 0 0 3px rgba(34,197,94,.14); margin-right:4px; vertical-align:middle; }
 .chat-member-list { display:flex; align-items:center; gap:8px; min-width:0; overflow-x:auto; scrollbar-width:none; }
 .chat-member-list::-webkit-scrollbar { display:none; }
-.chat-member-chip { flex:0 0 auto; display:inline-flex; align-items:center; gap:4px; max-width:118px; padding:4px 6px; border:1px solid #e5e7eb; border-radius:999px; background:#f8fafc; color:#64748b; font-size:11px; }
+.chat-member-chip { min-width:0; display:inline-flex; align-items:center; gap:5px; padding:5px 7px; border:1px solid #e5e7eb; border-radius:999px; background:#f8fafc; color:#64748b; font-size:11px; }
 .chat-member-chip.online { background:#f0fdf4; border-color:#bbf7d0; color:#166534; }
 .chat-member-avatar { position:relative; display:grid; place-items:center; width:26px; height:26px; border-radius:999px; background:linear-gradient(135deg,#ef4444,#fb7185); color:#fff; font-weight:800; font-size:12px; }
 .chat-member-avatar i { position:absolute; right:-1px; bottom:-1px; width:8px; height:8px; border-radius:999px; background:#cbd5e1; border:2px solid #fff; }
@@ -1648,30 +1648,32 @@ html.blys-native-app body.chat-body .chat-box { top: calc(128px + var(--app-safe
 @media (max-width:560px) {
   .chat-members-panel { margin:0 0 6px; padding:7px 8px; border-radius:10px; }
   .chat-members-summary { gap:6px; font-size:11px; }
-  .chat-member-chip { flex:0 0 auto; display:inline-flex; align-items:center; gap:4px; max-width:118px; padding:4px 6px; border:1px solid #e5e7eb; border-radius:999px; background:#f8fafc; color:#64748b; font-size:11px; }
+  .chat-member-chip { min-width:0; display:inline-flex; align-items:center; gap:5px; padding:5px 7px; border:1px solid #e5e7eb; border-radius:999px; background:#f8fafc; color:#64748b; font-size:11px; }
   .chat-member-avatar { width:24px; height:24px; }
 }
 
-.chat-members-admin { display:block; margin-top:6px; padding:6px 8px; border:1px solid #fee2e2; border-radius:10px; background:#fff; box-shadow:0 8px 18px rgba(15,23,42,.05); overflow:hidden; }
+.chat-members-admin { display:block; margin-top:8px; padding:10px; border:1px solid #fee2e2; border-radius:12px; background:#fff; box-shadow:0 8px 18px rgba(15,23,42,.05); overflow:hidden; }
 .chat-members-admin[hidden] { display:none; }
 .chat-members-summary { flex:0 0 auto; display:flex; align-items:center; gap:6px; color:#475569; font-size:13px; white-space:nowrap; }
 .chat-members-summary b { color:#111827; font-size:15px; }
 .chat-members-summary span { width:8px; height:8px; border-radius:999px; background:#22c55e; box-shadow:0 0 0 4px rgba(34,197,94,.12); }
-.chat-members-list { display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none; }
-.chat-members-list::-webkit-scrollbar { display:none; }
-.chat-member-chip { flex:0 0 auto; display:inline-flex; align-items:center; gap:4px; max-width:118px; padding:4px 6px; border:1px solid #e5e7eb; border-radius:999px; background:#f8fafc; color:#64748b; font-size:11px; }
+.chat-members-list { display:grid; grid-template-columns:repeat(auto-fill, minmax(104px, 1fr)); gap:8px; max-height:152px; overflow-y:auto; overflow-x:hidden; padding:1px 2px 2px; }
+.chat-members-list::-webkit-scrollbar { width:4px; }
+.chat-member-chip { min-width:0; display:inline-flex; align-items:center; gap:5px; padding:5px 7px; border:1px solid #e5e7eb; border-radius:999px; background:#f8fafc; color:#64748b; font-size:11px; }
 .chat-member-chip.online { background:#ecfdf5; border-color:#bbf7d0; color:#166534; }
 .chat-member-chip b { display:grid; place-items:center; width:22px; height:22px; border-radius:999px; background:#ef4444; color:#fff; font-style:normal; font-size:12px; }
 .chat-member-chip em { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-style:normal; }
 .chat-member-chip button { flex:0 0 auto; width:20px; height:20px; border:0; border-radius:999px; background:#fee2e2; color:#ef4444; line-height:1; font-size:14px; }
 .chat-members-loading { color:#94a3b8; font-size:13px; }
 @media (max-width:560px) {
-  .chat-members-admin { display:block; margin-top:6px; padding:6px 8px; border:1px solid #fee2e2; border-radius:10px; background:#fff; box-shadow:0 8px 18px rgba(15,23,42,.05); overflow:hidden; }
+  .chat-members-admin { display:block; margin-top:8px; padding:10px; border:1px solid #fee2e2; border-radius:12px; background:#fff; box-shadow:0 8px 18px rgba(15,23,42,.05); overflow:hidden; }
   .chat-members-summary { font-size:12px; }
-  .chat-member-chip { flex:0 0 auto; display:inline-flex; align-items:center; gap:4px; max-width:118px; padding:4px 6px; border:1px solid #e5e7eb; border-radius:999px; background:#f8fafc; color:#64748b; font-size:11px; }
+  .chat-member-chip { min-width:0; display:inline-flex; align-items:center; gap:5px; padding:5px 7px; border:1px solid #e5e7eb; border-radius:999px; background:#f8fafc; color:#64748b; font-size:11px; }
 }
 
 .chat-tab-admin-stats { display:flex; align-items:center; justify-content:center; width:min(168px, 96%); min-height:24px; padding:4px 8px; border-radius:999px; background:#fff; border:1px solid #fecdd3; color:#64748b; font-size:12px; font-weight:700; line-height:1.1; white-space:nowrap; }
 .chat-tab-admin-stats b { color:#ef4444; font-size:14px; margin:0 2px; }
 .chat-tab.active .chat-tab-admin-stats { background:#fff; color:#be123c; border-color:#fca5a5; }
-.chat-members-admin { display:block; margin-top:6px; padding:6px 8px; border:1px solid #fee2e2; border-radius:10px; background:#fff; box-shadow:0 8px 18px rgba(15,23,42,.05); overflow:hidden; }
+.chat-members-admin { display:block; margin-top:8px; padding:10px; border:1px solid #fee2e2; border-radius:12px; background:#fff; box-shadow:0 8px 18px rgba(15,23,42,.05); overflow:hidden; }
+
+.chat-members-list::-webkit-scrollbar-thumb { background:#cbd5e1; border-radius:999px; }
