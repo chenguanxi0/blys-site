@@ -144,8 +144,13 @@ BEGIN
   IF p_after IS NOT NULL THEN
     -- 增量：只返回 p_after 之后的新消息（升序），前端直接追加，避免全量重渲染
     RETURN QUERY SELECT
-      m.id, m.user_email, m.user_nickname, m.content, m.image,
-      m.reply_to_id, m.reply_to_nickname, m.reply_to_content, m.reply_to_image,
+      m.id, m.user_email, m.user_nickname,
+      CASE WHEN m.recalled_at IS NULL THEN m.content ELSE NULL END AS content,
+      CASE WHEN m.recalled_at IS NULL THEN m.image ELSE NULL END AS image,
+      CASE WHEN m.recalled_at IS NULL THEN m.reply_to_id ELSE NULL END AS reply_to_id,
+      CASE WHEN m.recalled_at IS NULL THEN m.reply_to_nickname ELSE NULL END AS reply_to_nickname,
+      CASE WHEN m.recalled_at IS NULL THEN m.reply_to_content ELSE NULL END AS reply_to_content,
+      CASE WHEN m.recalled_at IS NULL THEN m.reply_to_image ELSE NULL END AS reply_to_image,
       m.recalled_at, m.created_at
     FROM messages m
     WHERE m.room = p_room AND (m.created_at > p_after OR m.recalled_at > p_after)
@@ -153,8 +158,13 @@ BEGIN
   ELSIF p_before IS NOT NULL THEN
     -- 历史分页：返回早于 p_before 的 p_limit 条（降序），前端插入列表顶部
     RETURN QUERY SELECT
-      m.id, m.user_email, m.user_nickname, m.content, m.image,
-      m.reply_to_id, m.reply_to_nickname, m.reply_to_content, m.reply_to_image,
+      m.id, m.user_email, m.user_nickname,
+      CASE WHEN m.recalled_at IS NULL THEN m.content ELSE NULL END AS content,
+      CASE WHEN m.recalled_at IS NULL THEN m.image ELSE NULL END AS image,
+      CASE WHEN m.recalled_at IS NULL THEN m.reply_to_id ELSE NULL END AS reply_to_id,
+      CASE WHEN m.recalled_at IS NULL THEN m.reply_to_nickname ELSE NULL END AS reply_to_nickname,
+      CASE WHEN m.recalled_at IS NULL THEN m.reply_to_content ELSE NULL END AS reply_to_content,
+      CASE WHEN m.recalled_at IS NULL THEN m.reply_to_image ELSE NULL END AS reply_to_image,
       m.recalled_at, m.created_at
     FROM messages m
     WHERE m.room = p_room AND m.created_at < p_before
@@ -163,8 +173,13 @@ BEGIN
   ELSE
     -- 首屏：返回最近 p_limit 条（降序），前端翻转后整列表渲染
     RETURN QUERY SELECT
-      m.id, m.user_email, m.user_nickname, m.content, m.image,
-      m.reply_to_id, m.reply_to_nickname, m.reply_to_content, m.reply_to_image,
+      m.id, m.user_email, m.user_nickname,
+      CASE WHEN m.recalled_at IS NULL THEN m.content ELSE NULL END AS content,
+      CASE WHEN m.recalled_at IS NULL THEN m.image ELSE NULL END AS image,
+      CASE WHEN m.recalled_at IS NULL THEN m.reply_to_id ELSE NULL END AS reply_to_id,
+      CASE WHEN m.recalled_at IS NULL THEN m.reply_to_nickname ELSE NULL END AS reply_to_nickname,
+      CASE WHEN m.recalled_at IS NULL THEN m.reply_to_content ELSE NULL END AS reply_to_content,
+      CASE WHEN m.recalled_at IS NULL THEN m.reply_to_image ELSE NULL END AS reply_to_image,
       m.recalled_at, m.created_at
     FROM messages m
     WHERE m.room = p_room
