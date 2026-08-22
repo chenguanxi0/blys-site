@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082207" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082208" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -136,6 +136,13 @@
         <button class="chat-tab" data-room="vip" onclick="switchChatRoom('vip')">会员群聊<span class="chat-tab-badge" id="badge-vip" hidden>0</span></button>
         <button class="chat-tab" data-room="private" onclick="switchChatRoom('private')">私聊<span class="chat-tab-badge" id="badge-private" hidden>0</span></button>
       </div>
+      <div class="chat-members-panel" id="chatMembersPanel" hidden>
+        <div class="chat-members-summary">
+          <span>总人数 <b id="chatMemberTotal">--</b></span>
+          <span><i></i> 在线 <b id="chatMemberOnline">--</b></span>
+        </div>
+        <div class="chat-member-list" id="chatMemberList"></div>
+      </div>
     </div>
 
     <!-- 聊天窗口 -->
@@ -207,8 +214,8 @@
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082207"></script>
-  <script src="assets/mobile-app.js?v=2026082207"></script>
+  <script src="assets/app.js?v=2026082208"></script>
+  <script src="assets/mobile-app.js?v=2026082208"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -368,9 +375,59 @@
       chatHeartbeatTimer = setInterval(sendHeartbeat, 25000);
     }
 
+    
+    function chatAvatarText(name, email) {
+      const text = (name || email || '友').trim();
+      return text.slice(0, 1).toUpperCase();
+    }
+
+    function renderChatMembers(list, total, online) {
+      const panel = document.getElementById('chatMembersPanel');
+      const totalEl = document.getElementById('chatMemberTotal');
+      const onlineEl = document.getElementById('chatMemberOnline');
+      const listEl = document.getElementById('chatMemberList');
+      if (!panel || !listEl) return;
+      panel.hidden = false;
+      if (totalEl) totalEl.textContent = String(total == null ? '--' : total);
+      if (onlineEl) onlineEl.textContent = String(online == null ? '--' : online);
+      const rows = Array.isArray(list) ? list.slice(0, 18) : [];
+      if (!rows.length) {
+        listEl.innerHTML = '<span class="chat-member-empty">暂无成员数据</span>';
+        return;
+      }
+      listEl.innerHTML = rows.map((u) => {
+        const name = u.nickname || u.email || '站友';
+        const onlineCls = u.online ? ' online' : '';
+        return '<div class="chat-member-chip' + onlineCls + '" title="' + esc(name) + '">' +
+          '<span class="chat-member-avatar">' + esc(chatAvatarText(u.nickname, u.email)) + '<i></i></span>' +
+          '<span class="chat-member-name">' + esc(name) + '</span>' +
+        '</div>';
+      }).join('');
+    }
+
+    async function refreshChatMembers() {
+      if (currentRoom === 'private') {
+        const panel = document.getElementById('chatMembersPanel');
+        if (panel) panel.hidden = true;
+        return;
+      }
+      try {
+        const d = await sbRpc('chat_room_members', { p_room: currentRoom }, { timeoutMs: 6000 });
+        if (!d || !d.ok || !Array.isArray(d.list)) return;
+        renderChatMembers(d.list, d.total, d.online);
+      } catch (e) {
+        const panel = document.getElementById('chatMembersPanel');
+        if (panel) panel.hidden = true;
+      }
+    }
+
     async function sendHeartbeat() {
       try {
-        await sbRpc('heartbeat', { p_session: getChatSessionId(), p_room: currentRoom });
+        try {
+          await sbRpc('heartbeat', { p_session: getChatSessionId(), p_room: currentRoom, p_token: (__user && __user.token) || null }, { timeoutMs: 5000 });
+        } catch (err) {
+          await sbRpc('heartbeat', { p_session: getChatSessionId(), p_room: currentRoom }, { timeoutMs: 5000 });
+        }
       } catch (e) { /* 静默失败 */ }
     }
 
@@ -489,6 +546,7 @@
         messagesBox.innerHTML = renderChatLoadFailed(room, '网络较慢，消息还没有返回');
       }, 22000);
       refreshOnlineCount();
+      refreshChatMembers();
       sendHeartbeat();
     }
 
@@ -1539,7 +1597,7 @@
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082207', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082208', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -1808,7 +1866,7 @@
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082207', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082208', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
