@@ -105,3 +105,28 @@ set user_nickname = coalesce(excluded.user_nickname, public.chat_room_members.us
     last_seen = greatest(public.chat_room_members.last_seen, excluded.last_seen);
 
 notify pgrst, 'reload schema';
+
+
+-- 白鹿原上专用：从群聊成员统计列表移除某个用户（不删除账号、不影响会员身份）
+create or replace function public.admin_remove_chat_room_member(p_admin_token text, p_room text, p_user_email text)
+returns jsonb as $$
+declare
+  v_admin record;
+begin
+  select email, nickname, is_admin into v_admin from public.profiles where token = p_admin_token;
+  if v_admin.email is null or not (coalesce(v_admin.is_admin, false) or v_admin.email = '491788533@qq.com' or v_admin.nickname = '白鹿原上') then
+    return jsonb_build_object('ok', false, 'msg', '无权限');
+  end if;
+
+  if p_room not in ('public', 'vip') then
+    return jsonb_build_object('ok', false, 'msg', '房间无效');
+  end if;
+
+  delete from public.chat_room_members
+  where room = p_room and lower(user_email) = lower(p_user_email);
+
+  return jsonb_build_object('ok', true);
+end;
+$$ language plpgsql security definer;
+
+notify pgrst, 'reload schema';
