@@ -213,7 +213,6 @@
     // 聊天室页面初始化
     let currentRoom = 'public';
     let chatPollTimer = null;
-    let privatePollTimer = null;
     let chatOnlineTimer = null;
     let chatHeartbeatTimer = null;
     let chatSendWatchdogTimer = null;
@@ -221,7 +220,7 @@
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    console.log('[chat] build v2026082118 (private list + unread fixes)');
+    console.log('[chat] build v2026082201 (private list + unread fixes)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
     let lastSeenTs = { public: 0, vip: 0, private: 0 };
@@ -1529,15 +1528,6 @@
         if (chatHistLoading) return;
         loadChatMessages(currentRoom);
       }, 5000);
-      if (privatePollTimer) clearInterval(privatePollTimer);
-      privatePollTimer = setInterval(() => {
-        if (!__user.loggedIn || currentRoom !== 'private' || chatHistLoading) return;
-        if (isBlysAdminUser() && !currentPrivateConversationId) {
-          loadPrivateConversations({ silent: true });
-          return;
-        }
-        if (currentPrivateConversationId) loadPrivateMessages();
-      }, 5000);
     }
 
     // ===== 新消息提醒 =====
@@ -2133,7 +2123,6 @@
     // 页面离开时清理轮询
     window.addEventListener('beforeunload', () => {
       if (chatPollTimer) clearInterval(chatPollTimer);
-      if (privatePollTimer) clearInterval(privatePollTimer);
       if (chatOnlineTimer) clearInterval(chatOnlineTimer);
       if (chatHeartbeatTimer) clearInterval(chatHeartbeatTimer);
       if (chatSendWatchdogTimer) clearInterval(chatSendWatchdogTimer);
