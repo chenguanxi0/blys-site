@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082417" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082418" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -216,8 +216,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082417"></script>
-  <script src="assets/mobile-app.js?v=2026082417"></script>
+  <script src="assets/app.js?v=2026082418"></script>
+  <script src="assets/mobile-app.js?v=2026082418"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -233,7 +233,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    console.log('[chat] build v2026082417 (vip renewal private auto-send)');
+    console.log('[chat] build v2026082418 (hard vip lock)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
     let lastSeenTs = { public: 0, vip: 0, private: 0 };
@@ -323,7 +323,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         updateChatInputState();
         // 登录、会员激活或退出后，自动切换到身份对应的聊天室
         const preferredRoom = getPreferredChatRoom();
-        if (currentRoom !== preferredRoom && (chatManualRoom || !shouldStayOnExpiredVipRoom())) {
+        if (currentRoom !== preferredRoom && !shouldStayOnExpiredVipRoom()) {
           switchChatRoom(preferredRoom, { skipUserRefresh: true });
         }
         refreshChatPushSubscription();
@@ -334,7 +334,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         updateChatAdminMode();
         updateChatInputState();
         const preferredRoom = getPreferredChatRoom();
-        if (currentRoom !== preferredRoom && (chatManualRoom || !shouldStayOnExpiredVipRoom())) switchChatRoom(preferredRoom, { skipUserRefresh: true });
+        if (currentRoom !== preferredRoom && !shouldStayOnExpiredVipRoom()) switchChatRoom(preferredRoom, { skipUserRefresh: true });
       }, 300);
       // Enter 发送（Shift+Enter换行）
       const input = document.getElementById('chatInput');
@@ -527,7 +527,11 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     async function switchChatRoom(room, options) {
       options = options || {};
       if (!chatManualRoom) chatManualRoom = getStoredChatRoom();
-      if (options.manual) rememberChatRoom(room);
+      const vipLockEl = document.getElementById('chatVipLock');
+      if (room === 'vip') rememberChatRoom('vip');
+      else if (options.manual) rememberChatRoom(room);
+      if (room === 'public' && !options.manual && shouldStayOnExpiredVipRoom()) return;
+      if (room === 'public' && !options.manual && vipLockEl && vipLockEl.style.display === 'flex') return;
       currentRoom = room;
       // 更新标签样式（用 getAttribute 避免个别浏览器 dataset 兼容性问题导致中断）
       document.querySelectorAll('.chat-tab').forEach(t => t.classList.toggle('active', t.getAttribute('data-room') === room));
@@ -1889,7 +1893,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082417', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082418', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -2158,7 +2162,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082417', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082418', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
