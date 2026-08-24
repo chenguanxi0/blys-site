@@ -848,11 +848,18 @@ function maybeShowVipRenewModal(){
 }
 function isAdmin(){ return __user.loggedIn && __user.isAdmin; }
 
+function updateAdminNavLinks(){
+  document.querySelectorAll(".admin-nav-link").forEach(link => {
+    link.hidden = !isAdmin();
+  });
+}
+
 function logoutUser(){
   localStorage.removeItem(USER_TOKEN_KEY);
   __user = { loggedIn: false };
   syncUserGlobals();
   renderUserStatus();
+  updateAdminNavLinks();
   lockVipZones();
   emitUserChange();
 }
@@ -880,6 +887,7 @@ document.addEventListener("click", (event)=>{
 
 // 渲染右上角用户状态
 function renderUserStatus(){
+  updateAdminNavLinks();
   const el = document.getElementById("vipStatus");
   if (!el) return;
   if (__user.loggedIn){
