@@ -233,7 +233,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    console.log('[chat] build v2026082416 (persistent room + app vip latest/history)');
+    console.log('[chat] build v2026082416 (app latest stable + touch history)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
     let lastSeenTs = { public: 0, vip: 0, private: 0 };
@@ -361,20 +361,20 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
           const nearBottom = isChatNearBottom(histBox, 100);
           chatUserReadingHistoryUntil = nearBottom ? 0 : Date.now() + 15000;
           const nativeApp = document.documentElement.classList.contains('blys-native-app');
-          const topThreshold = nativeApp ? 160 : 180;
-          if (histBox.scrollTop <= topThreshold && (!nativeApp || currentRoom === 'vip' || !isChatNearBottom(histBox, 320)) && chatHasMore[currentRoom] && !chatHistLoading && currentRoom !== 'private') {
+          if (nativeApp) return;
+          const topThreshold = 180;
+          if (histBox.scrollTop <= topThreshold && chatHasMore[currentRoom] && !chatHistLoading && currentRoom !== 'private') {
             loadOlderChatMessages();
           }
         });
         histBox.addEventListener('touchstart', () => {
-          histBox.__touchStartTop = histBox.scrollTop || 0;
+          histBox.__touchActive = true;
         }, { passive: true });
         const maybeLoadByTouch = () => {
+          if (!histBox.__touchActive) return;
           if (Date.now() < chatSuppressHistoryUntil) return;
           if (currentRoom === 'private' || chatHistLoading || !chatHasMore[currentRoom]) return;
-          const startTop = Number(histBox.__touchStartTop || 0);
-          const movedTowardTop = histBox.scrollTop < startTop - 8;
-          if (movedTowardTop && histBox.scrollTop <= 220 && (currentRoom === 'vip' || !isChatNearBottom(histBox, 320))) loadOlderChatMessages();
+          if (histBox.scrollTop <= 260) loadOlderChatMessages();
         };
         histBox.addEventListener('touchmove', maybeLoadByTouch, { passive: true });
         histBox.addEventListener('touchend', maybeLoadByTouch, { passive: true });
@@ -1272,6 +1272,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       const box = document.getElementById('chatMessages');
       if (!box || room === 'private') return;
       const nativeApp = document.documentElement.classList.contains('blys-native-app');
+      if (nativeApp) return;
       let tries = 0;
       const run = () => {
         if (room !== currentRoom || chatHistLoading || !chatHasMore[room]) return;
@@ -1412,7 +1413,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       ensureHistoryMoreButton(room);
       // 首屏始终滚到最新；图片是 base64 异步解码，会撑高内容，故多次兜底滚动
       const scrollToBottom = () => {
-        const target = Math.max(0, box.scrollHeight - box.clientHeight + 160);
+        const target = Math.max(0, box.scrollHeight + 240);
         box.scrollTop = target;
         try { box.scrollTo({ top: target, behavior: 'auto' }); } catch(e) {}
       };
