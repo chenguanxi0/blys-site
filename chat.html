@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082419" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082420" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -216,8 +216,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082419"></script>
-  <script src="assets/mobile-app.js?v=2026082419"></script>
+  <script src="assets/app.js?v=2026082420"></script>
+  <script src="assets/mobile-app.js?v=2026082420"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -233,7 +233,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    console.log('[chat] build v2026082419 (private unread badge + app history)');
+    console.log('[chat] build v2026082420 (stable latest chat order)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
     let lastSeenTs = { public: 0, vip: 0, private: 0 };
@@ -1039,8 +1039,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
           // 历史分页：把更早的消息插入列表顶部，并维持当前阅读位置
           prependChatHistory(list, room, rpcParams.p_limit);
         } else if (isFirst) {
-          // 首屏：最近 30 条为降序，翻转后整列表渲染，并滚到最新
-          renderChatMessages(list.slice().reverse(), room, true);
+          // 首屏：按时间升序渲染，底部一定是最新消息
+          renderChatMessages(sortMessagesAsc(list), room, true);
           if (list.length) {
             const minTs = list.reduce((mn, m) => Math.min(mn, m.created_at ? new Date(m.created_at).getTime() : 0), Infinity);
             chatOldestTs[room] = minTs;
@@ -1120,7 +1120,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         if (isHistory) {
           prependChatHistory(list, 'private');
         } else if (isFirst) {
-          renderChatMessages(list.slice().reverse(), 'private', true);
+          renderChatMessages(sortMessagesAsc(list), 'private', true);
           if (!list.length) box.innerHTML = '<div class="chat-empty">这里是你和' + esc(currentPrivateTitle || '白鹿原上') + '的私聊</div>';
           if (list.length) {
             const minTs = list.reduce((mn, m) => Math.min(mn, m.created_at ? new Date(m.created_at).getTime() : 0), Infinity);
@@ -1299,6 +1299,15 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       if (oldest) chatOldestTs[room] = oldest;
     }
 
+    function sortMessagesAsc(list) {
+      return (Array.isArray(list) ? list.slice() : []).sort((a, b) => {
+        const at = a && a.created_at ? new Date(a.created_at).getTime() : 0;
+        const bt = b && b.created_at ? new Date(b.created_at).getTime() : 0;
+        if (at !== bt) return at - bt;
+        return String(a && a.id || '').localeCompare(String(b && b.id || ''));
+      });
+    }
+
     function loadOlderChatMessages() {
       if (chatHistLoading) return;
       syncOldestTsFromDom(currentRoom);
@@ -1422,8 +1431,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       const box = document.getElementById('chatMessages');
       if (!box || !list || !list.length) { chatHasMore[room] = false; const oldBtn = box && box.querySelector('.chat-history-more'); if (oldBtn) oldBtn.textContent = '没有更早消息了'; return; }
       const existingIds = new Set(Array.from(box.querySelectorAll('.chat-msg')).map(node => node.getAttribute('data-message-id')).filter(Boolean));
-      // list 为降序（最新在前），转成升序以便按时间顺序插入顶部；边界重复的消息先去重。
-      const ordered = list.slice().reverse().filter(m => !m.id || !existingIds.has(String(m.id)));
+      // 明确按时间升序插入顶部，不依赖接口返回顺序；边界重复的消息先去重。
+      const ordered = sortMessagesAsc(list).filter(m => !m.id || !existingIds.has(String(m.id)));
       if (!ordered.length) {
         const oldest = list.reduce((mn, m) => Math.min(mn, m.created_at ? new Date(m.created_at).getTime() : Infinity), Infinity);
         if (Number.isFinite(oldest)) chatOldestTs[room] = Math.min(chatOldestTs[room] || Infinity, oldest);
@@ -1940,7 +1949,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082419', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082420', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -2209,7 +2218,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082419', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082420', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
