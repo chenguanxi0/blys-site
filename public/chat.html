@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082432" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082433" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -224,8 +224,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082432"></script>
-  <script src="assets/mobile-app.js?v=2026082432"></script>
+  <script src="assets/app.js?v=2026082433"></script>
+  <script src="assets/mobile-app.js?v=2026082433"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -241,7 +241,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    console.log('[chat] build v2026082432 (guard vip chat access)');
+    console.log('[chat] build v2026082433 (clearer chat images)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
     let lastSeenTs = { public: 0, vip: 0, private: 0 };
@@ -1970,18 +1970,22 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       if (!file.type.startsWith('image/')) { alert('请选择图片文件'); return Promise.resolve(); }
       if (file.size > 8 * 1024 * 1024) { alert('图片最大支持 8MB'); return Promise.resolve(); }
 
-      // 压缩：最大宽度 720，质量 0.7，控制 base64 在合理范围
-      return compressChatImage(file, 720, 0.7).then(({ base64, name }) => {
-        // base64 超过 600KB 时再次压缩
+      // 聊天气泡显示缩略图，但点击查看时用这份较高清图片。
+      // 之前 720/0.7 甚至回退到 480/0.6，手机点开会明显发糊。
+      return compressChatImage(file, 1600, 0.88).then(({ base64, name }) => {
+        // 体积太大时逐级降档，仍尽量保留可放大的清晰度
         const roughSize = Math.round(base64.length * 0.75);
-        if (roughSize > 600 * 1024) {
-          return compressChatImage(file, 480, 0.6);
+        if (roughSize > 1400 * 1024) {
+          return compressChatImage(file, 1200, 0.82);
+        }
+        if (roughSize > 950 * 1024) {
+          return compressChatImage(file, 1400, 0.84);
         }
         return { base64, name };
       }).then(({ base64, name }) => {
         const finalSize = Math.round(base64.length * 0.75);
-        if (finalSize > 1 * 1024 * 1024) {
-          throw new Error('图片压缩后仍超过 1MB，请换一张更小的图片');
+        if (finalSize > 1600 * 1024) {
+          throw new Error('图片压缩后仍超过 1.6MB，请换一张更小的图片');
         }
         pendingChatImage = base64;
         const thumb = document.getElementById('chatImgPreviewThumb');
@@ -2023,6 +2027,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
             canvas.width = width;
             canvas.height = height;
             const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
             ctx.drawImage(img, 0, 0, width, height);
             const base64 = canvas.toDataURL('image/jpeg', quality);
             resolve({ base64, name: file.name, width, height });
@@ -2055,7 +2061,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082432', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082433', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -2324,7 +2330,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082432', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082433', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
