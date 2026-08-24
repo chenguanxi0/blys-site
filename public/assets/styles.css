@@ -1205,12 +1205,11 @@ html.blys-native-app body.chat-body .chat-tabs-wrapper { top: calc(64px + var(--
 @keyframes chatUnreadPop { from { transform:translateY(-6px); opacity:0; } to { transform:translateY(0); opacity:1; } }
 
 .chat-announcement {
-  display:none; align-items:center; gap:10px; width:calc(100% - 20px); margin:10px 10px 0;
+  display:none; align-items:center; gap:10px; width:100%; margin:8px 0 0;
   padding:9px 12px; border:1px solid rgba(245,158,11,.28); border-radius:12px;
   background:linear-gradient(180deg,#fffaf0,#fff7ed); color:#7c2d12; text-align:left;
   box-shadow:0 4px 14px rgba(245,158,11,.10); cursor:pointer; font-family:inherit;
   flex-shrink:0; transition:all var(--transition);
-  position:sticky; top:0; z-index:12;
 }
 .chat-announcement:not([hidden]) { display:flex; }
 .chat-announcement:hover { border-color:rgba(245,158,11,.45); background:#fff7ed; }
