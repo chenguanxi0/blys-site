@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082430" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082431" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -144,15 +144,6 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         </button>
         <button class="chat-tab" data-room="private" onclick="switchChatRoom('private', { manual: true })">私聊<span class="chat-tab-badge" id="badge-private" hidden>0</span></button>
       </div>
-<div class="chat-members-admin" id="chatMembersAdmin" hidden></div>
-    </div>
-
-    <!-- 聊天窗口 -->
-    <div class="chat-box" id="chatBox">
-      <!-- 未读横幅：离开期间有新消息时显示 -->
-      <div class="chat-unread-banner" id="chatUnreadBanner" hidden onclick="dismissUnreadBanner()">
-        📬 你离开期间有 <b id="chatUnreadCount"></b> 条新消息，点此回到最新
-      </div>
       <div class="chat-announcement" id="chatAnnouncement" hidden onclick="toggleChatAnnouncement()">
         <span class="chat-announcement-icon">📌</span>
         <span class="chat-announcement-main">
@@ -161,6 +152,15 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         </span>
         <button class="chat-announcement-edit" id="chatAnnouncementEdit" type="button" hidden onclick="editChatAnnouncement(event)">编辑</button>
         <button class="chat-announcement-arrow" id="chatAnnouncementArrow" type="button" onclick="toggleChatAnnouncement(event)">展开</button>
+      </div>
+<div class="chat-members-admin" id="chatMembersAdmin" hidden></div>
+    </div>
+
+    <!-- 聊天窗口 -->
+    <div class="chat-box" id="chatBox">
+      <!-- 未读横幅：离开期间有新消息时显示 -->
+      <div class="chat-unread-banner" id="chatUnreadBanner" hidden onclick="dismissUnreadBanner()">
+        📬 你离开期间有 <b id="chatUnreadCount"></b> 条新消息，点此回到最新
       </div>
       <div class="chat-messages" id="chatMessages">
         <div class="chat-loading">加载消息中…</div>
@@ -225,8 +225,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082430"></script>
-  <script src="assets/mobile-app.js?v=2026082430"></script>
+  <script src="assets/app.js?v=2026082431"></script>
+  <script src="assets/mobile-app.js?v=2026082431"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -242,7 +242,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    console.log('[chat] build v2026082430 (editable vip announcement)');
+    console.log('[chat] build v2026082431 (fixed pinned vip announcement)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
     let lastSeenTs = { public: 0, vip: 0, private: 0 };
@@ -2055,7 +2055,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082430', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082431', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -2324,7 +2324,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082430', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082431', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
