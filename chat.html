@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082422" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082425" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -216,8 +216,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082422"></script>
-  <script src="assets/mobile-app.js?v=2026082422"></script>
+  <script src="assets/app.js?v=2026082425"></script>
+  <script src="assets/mobile-app.js?v=2026082425"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -233,7 +233,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    console.log('[chat] build v2026082422 (private list newest first)');
+    console.log('[chat] build v2026082425 (stop stale group scroll)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
     let lastSeenTs = { public: 0, vip: 0, private: 0 };
@@ -1493,6 +1493,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       ensureHistoryMoreButton(room);
       // 首屏始终滚到最新；图片是 base64 异步解码，会撑高内容，故多次兜底滚动
       const scrollToBottom = () => {
+        if (room && room !== currentRoom) return;
         const target = Math.max(0, box.scrollHeight + 240);
         box.scrollTop = target;
         try { box.scrollTo({ top: target, behavior: 'auto' }); } catch(e) {}
@@ -1963,7 +1964,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082422', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082425', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -2232,7 +2233,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082422', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082425', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
