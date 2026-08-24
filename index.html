@@ -8,21 +8,9 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082207" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082426" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23e23b3b'/%3E%3Cstop offset='100%25' stop-color='%23f87171'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='18' cy='18' r='17' fill='url(%23g)'/%3E%3Ctext x='18' y='23' text-anchor='middle' fill='white' font-family='-apple-system,PingFang SC,Microsoft YaHei,sans-serif' font-size='18' font-weight='700'%3E白%3C/text%3E%3C/svg%3E" />
   <link rel="apple-touch-icon" href="assets/favicon.png" />
-<script class="blys-home-restore">
-  (function(){
-    try {
-      var last = localStorage.getItem('blys_last_page') || '';
-      var ok = /^(chat|daily|diary)\.html$/.test(last);
-      var skip = new URLSearchParams(location.search).get('home') === '1';
-      if (ok && !skip && location.pathname.replace(/\/$/, '').endsWith('') && last === 'chat.html') {
-        location.replace(last);
-      }
-    } catch(e) {}
-  }());
-</script>
 </head>
 <body>
   <!-- 风险提示条 -->
@@ -108,17 +96,8 @@
       <h1>每天记录，<br/>让<span class="hl">复利</span>看得见</h1>
       <p class="hero-sub">一个股票博主的个人复盘站：每日收盘复盘 + 真实持仓日记。<br/>把每天的盘面翻译成人话，把每一笔交易留下痕迹。</p>
 
-      <!-- 首页第一屏入口 -->
+      <!-- 双入口选择卡（从下方挪上来） -->
       <div class="entry-grid" style="margin-top:24px">
-<a class="entry-card" href="chat.html">
-          <div class="entry-icon">💬</div>
-          <div class="entry-body">
-            <h3>聊天室</h3>
-            <p>和站友交流观点、分享经验。注册用户可发言，会员群聊为 VIP 专属，也可以在这里和站长私聊。</p>
-            <span class="entry-go">进入聊天室 →</span>
-          </div>
-        </a>
-      
         <a class="entry-card" href="daily.html">
           <div class="entry-icon">📊</div>
           <div class="entry-body">
@@ -135,7 +114,7 @@
             <span class="entry-go">看今天的操作 →</span>
           </div>
         </a>
-        </div>
+      </div>
 
       <div class="hero-social">
         <span class="muted" style="font-size:13px">同作者：</span>
@@ -300,8 +279,8 @@
 
   <script src="assets/data.js?v=20260819"></script>
   <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
-  <script src="assets/app.js?v=2026082224"></script>
-  <script src="assets/mobile-app.js?v=2026082207"></script>
+  <script src="assets/app.js?v=2026082426"></script>
+  <script src="assets/mobile-app.js?v=2026082426"></script>
 
   <!-- 登录 / 注册 / 找回密码 弹窗 -->
   <div class="modal-mask" id="authModal">
