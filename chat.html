@@ -8,10 +8,12 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082407" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082408" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
+html.blys-native-app body.chat-body .chat-scroll-head { display:none !important; }
+html.blys-native-app body.chat-body .chat-page { padding-top:0 !important; }
     html.blys-native-app body.chat-body .nav { padding-top: var(--app-safe-top); }
     html.blys-native-app body.chat-body .chat-tabs-wrapper { top: calc(64px + var(--app-safe-top)); }
     html.blys-native-app body.chat-body .chat-box { top: calc(124px + var(--app-safe-top)); height: calc(100dvh - 124px - var(--app-safe-top)); }
@@ -211,8 +213,8 @@
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082407"></script>
-  <script src="assets/mobile-app.js?v=2026082407"></script>
+  <script src="assets/app.js?v=2026082408"></script>
+  <script src="assets/mobile-app.js?v=2026082408"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -228,7 +230,7 @@
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    console.log('[chat] build v2026082407 (app touch history loader)');
+    console.log('[chat] build v2026082408 (app touch history loader)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
     let lastSeenTs = { public: 0, vip: 0, private: 0 };
@@ -357,6 +359,10 @@
     function bindChatHeadFade() {
       const head = document.getElementById('chatScrollHead');
       if (!head) return;
+      if (document.documentElement.classList.contains('blys-native-app')) {
+        head.style.display = 'none';
+        return;
+      }
       const onScroll = () => {
         const max = head.offsetHeight || 120;
         const y = window.scrollY || window.pageYOffset || 0;
@@ -1821,7 +1827,7 @@
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082407', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082408', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -2090,7 +2096,7 @@
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082407', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082408', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
