@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>每日复盘 · 白鹿原上-交易笔记</title>
+  <meta name="description" content="每天的市场复盘：把盘面翻译成人话。情绪温度计、最强板块、连板梯队、涨停分布，一眼看懂今天发生了什么。blys.site" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082014" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23e23b3b'/%3E%3Cstop offset='100%25' stop-color='%23f87171'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='18' cy='18' r='17' fill='url(%23g)'/%3E%3Ctext x='18' y='23' text-anchor='middle' fill='white' font-family='-apple-system,PingFang SC,Microsoft YaHei,sans-serif' font-size='18' font-weight='700'%3E白%3C/text%3E%3C/svg%3E" />
+  <link rel="apple-touch-icon" href="assets/favicon.png" />
+</head>
+<body>
+  <!-- 风险提示条 -->
+  <div class="risk-bar">
+    ⚠️ 风险提示：本站所有内容仅为个人复盘与经验分享，不构成任何投资建议，市场有风险，投资需谨慎。
+  </div>
+
+  <!-- 顶部导航 -->
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-logo">白</span>
+        <span class="brand-name">白鹿原上-交易笔记 <small>· blys.site</small></span>
+      </a>
+      <div class="nav-right">
+        <nav class="nav-links" id="navLinks">
+          <a href="chat.html">聊天室</a>
+          <a href="daily.html" class="active">每日复盘</a>
+          <a href="diary.html">实盘日记</a>
+          <a href="index.html#vip">心得分享</a>
+          <a href="index.html#vipzone">会员专享</a>
+          <div class="nav-dropdown">
+            <button class="nav-dropdown-trigger" type="button">关于<span class="nav-dropdown-chevron" aria-hidden="true"></span></button>
+            <div class="nav-dropdown-menu">
+              <a href="index.html#about">关于我</a>
+              <a href="notification-guide.html">弹窗教程</a>
+              <a href="changelog.html">更新日志</a>
+            </div>
+          </div>
+        </nav>
+        <div class="vip-status" id="vipStatus"></div>
+        <div class="online-counter" id="onlineCounter" title="当前在线访客">
+          <span class="online-dot"></span>
+          <span id="onlineNum">--</span> 在线
+        </div>
+        <button class="nav-toggle" id="navToggle" aria-label="菜单">☰</button>
+      </div>
+    </div>
+  </header>
+  <script>
+    (function () {
+      var toggle = document.getElementById('navToggle');
+      var links = document.getElementById('navLinks');
+      if (!toggle || !links) return;
+      var dropdowns = document.querySelectorAll('.nav-dropdown');
+      dropdowns.forEach(function (dropdown) {
+        var trigger = dropdown.querySelector('.nav-dropdown-trigger');
+        if (!trigger) return;
+        trigger.addEventListener('click', function (event) {
+          event.preventDefault(); event.stopPropagation();
+          dropdowns.forEach(function (item) { if (item !== dropdown) item.classList.remove('open'); });
+          dropdown.classList.toggle('open');
+        });
+      });
+      document.addEventListener('click', function () {
+        dropdowns.forEach(function (item) { item.classList.remove('open'); });
+      });
+      toggle.dataset.navReady = '1';
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.addEventListener('click', function (event) {
+        event.preventDefault();
+        var open = links.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', String(open));
+      });
+      links.addEventListener('click', function (event) {
+        if (event.target.closest('a')) {
+          links.classList.remove('open');
+          toggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+      document.addEventListener('click', function (event) {
+        if (!event.target.closest('.nav-inner')) {
+          links.classList.remove('open');
+          toggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }());
+  </script>
+
+  <!-- 每日复盘 -->
+  <section class="section" id="reviewRoot">
+    <div class="section-head review-head" style="text-align:center">
+      <h2 class="review-title" style="text-align:center">📊 每日复盘</h2>
+      <p class="review-subtitle" style="text-align:center">收盘后把今天的盘面翻译成人话。<br><small>今日报告将于 15:00 收盘后更新。</small></p>
+    </div>
+
+    <!-- 历史复盘日期选择 -->
+    <div id="historyBar" class="rpt-history-bar"></div>
+
+    <!-- 完整复盘报告 -->
+    <div id="fullReport" class="rpt-card"><div class="rpt-loading">报告加载中…</div></div>
+  </section>
+
+  <!-- 隐藏占位：保证 app.js 初始化(renderDiary)不报错 -->
+  <section id="diary" hidden><div id="diaryStats"></div><div id="diaryList"></div></section>
+
+  <!-- 页脚 -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <p>© <span id="year"></span> 白鹿原上-交易笔记 · <a href="https://blys.site" target="_blank" rel="noopener">blys.site</a></p>
+      <p class="muted">本站内容仅为个人复盘与经验分享，不构成任何投资建议。</p>
+    </div>
+  </footer>
+
+  <script src="assets/app.js?v=2026082014"></script>
+  <script src="assets/mobile-app.js?v=2026082021"></script>
+</body>
+</html>
