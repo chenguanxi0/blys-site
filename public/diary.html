@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>实盘日记 · 白鹿原上-交易笔记</title>
+  <meta name="description" content="每日实盘记录：持仓、仓位、当日盈亏与逻辑。blys.site" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082121" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23e23b3b'/%3E%3Cstop offset='100%25' stop-color='%23f87171'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='18' cy='18' r='17' fill='url(%23g)'/%3E%3Ctext x='18' y='23' text-anchor='middle' fill='white' font-family='-apple-system,PingFang SC,Microsoft YaHei,sans-serif' font-size='18' font-weight='700'%3E白%3C/text%3E%3C/svg%3E" />
+  <link rel="apple-touch-icon" href="assets/favicon.png" />
+</head>
+<body>
+  <!-- 风险提示条 -->
+  <div class="risk-bar">
+    ⚠️ 风险提示：本站所有内容仅为个人复盘与经验分享，不构成任何投资建议，市场有风险，投资需谨慎。
+  </div>
+
+  <!-- 顶部导航 -->
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-logo">白</span>
+        <span class="brand-name">白鹿原上-交易笔记 <small>· blys.site</small></span>
+      </a>
+      <div class="nav-right">
+        <nav class="nav-links" id="navLinks">
+          <a href="chat.html">聊天室</a>
+          <a href="daily.html">每日复盘</a>
+          <a href="diary.html" class="active">实盘日记</a>
+          <a href="index.html#vip">心得分享</a>
+          <a href="index.html#vipzone">会员专享</a>
+          <div class="nav-dropdown">
+            <button class="nav-dropdown-trigger" type="button">关于<span class="nav-dropdown-chevron" aria-hidden="true"></span></button>
+            <div class="nav-dropdown-menu">
+              <a href="index.html#about">关于我</a>
+              <a href="notification-guide.html">弹窗教程</a>
+              <a href="changelog.html">更新日志</a>
+            </div>
+          </div>
+        </nav>
+        <div class="vip-status" id="vipStatus"></div>
+        <div class="online-counter" id="onlineCounter" title="当前在线访客">
+          <span class="online-dot"></span>
+          <span id="onlineNum">--</span> 在线
+        </div>
+        <button class="nav-toggle" id="navToggle" aria-label="菜单">☰</button>
+      </div>
+    </div>
+  </header>
+  <script>
+    (function () {
+      var toggle = document.getElementById('navToggle');
+      var links = document.getElementById('navLinks');
+      if (!toggle || !links) return;
+      var dropdowns = document.querySelectorAll('.nav-dropdown');
+      dropdowns.forEach(function (dropdown) {
+        var trigger = dropdown.querySelector('.nav-dropdown-trigger');
+        if (!trigger) return;
+        trigger.addEventListener('click', function (event) {
+          event.preventDefault(); event.stopPropagation();
+          dropdowns.forEach(function (item) { if (item !== dropdown) item.classList.remove('open'); });
+          dropdown.classList.toggle('open');
+        });
+      });
+      document.addEventListener('click', function () {
+        dropdowns.forEach(function (item) { item.classList.remove('open'); });
+      });
+      toggle.dataset.navReady = '1';
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.addEventListener('click', function (event) {
+        event.preventDefault();
+        var open = links.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', String(open));
+      });
+      links.addEventListener('click', function (event) {
+        if (event.target.closest('a')) {
+          links.classList.remove('open');
+          toggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+      document.addEventListener('click', function (event) {
+        if (!event.target.closest('.nav-inner')) {
+          links.classList.remove('open');
+          toggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }());
+  </script>
+
+  <!-- 实盘日记 -->
+  <section class="section section-alt" id="diary">
+    <div class="section-head">
+      <h2>📒 实盘日记</h2>
+      <p>每天收盘后记录持仓、盈亏与交易逻辑。真实、透明、可追溯。</p>
+    </div>
+    <div class="stats" id="diaryStats"></div>
+    <div class="diary-list" id="diaryList"></div>
+  </section>
+
+  <footer class="footer">
+    <p>© <span id="year"></span> 白鹿原上-交易笔记 · blys.site ｜ 本内容为个人分享，不构成投资建议</p>
+  </footer>
+
+  <script src="assets/data.js?v=2026082117"></script>
+  <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+  <script src="assets/app.js?v=2026082123"></script>
+  <script src="assets/mobile-app.js?v=2026082021"></script>
+
+  <!-- 登录 / 注册 / 找回密码 弹窗 -->
+  <div class="modal-mask" id="authModal">
+    <div class="modal">
+      <button class="modal-close" onclick="closeAuthModal()" aria-label="关闭">×</button>
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-mode="login" onclick="switchAuth('login')">登录</button>
+        <button class="auth-tab" data-mode="register" onclick="switchAuth('register')">注册</button>
+      </div>
+
+      <div id="authLogin">
+        <div class="form-row">
+          <label>邮箱</label>
+          <input id="authEmail" type="email" placeholder="you@example.com" autocomplete="username" />
+        </div>
+        <div class="form-row">
+          <label>密码</label>
+          <input id="authPwd" type="password" placeholder="你的密码" autocomplete="current-password" />
+        </div>
+        <div id="authMsg" class="result"></div>
+        <button class="btn btn-primary btn-block" onclick="userLogin()">登录</button>
+        <p class="muted auth-switch">
+          还没有账号？<a onclick="switchAuth('register')">去注册</a>
+          ｜ <a onclick="switchAuth('forgot')">忘记密码</a>
+        </p>
+      </div>
+
+      <div id="authRegister" style="display:none">
+        <p class="muted">用邮箱注册，首次需邮箱验证码（演示模式页面直接显示）。</p>
+        <div class="form-row">
+          <label>邮箱</label>
+          <input id="regEmail" type="email" placeholder="you@example.com" autocomplete="username" />
+        </div>
+        <div class="form-row">
+          <label>密码</label>
+          <input id="regPwd" type="password" placeholder="至少 6 位" autocomplete="new-password" />
+        </div>
+        <div class="form-row">
+          <label>昵称</label>
+          <input id="regNick" type="text" placeholder="怎么称呼你（选填）" />
+        </div>
+        <div class="form-row" id="regCodeRow" style="display:none">
+          <label>验证码</label>
+          <input id="regCode" type="text" placeholder="6 位验证码" />
+        </div>
+        <div id="regMsg" class="result"></div>
+        <button class="btn btn-primary btn-block" id="regSendBtn" onclick="regSend()">获取验证码</button>
+        <button class="btn btn-primary btn-block" id="regSubmitBtn" style="display:none" onclick="regSubmit()">验证并注册</button>
+        <p class="muted auth-switch"><a onclick="switchAuth('login')">已有账号？去登录</a></p>
+      </div>
+
+      <div id="authForgot" style="display:none">
+        <p class="muted">输入注册邮箱，获取验证码后重置密码。</p>
+        <div class="form-row">
+          <label>邮箱</label>
+          <input id="fgEmail" type="email" placeholder="you@example.com" autocomplete="username" />
+        </div>
+        <div class="form-row" id="fgCodeRow" style="display:none">
+          <label>验证码</label>
+          <input id="fgCode" type="text" placeholder="6 位验证码" />
+        </div>
+        <div class="form-row" id="fgPwdRow" style="display:none">
+          <label>新密码</label>
+          <input id="fgPwd" type="password" placeholder="至少 6 位" autocomplete="new-password" />
+        </div>
+        <div id="fgMsg" class="result"></div>
+        <button class="btn btn-primary btn-block" id="fgSendBtn" onclick="fgSend()">获取验证码</button>
+        <button class="btn btn-primary btn-block" id="fgSubmitBtn" style="display:none" onclick="fgSubmit()">重置密码</button>
+        <p class="muted auth-switch"><a onclick="switchAuth('login')">返回登录</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 激活码兑换弹窗（已登录用户） -->
+  <div class="modal-mask" id="redeemModal">
+    <div class="modal">
+      <button class="modal-close" onclick="closeRedeemModal()" aria-label="关闭">×</button>
+      <h3>兑换会员激活码</h3>
+      <p class="muted">输入博主发放的激活码，会员有效期将绑定到你的邮箱账户。</p>
+      <div class="form-row">
+        <label>激活码</label>
+        <input id="redeemCode" type="text" placeholder="请输入你收到的专属激活码" style="text-transform:uppercase" autocomplete="off" />
+      </div>
+      <div id="redeemMsg" class="result"></div>
+      <button class="btn btn-primary btn-block" onclick="doRedeem()">兑换</button>
+      <p class="muted" style="margin-top:12px;text-align:center">没有激活码？关注小红书 <b>@白鹿原上</b> 获取。</p>
+    </div>
+  </div>
+</body>
+</html>
