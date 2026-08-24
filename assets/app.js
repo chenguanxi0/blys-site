@@ -2009,6 +2009,7 @@ function blysEnhanceHomeEntry(){
     var isHome = name === '' || name === 'index.html';
     if (!isHome) { blysRememberCurrentPage(); return; }
     var params = new URLSearchParams(location.search);
+    if (params.get('home') === '1') { localStorage.removeItem('blys_last_page'); }
     var last = localStorage.getItem('blys_last_page') || '';
     if (last === 'chat.html' && params.get('home') !== '1') {
       location.replace('chat.html');
