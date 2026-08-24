@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082413" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082414" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -216,8 +216,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082413"></script>
-  <script src="assets/mobile-app.js?v=2026082413"></script>
+  <script src="assets/app.js?v=2026082414"></script>
+  <script src="assets/mobile-app.js?v=2026082414"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -233,7 +233,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    console.log('[chat] build v2026082413 (app touch history loader)');
+    console.log('[chat] build v2026082414 (app touch history loader)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
     let lastSeenTs = { public: 0, vip: 0, private: 0 };
@@ -924,10 +924,10 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         const shouldStickToBottom = isFirst || (!isHistory && isChatNearBottom(box, 100) && Date.now() > chatUserReadingHistoryUntil);
         const rpcParams = { p_room: room };
         if (isHistory) {
-          rpcParams.p_limit = room === 'vip' ? 3 : 8;
+          rpcParams.p_limit = room === 'vip' ? 8 : 12;
           rpcParams.p_before = chatTsToIso(chatOldestTs[room]);
         } else if (isFirst) {
-          rpcParams.p_limit = room === 'vip' ? 6 : (isNativeApp ? 10 : 20);
+          rpcParams.p_limit = room === 'vip' ? (isNativeApp ? 8 : 14) : (isNativeApp ? 10 : 20);
         } else {
           rpcParams.p_limit = room === 'vip' ? 20 : (isNativeApp ? 30 : 80);
           rpcParams.p_after = chatTsToIso(lastSeenTs[room]);
@@ -1235,6 +1235,25 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     function isChatNearBottom(box, distance) {
       if (!box) return true;
       return box.scrollTop + box.clientHeight >= box.scrollHeight - (distance || 80);
+    }
+
+    function scheduleFillChatViewport(room) {
+      const box = document.getElementById('chatMessages');
+      if (!box || room === 'private') return;
+      const nativeApp = document.documentElement.classList.contains('blys-native-app');
+      let tries = 0;
+      const run = () => {
+        if (room !== currentRoom || chatHistLoading || !chatHasMore[room]) return;
+        const tooShort = box.scrollHeight <= box.clientHeight + (nativeApp ? 24 : 160);
+        if (!tooShort || tries >= (nativeApp ? 1 : 4)) return;
+        tries += 1;
+        chatHistLoading = true;
+        loadChatMessages(room, { history: true }).finally(() => {
+          setTimeout(() => { chatHistLoading = false; run(); }, nativeApp ? 500 : 120);
+        });
+      };
+      setTimeout(run, nativeApp ? 900 : 120);
+      if (!nativeApp) setTimeout(run, 500);
     }
 
     function getChatScrollAnchor(box) {
@@ -1824,7 +1843,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082413', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082414', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -2093,7 +2112,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082413', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082414', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
