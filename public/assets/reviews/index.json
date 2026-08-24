@@ -88,5 +88,11 @@
     "weekday": "星期五",
     "title": "2026-08-21 星期五",
     "file": "assets/reviews/2026-08-21.html"
+  },
+  {
+    "date": "2026-08-24",
+    "weekday": "星期一",
+    "title": "2026-08-24 星期一",
+    "file": "assets/reviews/2026-08-24.html"
   }
 ]
