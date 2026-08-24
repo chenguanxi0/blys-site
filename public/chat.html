@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082433" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082434" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -224,8 +224,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082433"></script>
-  <script src="assets/mobile-app.js?v=2026082433"></script>
+  <script src="assets/app.js?v=2026082434"></script>
+  <script src="assets/mobile-app.js?v=2026082434"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -241,7 +241,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    console.log('[chat] build v2026082433 (clearer chat images)');
+    console.log('[chat] build v2026082434 (fix pc notification button)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
     let lastSeenTs = { public: 0, vip: 0, private: 0 };
@@ -415,6 +415,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         const ratio = Math.min(1, Math.max(0, y / Math.max(1, max * 0.7)));
         head.style.opacity = String(1 - ratio);
         head.style.transform = `translateY(-${ratio * 12}px)`;
+        head.style.pointerEvents = ratio > 0.85 ? 'none' : 'auto';
       };
       window.addEventListener('scroll', onScroll, { passive: true });
       onScroll();
@@ -2061,7 +2062,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082433', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082434', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -2330,7 +2331,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082433', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082434', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
@@ -2482,16 +2483,16 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     }
 
     async function toggleChatNotification() {
+      const btn = document.getElementById('chatNotifBtn');
+      const withTimeout = (promise, ms, label) => Promise.race([
+        promise,
+        new Promise((_, rej) => setTimeout(() => rej(new Error(label + ' timeout')), ms))
+      ]);
       if (isNativeNotificationApp()) {
         if (!__user.loggedIn) {
           openAuthModal();
           return;
         }
-        const btn = document.getElementById('chatNotifBtn');
-        const withTimeout = (promise, ms, label) => Promise.race([
-          promise,
-          new Promise((_, rej) => setTimeout(() => rej(new Error(label + ' timeout')), ms))
-        ]);
         try {
           if (notifEnabled) {
             if (btn) {
@@ -2525,13 +2526,18 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       }
       if (notifEnabled || inAppNotifOn) {
         // 关闭提醒
+        if (btn) {
+          btn.textContent = '正在关闭...';
+          btn.disabled = true;
+        }
         inAppNotifOn = false;
         localStorage.setItem('blys_notif_inapp', 'off');
         notifEnabled = false;
         localStorage.setItem('blys_notif', 'off');
         setNotifDiag('');
-        unsubscribeChatPush();
+        try { await withTimeout(unsubscribeChatPush(), 8000, 'unsubscribe push'); } catch(e) { console.warn('[chat] unsubscribe timeout', e); }
         updateNotifBtn();
+        if (btn) btn.disabled = false;
         return;
       }
       if (!__user.loggedIn) {
@@ -2542,8 +2548,13 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       // 开启：优先尝试系统 Web Push，失败再退回页内提醒
       inAppNotifOn = true;
       localStorage.setItem('blys_notif_inapp', 'on');
+      if (btn) {
+        btn.textContent = '正在开启...';
+        btn.disabled = true;
+      }
+      setNotifDiag('正在开启浏览器提醒...');
       try {
-        await subscribeChatPush();
+        await withTimeout(subscribeChatPush(), 12000, 'subscribe push');
         notifEnabled = true;
         localStorage.setItem('blys_notif', 'on');
         setNotifDiag('系统弹窗提醒已开启');
@@ -2553,6 +2564,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         localStorage.setItem('blys_notif', 'off');
         setNotifDiag(getNotifErrorText(e));
       }
+      if (btn) btn.disabled = false;
       updateNotifBtn();
       unreadCounts = { public: 0, vip: 0, private: 0 };
       updateUnreadBadges();
