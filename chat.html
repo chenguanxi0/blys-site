@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082429" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082430" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -153,14 +153,15 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       <div class="chat-unread-banner" id="chatUnreadBanner" hidden onclick="dismissUnreadBanner()">
         📬 你离开期间有 <b id="chatUnreadCount"></b> 条新消息，点此回到最新
       </div>
-      <button class="chat-announcement" id="chatAnnouncement" type="button" hidden onclick="toggleChatAnnouncement()">
+      <div class="chat-announcement" id="chatAnnouncement" hidden onclick="toggleChatAnnouncement()">
         <span class="chat-announcement-icon">📌</span>
         <span class="chat-announcement-main">
           <b>群公告</b>
           <em id="chatAnnouncementText">会员群文明交流，禁止荐股与广告；重要通知会在这里置顶。</em>
         </span>
-        <span class="chat-announcement-arrow" id="chatAnnouncementArrow">展开</span>
-      </button>
+        <button class="chat-announcement-edit" id="chatAnnouncementEdit" type="button" hidden onclick="editChatAnnouncement(event)">编辑</button>
+        <button class="chat-announcement-arrow" id="chatAnnouncementArrow" type="button" onclick="toggleChatAnnouncement(event)">展开</button>
+      </div>
       <div class="chat-messages" id="chatMessages">
         <div class="chat-loading">加载消息中…</div>
       </div>
@@ -224,8 +225,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082429"></script>
-  <script src="assets/mobile-app.js?v=2026082429"></script>
+  <script src="assets/app.js?v=2026082430"></script>
+  <script src="assets/mobile-app.js?v=2026082430"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -241,7 +242,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    console.log('[chat] build v2026082429 (vip announcement)');
+    console.log('[chat] build v2026082430 (editable vip announcement)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
     let lastSeenTs = { public: 0, vip: 0, private: 0 };
@@ -271,6 +272,9 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     let inAppNotifOn = false;
     let notifDiagMsg = '';
     let unreadCounts = { public: 0, vip: 0, private: 0 };
+    const DEFAULT_VIP_ANNOUNCEMENT = '会员群文明交流，禁止荐股与广告；重要通知会在这里置顶。';
+    let vipAnnouncementText = DEFAULT_VIP_ANNOUNCEMENT;
+    let vipAnnouncementLoading = false;
     const CHAT_LAST_ROOM_KEY = 'blys_chat_last_room';
     let chatManualRoom = null;
     function normalizeChatRoom(room) {
@@ -638,16 +642,66 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       const show = room === 'vip' && __user && __user.loggedIn && __user.isVip;
       el.hidden = !show;
       if (!show) el.classList.remove('expanded');
+      renderChatAnnouncement();
+      if (show) setTimeout(() => loadChatAnnouncement('vip'), 80);
+    }
+
+    function renderChatAnnouncement() {
+      const textEl = document.getElementById('chatAnnouncementText');
+      if (textEl) textEl.textContent = vipAnnouncementText || DEFAULT_VIP_ANNOUNCEMENT;
+      const edit = document.getElementById('chatAnnouncementEdit');
+      if (edit) edit.hidden = !isBlysAdminUser();
       const arrow = document.getElementById('chatAnnouncementArrow');
+      const el = document.getElementById('chatAnnouncement');
       if (arrow) arrow.textContent = el.classList.contains('expanded') ? '收起' : '展开';
     }
 
-    function toggleChatAnnouncement() {
+    async function loadChatAnnouncement(room) {
+      if (room !== 'vip' || vipAnnouncementLoading) return;
+      vipAnnouncementLoading = true;
+      try {
+        const d = await sbRpc('get_chat_announcement', { p_room: 'vip' }, { timeoutMs: 5000 });
+        if (d && d.ok && typeof d.content === 'string' && d.content.trim()) {
+          vipAnnouncementText = d.content.trim();
+          renderChatAnnouncement();
+        }
+      } catch(e) {
+        console.warn('[chat] load announcement failed', e);
+      } finally {
+        vipAnnouncementLoading = false;
+      }
+    }
+
+    async function editChatAnnouncement(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      if (!isBlysAdminUser()) return;
+      const next = prompt('编辑会员群公告', vipAnnouncementText || DEFAULT_VIP_ANNOUNCEMENT);
+      if (next == null) return;
+      const content = String(next).trim();
+      if (!content) { alert('公告内容不能为空'); return; }
+      try {
+        const d = await sbRpc('set_chat_announcement', { p_token: __user.token, p_room: 'vip', p_content: content }, { timeoutMs: 8000 });
+        if (!d || !d.ok) { alert((d && d.msg) || '保存失败'); return; }
+        vipAnnouncementText = content;
+        renderChatAnnouncement();
+        alert('公告已保存');
+      } catch(e) {
+        alert('保存失败：' + (e && e.message ? e.message : '网络异常'));
+      }
+    }
+
+    function toggleChatAnnouncement(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
       const el = document.getElementById('chatAnnouncement');
       if (!el || el.hidden) return;
       el.classList.toggle('expanded');
-      const arrow = document.getElementById('chatAnnouncementArrow');
-      if (arrow) arrow.textContent = el.classList.contains('expanded') ? '收起' : '展开';
+      renderChatAnnouncement();
     }
 
     function isBlysAdminUser(user) {
@@ -2001,7 +2055,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082429', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082430', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -2270,7 +2324,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082429', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082430', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
