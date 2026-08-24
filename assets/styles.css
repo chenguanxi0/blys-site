@@ -1204,6 +1204,30 @@ html.blys-native-app body.chat-body .chat-tabs-wrapper { top: calc(64px + var(--
 .chat-unread-banner b { font-size:15px; }
 @keyframes chatUnreadPop { from { transform:translateY(-6px); opacity:0; } to { transform:translateY(0); opacity:1; } }
 
+.chat-announcement {
+  display:none; align-items:center; gap:10px; width:calc(100% - 20px); margin:10px 10px 0;
+  padding:9px 12px; border:1px solid rgba(245,158,11,.28); border-radius:12px;
+  background:linear-gradient(180deg,#fffaf0,#fff7ed); color:#7c2d12; text-align:left;
+  box-shadow:0 4px 14px rgba(245,158,11,.10); cursor:pointer; font-family:inherit;
+  flex-shrink:0; transition:all var(--transition);
+}
+.chat-announcement:not([hidden]) { display:flex; }
+.chat-announcement:hover { border-color:rgba(245,158,11,.45); background:#fff7ed; }
+.chat-announcement-icon {
+  width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  background:#ffedd5; flex-shrink:0; font-size:15px;
+}
+.chat-announcement-main { min-width:0; flex:1; display:flex; align-items:center; gap:8px; }
+.chat-announcement-main b { flex-shrink:0; font-size:13px; color:#ea580c; }
+.chat-announcement-main em {
+  min-width:0; color:#7c2d12; font-size:13px; line-height:1.45; font-style:normal;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.chat-announcement-arrow { flex-shrink:0; color:#c2410c; font-size:12px; font-weight:700; }
+.chat-announcement.expanded { align-items:flex-start; }
+.chat-announcement.expanded .chat-announcement-main { align-items:flex-start; flex-direction:column; gap:3px; }
+.chat-announcement.expanded .chat-announcement-main em { white-space:normal; overflow:visible; }
+
 .chat-box { background:#fff; border:1px solid var(--line); border-radius:14px; overflow:hidden; box-shadow:var(--shadow-sm); display:flex; flex-direction:column; position:sticky; top:128px; height:calc(100dvh - 128px); min-height:360px; }
 html.blys-native-app body.chat-body .chat-box { top: calc(128px + var(--app-safe-top)); height: calc(100dvh - 128px - var(--app-safe-top)); }
 html.blys-native-app body.chat-body .chat-input-area { position:sticky; bottom:0; }
