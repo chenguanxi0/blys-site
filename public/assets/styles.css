@@ -1210,6 +1210,7 @@ html.blys-native-app body.chat-body .chat-tabs-wrapper { top: calc(64px + var(--
   background:linear-gradient(180deg,#fffaf0,#fff7ed); color:#7c2d12; text-align:left;
   box-shadow:0 4px 14px rgba(245,158,11,.10); cursor:pointer; font-family:inherit;
   flex-shrink:0; transition:all var(--transition);
+  position:sticky; top:0; z-index:12;
 }
 .chat-announcement:not([hidden]) { display:flex; }
 .chat-announcement:hover { border-color:rgba(245,158,11,.45); background:#fff7ed; }
@@ -1223,7 +1224,13 @@ html.blys-native-app body.chat-body .chat-tabs-wrapper { top: calc(64px + var(--
   min-width:0; color:#7c2d12; font-size:13px; line-height:1.45; font-style:normal;
   overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
-.chat-announcement-arrow { flex-shrink:0; color:#c2410c; font-size:12px; font-weight:700; }
+.chat-announcement-edit,
+.chat-announcement-arrow {
+  flex-shrink:0; border:0; background:#ffedd5; color:#c2410c; border-radius:999px;
+  padding:5px 8px; font-size:12px; font-weight:700; cursor:pointer; font-family:inherit;
+}
+.chat-announcement-edit:hover,
+.chat-announcement-arrow:hover { background:#fed7aa; }
 .chat-announcement.expanded { align-items:flex-start; }
 .chat-announcement.expanded .chat-announcement-main { align-items:flex-start; flex-direction:column; gap:3px; }
 .chat-announcement.expanded .chat-announcement-main em { white-space:normal; overflow:visible; }
