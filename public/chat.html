@@ -1,0 +1,2437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>聊天室 · 白鹿原上-交易笔记</title>
+  <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082414" />
+  <style>
+    html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
+    html.blys-native-app body.chat-body .risk-bar { display:none; }
+html.blys-native-app body.chat-body .chat-scroll-head { display:none !important; }
+html.blys-native-app body.chat-body .chat-page { padding-top:0 !important; }
+html.blys-native-app body.chat-body .chat-input-area { position:fixed !important; left:0; right:0; bottom:0; z-index:999; display:block; flex-shrink:0; box-shadow:0 -4px 16px rgba(15,23,42,.08); }
+html.blys-native-app body.chat-body .chat-box { padding-bottom:0; }
+html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
+    html.blys-native-app body.chat-body .nav { padding-top: var(--app-safe-top); }
+    html.blys-native-app body.chat-body .chat-tabs-wrapper { top: calc(64px + var(--app-safe-top)); }
+    html.blys-native-app body.chat-body .chat-box { top: calc(124px + var(--app-safe-top)); height: calc(100dvh - 124px - var(--app-safe-top)); }
+    .chat-load-failed { padding:28px 14px; }
+    .chat-empty-actions { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:12px; }
+    .chat-empty-actions .btn-small { min-height:34px; padding:7px 12px; border-radius:10px; font-size:13px; }
+    @media (max-width:560px) {
+      html.blys-native-app body.chat-body .chat-tabs-wrapper { top: calc(64px + var(--app-safe-top)); }
+      html.blys-native-app body.chat-body .chat-box { top: calc(116px + var(--app-safe-top)); height: calc(100dvh - 116px - var(--app-safe-top)); padding-bottom:0; }
+      html.blys-native-app body.chat-body .brand-logo { width:36px; height:36px; font-size:17px; }
+      html.blys-native-app body.chat-body .brand-name { max-width:138px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      html.blys-native-app body.chat-body .vip-status { max-width:108px; }
+      html.blys-native-app body.chat-body .user-menu-trigger { max-width:96px; }
+    }
+  </style>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23e23b3b'/%3E%3Cstop offset='100%25' stop-color='%23f87171'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='18' cy='18' r='17' fill='url(%23g)'/%3E%3Ctext x='18' y='23' text-anchor='middle' fill='white' font-family='-apple-system,PingFang SC,Microsoft YaHei,sans-serif' font-size='18' font-weight='700'%3E白%3C/text%3E%3C/svg%3E" />
+</head>
+<body class="chat-body">
+  <!-- 风险提示条 -->
+  <div class="risk-bar">
+    ⚠️ 风险提示：本站所有内容仅为个人复盘与经验分享，不构成任何投资建议，市场有风险，投资需谨慎。
+  </div>
+
+  <!-- 顶部导航 -->
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html?home=1" onclick="try{localStorage.removeItem('blys_last_page')}catch(e){}">
+        <span class="brand-logo">白</span>
+        <span class="brand-name">白鹿原上-交易笔记 <small>· blys.site</small></span>
+      </a>
+      <div class="nav-right">
+        <nav class="nav-links" id="navLinks">
+          <a href="chat.html" class="active">聊天室</a>
+          <a href="daily.html">每日复盘</a>
+          <a href="diary.html">实盘日记</a>
+          <a href="index.html#vip">心得分享</a>
+          <a href="index.html#vipzone">会员专享</a>
+          <div class="nav-dropdown">
+            <button class="nav-dropdown-trigger" type="button">关于<span class="nav-dropdown-chevron" aria-hidden="true"></span></button>
+            <div class="nav-dropdown-menu">
+              <a href="index.html#about">关于我</a>
+              <a href="notification-guide.html">弹窗教程</a>
+              <a href="changelog.html">更新日志</a>
+            </div>
+          </div>
+        </nav>
+        <div class="vip-status" id="vipStatus"></div>
+        <div class="online-counter" id="onlineCounter" title="当前在线访客">
+          <span class="online-dot"></span>
+          <span id="onlineNum">--</span> 在线
+        </div>
+        <button class="nav-toggle" id="navToggle" aria-label="菜单">☰</button>
+      </div>
+    </div>
+  </header>
+  <script>
+    (function () {
+      var toggle = document.getElementById('navToggle');
+      var links = document.getElementById('navLinks');
+      if (!toggle || !links) return;
+      var dropdowns = document.querySelectorAll('.nav-dropdown');
+      dropdowns.forEach(function (dropdown) {
+        var trigger = dropdown.querySelector('.nav-dropdown-trigger');
+        if (!trigger) return;
+        trigger.addEventListener('click', function (event) {
+          event.preventDefault(); event.stopPropagation();
+          dropdowns.forEach(function (item) { if (item !== dropdown) item.classList.remove('open'); });
+          dropdown.classList.toggle('open');
+        });
+      });
+      document.addEventListener('click', function () {
+        dropdowns.forEach(function (item) { item.classList.remove('open'); });
+      });
+      toggle.dataset.navReady = '1';
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.addEventListener('click', function (event) {
+        event.preventDefault();
+        var open = links.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', String(open));
+      });
+      links.addEventListener('click', function (event) {
+        if (event.target.closest('a')) {
+          links.classList.remove('open');
+          toggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+      document.addEventListener('click', function (event) {
+        if (!event.target.closest('.nav-inner')) {
+          links.classList.remove('open');
+          toggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }());
+  </script>
+
+  <main class="chat-page">
+    <!-- 可滚动的头部：向下滚动时淡出 -->
+    <div class="chat-scroll-head" id="chatScrollHead">
+      <div class="chat-head">
+        <div class="section-head" style="margin-bottom:0;">
+          <h1>💬 聊天室</h1>
+          <p>和站友们交流观点、分享经验。<em>文明发言，禁止荐股与广告。</em></p>
+        </div>
+        <div class="chat-head-actions">
+          <div class="chat-online" id="chatOnline" title="当前房间在线人数">
+            <span class="chat-online-dot"></span>
+            <span id="chatOnlineNum">--</span> 人在线
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+            <button class="chat-notif-btn" id="chatNotifBtn" type="button" onclick="toggleChatNotification()" title="新消息弹窗提醒">🔕 开启提醒</button>
+            <div id="chatNotifDiag" style="max-width:280px; font-size:12px; line-height:1.4; color:#7a8699; text-align:right;">诊断载入中...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 频道切换：吸顶固定 -->
+    <div class="chat-tabs-wrapper">
+      <div class="chat-tabs">
+        <button class="chat-tab active" data-room="public" onclick="switchChatRoom('public', { manual: true })">普通群聊<span class="chat-tab-badge" id="badge-public" hidden>0</span></button>
+        <button class="chat-tab" data-room="vip" onclick="switchChatRoom('vip', { manual: true })">
+          <span>会员群聊<span class="chat-tab-badge" id="badge-vip" hidden>0</span></span>
+          <span class="chat-tab-admin-stats" id="vipTabMemberStats" hidden onclick="toggleChatMembersAdmin(event)">总人数 -- · 在线 --</span>
+        </button>
+        <button class="chat-tab" data-room="private" onclick="switchChatRoom('private', { manual: true })">私聊<span class="chat-tab-badge" id="badge-private" hidden>0</span></button>
+      </div>
+<div class="chat-members-admin" id="chatMembersAdmin" hidden></div>
+    </div>
+
+    <!-- 聊天窗口 -->
+    <div class="chat-box" id="chatBox">
+      <!-- 未读横幅：离开期间有新消息时显示 -->
+      <div class="chat-unread-banner" id="chatUnreadBanner" hidden onclick="dismissUnreadBanner()">
+        📬 你离开期间有 <b id="chatUnreadCount"></b> 条新消息，点此回到最新
+      </div>
+      <div class="chat-messages" id="chatMessages">
+        <div class="chat-loading">加载消息中…</div>
+      </div>
+
+      <!-- 输入区 -->
+      <div class="chat-input-area" id="chatInputArea">
+        <div class="chat-login-mask" id="chatLoginMask">
+          <p id="chatLoginText">正在检查登录状态…</p>
+          <button class="btn btn-primary" id="chatLoginBtn" onclick="openAuthModal()" style="display:none;">注册 / 登录</button>
+        </div>
+        <div class="chat-input-wrap" id="chatInputWrap" style="display:none;">
+          <div class="chat-input-col" style="position:relative;">
+            <div class="chat-img-preview" id="chatImgPreview">
+              <img id="chatImgPreviewThumb" src="" alt="preview" />
+              <span id="chatImgPreviewName">图片</span>
+              <button class="chat-tool-btn" type="button" onclick="clearChatImage()" title="取消">✕</button>
+            </div>
+            <div class="chat-quote-preview" id="chatQuotePreview" hidden>
+              <div class="chat-quote-preview-main">
+                <span class="chat-quote-preview-label">引用 <b id="chatQuotePreviewName"></b></span>
+                <span class="chat-quote-preview-text" id="chatQuotePreviewText"></span>
+              </div>
+              <button class="chat-tool-btn" type="button" onclick="clearChatQuote()" title="取消引用" aria-label="取消引用">✕</button>
+            </div>
+            <div class="chat-compose-row">
+              <div class="chat-input-tools">
+                <button class="chat-tool-btn" type="button" onclick="toggleEmojiPanel(event)" title="表情">😊</button>
+                <button class="chat-tool-btn" type="button" onclick="document.getElementById('chatImgInput').click()" title="发送图片" aria-label="发送图片"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M3 17l5-5 4 4 3-3 6 6"/></svg></button>
+                <input type="file" id="chatImgInput" accept="image/*" style="display:none;" onchange="onChatImageSelected(this)" />
+              </div>
+              <textarea id="chatInput" class="chat-input" placeholder="文明发言，禁止荐股与广告…" maxlength="500" autocomplete="off" rows="1"></textarea>
+            </div>
+          </div>
+          <button class="btn btn-primary chat-send-btn" id="chatSendBtn" onclick="sendChatMessage()">发送</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIP 未解锁提示 -->
+    <div class="chat-vip-lock" id="chatVipLock" style="display:none;">
+      <div class="chat-vip-lock-inner">
+        <div class="vip-lock">🔒</div>
+        <h3>会员专属群聊</h3>
+        <p>只有激活会员才能进入会员群聊频道</p>
+        <button class="btn btn-primary" onclick="openRedeemModal()">激活会员</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- 表情面板：放到 body 层级，避免被 chat-box overflow:hidden 裁切 -->
+  <div class="chat-emoji-panel" id="chatEmojiPanel" onclick="insertEmoji(event)"></div>
+
+  <!-- 图片查看器（点击聊天图片放大） -->
+  <div id="chatImageViewer" class="chat-img-viewer" hidden role="dialog" aria-modal="true" aria-label="图片查看">
+    <button class="chat-img-viewer-close" id="chatImageViewerClose" aria-label="关闭">×</button>
+    <img class="chat-img-viewer-img" id="chatImageViewerImg" alt="" />
+    <div class="chat-img-viewer-tip" id="chatImageViewerTip">点击空白处或按 Esc 关闭 · 双指捏合/双击图片可放大</div>
+  </div>
+
+  <footer class="footer" style="margin-top:0;">
+    <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
+  </footer>
+
+  <script src="assets/app.js?v=2026082414"></script>
+  <script src="assets/mobile-app.js?v=2026082414"></script>
+  <script>
+    // 聊天室页面初始化
+    let currentRoom = 'public';
+    let chatPollTimer = null;
+    let chatOnlineTimer = null;
+    let chatHeartbeatTimer = null;
+    let chatSendWatchdogTimer = null;
+    let chatMembersTimer = null;
+    let chatMembersPanelOpen = false;
+    let chatMembersStatsCache = null;
+    let chatMembersStatsTimer = null;
+    let chatSuppressHistoryUntil = 0;
+    let pendingChatImage = null;
+    let pendingChatQuote = null;
+    let chatMessageCache = new Map();
+    console.log('[chat] build v2026082414 (app touch history loader)');
+    let chatLoadSeq = 0;
+    let vipRefreshing = false;
+    let lastSeenTs = { public: 0, vip: 0, private: 0 };
+    let chatOldestTs = { public: 0, vip: 0, private: 0 };
+    let chatHasMore = { public: true, vip: true, private: true };
+    let currentPrivateConversationId = '';
+    let currentPrivateTitle = '';
+    let privateConversations = [];
+    // 乐观发送：点击发送即先本地渲染，后台再同步到服务器
+    // tempId -> { key, room, message, payload }
+    const chatPendingSends = new Map();
+    // key(room|content|imageLen) -> tempId，用于轮询拉回自己消息时合并去重
+    const chatPendingKeys = new Map();
+    function chatSendKey(room, content, image) {
+      return room + '|' + (content || '') + '|' + (image ? String(image).length : 0);
+    }
+    function chatTsToIso(ts) {
+      // lastSeenTs/chatOldestTs 存的是毫秒时间戳，传给 Postgres TIMESTAMPTZ 参数时要转 ISO 字符串，
+      // 否则 PostgREST 会把数字解释成 "1970/01/01 08:00" 这种不被 PostgreSQL 默认 datestyle 接受的格式。
+      return (ts && ts > 0) ? new Date(ts).toISOString() : null;
+    }
+    let chatHistLoading = false;
+    let chatUserReadingHistoryUntil = 0;
+    let notifEnabled = false;
+    let inAppNotifOn = false;
+    let notifDiagMsg = '';
+    let unreadCounts = { public: 0, vip: 0, private: 0 };
+    let chatManualRoom = null;
+    const PUSH_VAPID_PUBLIC_KEY = 'BA2xT4Y1plL6c9JNmBJI8aqp_vjxrnOG1-p-nhazGbm_QGnnuq8A7hbYbBIpZKd3MQ3-jx0EfXZGnKYQQuFHFac';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initChatPage();
+    });
+
+    const EMOJIS = ['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','🙃','😉','😊','😇','🥰','😍','🤩','😘','😗','😚','😙','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','🤐','🤨','😐','😑','😶','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😴','😷','🤒','🤕','🤢','🤮','🤧','🥵','🥶','🥴','😵','🤯','🤠','🥳','😎','🤓','🧐','😕','😟','🙁','☹️','😮','😯','😲','😳','🥺','😦','😧','😨','😰','😥','😢','😭','😱','😖','😣','😞','😓','😩','😫','🥱','😤','😡','😠','🤬','😈','👿','💀','☠️','💩','🤡','👹','👺','👻','👽','👾','🤖','😺','😸','😹','😻','😼','😽','🙀','😿','😾','👍','👎','👏','🙌','👐','🤝','🤲','🤜','🤛','✊','👊','🤞','✌️','🤟','🤘','👌','🤏','👈','👉','👆','👇','☝️','✋','🤚','🖐️','🖖','👋','🤙','💪','🦾','🖕','✍️','🙏','🦶','🦵','🦿','💐','🌸','💮','🏵️','🌹','🥀','🌺','🌻','🌼','🌷','🌱','🌲','🌳','🌴','🌵','🌾','🌿','☘️','🍀','🍁','🍂','🍃','🍇','🍈','🍉','🍊','🍋','🍌','🍍','🥭','🍎','🍏','🍐','🍑','🍒','🍓','🥝','🍅','🥥','🥑','🍆','🥔','🥕','🌽','🌶️','🥒','🥬','🥦','🧄','🧅','🍄','🥜','🌰','🍞','🥐','🥖','🥨','🥯','🥞','🧇','🧀','🍖','🍗','🥩','🥓','🍔','🍟','🍕','🌭','🥪','🌮','🌯','🥙','🧆','🥚','🍳','🥘','🍲','🥣','🥗','🍿','🧈','🧂','🥫','🍱','🍘','🍙','🍚','🍛','🍜','🍝','🍠','🍢','🍣','🍤','🍥','🍡','🍦','🍧','🍨','🍩','🍪','🎂','🍰','🧁','🥧','🍫','🍬','🍭','🍮','🍯','🍼','🥛','☕','🍵','🍶','🍾','🍷','🍸','🍹','🍺','🍻','🥂','🥃','🥤','🧃','🧉','🧊','⭐','🌟','✨','⚡','🔥','💥','☄️','☀️','🌤️','⛅','🌥️','☁️','🌦️','🌧️','⛈️','🌩️','🌨️','❄️','🌬️','💨','💧','💦','☔','☂️','🌊','🎉','🎊','🎁','🎈','🎀','🏆','🥇','🥈','🥉','🏅','🎖️','🏵️','🎯','🎪','🎨','🧩','🎭','🎬','🎤','🎧','🎼','🎹','🥁','🎷','🎸','🎻','🪕','🎮','🕹️','🎰','🎲','🧸','🪀','🪁','🎱','🏓','🏸','🥅','🏒','🏑','🏏','⛳','🏹','🎣','🤿','🥊','🥋','🎽','🛹','🛷','⛸️','🥌','🎿','⛷️','🏂','🏋️','🤼','🤽','🤾','🌇','🌆','🏙️','🌃','🌉','🌌','🌠','🎇','🎆','🏰','🏯','🏟️','🗽','🏠','🏡','🏢','🏣','🏤','🏥','🏦','🏨','🏩','🏪','🏫','🏬','🏭','🏯','🏰','💒','🗼','🗽','⛪','🕌','🛕','🕍','⛩️','🕋','⛲','⛺','🌁','🌃','🏙️','🌄','🌅','🌆','🌇','🌉','♨️','🎠','🎡','🎢','💈','🎪','🚂','🚃','🚄','🚅','🚆','🚇','🚈','🚉','🚊','🚝','🚞','🚋','🚌','🚍','🚎','🚐','🚑','🚒','🚓','🚔','🚕','🚖','🚗','🚘','🚙','🛻','🚚','🚛','🚜','🏎️','🏍️','🛵','🦽','🦼','🛺','🚲','🛴','🚏','🛣️','🛤️','⛽','🚨','🚥','🚦','🛑','🚧','⚓','⛵','🛶','🚤','🛳️','⛴️','🛥️','🚢','✈️','🛩️','🛫','🛬','🪂','💺','🚁','🚟','🚠','🚡','🛰️','🚀','🛸','🛎️','🧳','⌚','⏰','⏱️','⏲️','🕰️','🕛','🕧','🕐','🕜','🕑','🕝','🕒','🕞','🕓','🕟','🕔','🕠','🕕','🕡','🕖','🕢','🕗','🕣','🕘','🕤','🕙','🕥','🕚','🕦','🌑','🌒','🌓','🌔','🌕','🌖','🌗','🌘','🌙','🌚','🌛','🌜','🌡️','☀️','🌝','🌞','⭐','🌟','🌠','☁️','⛅','⛈️','🌤️','🌥️','🌦️','🌧️','🌨️','❄️','🌬️','💨','💧','💦','☔','☂️','🌊','🌫️','🌀','🌈','🌂','💣','💎','🔪','🧱','🛢️','🛡️','🗡️','⚔️','🔫','🏹','🛡️','💣','🧨','🔪','🗡️','🛡️','🚬','⚰️','⚱️','🏺','🔮','🧿','🧸','📿','💎','🔔','🔕','🎐','🎏','🎀','🎁','🎗️','🎟️','🎫','🔍','🔎','🕯️','💡','🔦','🏮','📜','📃','📄','📑','📊','📈','📉','🗒️','🗓️','📆','📅','🗑️','📇','🗃️','🗳️','🗄️','📋','📁','📂','🗂️','🗞️','📰','📓','📔','📒','📕','📗','📘','📙','📚','📖','🔖','🧷','🔗','📎','🖇️','📐','📏','🧮','📌','📍','✂️','🖊️','🖋️','✒️','🖌️','🖍️','📝','✏️','🔍','🔎','🔏','🔐','🔒','🔓','❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','💟','☮️','✝️','☪️','🕉️','☸️','✡️','🔯','🕎','☯️','☦️','🛐','⛎','♈','♉','♊','♋','♌','♍','♎','♏','♐','♑','♒','♓','🆔','⚛️','🉑','☢️','☣️','📴','📳','🈶','🈚','🈸','🈺','🈷️','✴️','🆚','💮','🉐','㊙️','㊗️','🈴','🈵','🈹','🈲','🅰️','🅱️','🆎','🆑','🅾️','🆘','❌','⭕','🛑','⛔','📛','🚫','💯','💢','♨️','🚷','🚯','🚳','🚱','🔞','📵','🚭','❗','❕','❓','❔','‼️','⁉️','🔅','🔆','〽️','⚠️','🚸','🔱','⚜️','🔰','♻️','✅','🈯','💹','❇️','✳️','❎','🌐','💠','Ⓜ️','🌀','💤','🏧','🚾','♿','🅿️','🈳','🈂','🛂','🛃','🛄','🛅','🛗','🧭','🚹','🚺','🚼','⚧','🚻','🚮','🎦','📶','🈁','🔣','ℹ️','🔤','🔡','🔠','🆖','🆗','🆙','🆒','🆕','🆓','0️⃣','1️⃣','2️⃣','3️⃣','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣','9️⃣','🔟','🔢','#️⃣','*️⃣','⏏️','▶️','⏸️','⏯️','⏹','⏺','⏭️','⏮️','⏩','⏪','⏫','⏬','◀️','🔼','🔽','➡️','⬅️','⬆️','⬇️','↗️','↘️','↙️','↖️','↕️','↔️','↪️','↩️','⤴️','⤵️','🔀','🔁','🔂','🔄','🔃','🎵','🎶','➕','➖','➗','✖️','💲','💱','™️','©️','®️','〰️','➰','➿','🔚','🔙','🔛','🔝','🔜','✔️','☑️','🔘','🔴','🟠','🟡','🟢','🔵','🟣','⚫','⚪','🟤','🔺','🔻','🔸','🔹','🔶','🔷','🔳','🔲','▪️','▫️','◾','◽','◼️','◻️','🟥','🟧','🟨','🟩','🟦','🟪','⬛','⬜','🟫','🔈','🔇','🔉','🔊','🔔','🔕','📢','📣','💤','💲','💱','🏧','💹','🧮','💯','✅','❌','❎','⭕','🚫','🚭','🚷','🚯','🚳','🚱','🔞','📵','🚸','🔱','⚜️','🔰','♻️','✳️','❇️','💹','🈯','🈳','🈂️','🈷️','🈶','🈚','🈸','🈺','🉐','🉑','㊗️','㊙️','🈴','🈵','🈹','🈲','🅰️','🅱️','🆎','🆑','🅾️','🆘','🆔','🆚','🈁','🈯','🈂','🈷️','🈶','🈚','🈸','🈺','🉐','🉑','㊗️','㊙️','🈴','🈵','🈹','🈲','🅰️','🅱️','🆎','🆑','🅾️','🆘','❓','❔','❕','❗','‼️','⁉️','🔅','🔆','〽️','⚠️','🚸','🔱','⚜️','🔰','♻️','🈯','💹','❇️','✳️','❎','🌐','💠','Ⓜ️','🌀','💤','🏧','🚾','♿','🅿️','🈳','🈂','🛂','🛃','🛄','🛅','🛗','🧭','🚹','🚺','🚼','⚧','🚻','🚮','🎦','📶','🈁','🔣','ℹ️','🔤','🔡','🔠','🆖','🆗','🆙','🆒','🆕','🆓'];
+
+    async function initChatPage() {
+      console.log('[chat] initChatPage start');
+      // 确保登录弹窗存在
+      ensureAuthModal();
+      // 渲染表情面板
+      renderEmojiPanel();
+      // 绑定图片查看器（聊天消息图片点击放大）
+      bindChatImageViewer();
+      bindChatQuoteActions();
+      // 初始状态：显示"检查中"，避免先闪出登录按钮
+      setChatLoginLoading(true);
+      // 先确认身份，再只加载对应房间，避免公共群聊的异步响应覆盖 VIP 群聊
+      updateChatInputState();
+      try { await fetchUser(); } catch (e) { console.error('[chat] fetchUser failed', e); }
+      console.log('[chat] fetchUser done');
+      updateChatAdminMode();
+      updateChatInputState();
+      const preferredRoom = location.hash === '#private' ? 'private' : (__user.loggedIn && __user.isVip ? 'vip' : 'public');
+      await switchChatRoom(preferredRoom, { skipUserRefresh: true });
+      // 启动轮询
+      startChatPoll();
+      // 发送兜底：防止乐观气泡停在“发送中”但投递未启动
+      startChatSendWatchdog();
+      // 启动在线人数
+      startOnlineTracking();
+      // 注册通知（新消息手机弹窗提醒）
+      initChatNotification();
+      // 监听登录状态变化
+      window.addEventListener('blys:user:change', () => {
+        setChatLoginLoading(false);
+        updateChatAdminMode();
+        updateChatInputState();
+        // 登录、会员激活或退出后，自动切换到身份对应的聊天室
+        const preferredRoom = location.hash === '#private' ? 'private' : (__user.loggedIn && __user.isVip ? 'vip' : 'public');
+        if (currentRoom !== preferredRoom) {
+          switchChatRoom(preferredRoom, { skipUserRefresh: true });
+        }
+        refreshChatPushSubscription();
+      });
+      // 兜底：再延迟刷新一次，避免某些浏览器事件时机问题
+      setTimeout(() => {
+        setChatLoginLoading(false);
+        updateChatAdminMode();
+        updateChatInputState();
+        const preferredRoom = location.hash === '#private' ? 'private' : (__user.loggedIn && __user.isVip ? 'vip' : 'public');
+        if (currentRoom !== preferredRoom && !shouldStayOnExpiredVipRoom()) switchChatRoom(preferredRoom, { skipUserRefresh: true });
+      }, 300);
+      // Enter 发送（Shift+Enter换行）
+      const input = document.getElementById('chatInput');
+      if (input) {
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
+        });
+        input.addEventListener('input', () => {
+          input.style.height = 'auto';
+          input.style.height = Math.min(input.scrollHeight, 96) + 'px';
+          updateChatComposerState();
+        });
+        input.addEventListener('paste', handleChatPaste);
+        updateChatComposerState();
+      }
+      // 绑定头部淡出滚动效果
+      bindChatHeadFade();
+      // 聊天记录上滑到顶 → 加载更早历史（分页），不阻塞首屏
+      const histBox = document.getElementById('chatMessages');
+      if (histBox && !histBox.__histBound) {
+        histBox.addEventListener('scroll', () => {
+          if (Date.now() < chatSuppressHistoryUntil) return;
+          if (histBox.querySelector('.chat-loading')) return;
+          const nearBottom = isChatNearBottom(histBox, 100);
+          chatUserReadingHistoryUntil = nearBottom ? 0 : Date.now() + 15000;
+          if (histBox.scrollTop <= 140 && chatHasMore[currentRoom] && !chatHistLoading) {
+            chatHistLoading = true;
+            loadChatMessages(currentRoom, { history: true }).finally(() => {
+              setTimeout(() => { chatHistLoading = false; }, 400);
+            });
+          }
+        });
+        histBox.__histBound = true;
+      }
+    }
+
+    function bindChatHeadFade() {
+      const head = document.getElementById('chatScrollHead');
+      if (!head) return;
+      if (document.documentElement.classList.contains('blys-native-app')) {
+        head.style.display = 'none';
+        return;
+      }
+      const onScroll = () => {
+        const max = head.offsetHeight || 120;
+        const y = window.scrollY || window.pageYOffset || 0;
+        const ratio = Math.min(1, Math.max(0, y / Math.max(1, max * 0.7)));
+        head.style.opacity = String(1 - ratio);
+        head.style.transform = `translateY(-${ratio * 12}px)`;
+      };
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll();
+    }
+
+    function getChatSessionId() {
+      let sid = localStorage.getItem('blys_chat_session');
+      if (!sid) {
+        sid = 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        localStorage.setItem('blys_chat_session', sid);
+      }
+      return sid;
+    }
+
+    function startOnlineTracking() {
+      refreshOnlineCount();
+      sendHeartbeat();
+      // 每12秒刷新人数，每25秒发送心跳
+      if (chatOnlineTimer) clearInterval(chatOnlineTimer);
+      if (chatHeartbeatTimer) clearInterval(chatHeartbeatTimer);
+      chatOnlineTimer = setInterval(refreshOnlineCount, 12000);
+      chatHeartbeatTimer = setInterval(sendHeartbeat, 25000);
+    }
+
+    
+    function chatAvatarText(name, email) {
+      const text = (name || email || '友').trim();
+      return text.slice(0, 1).toUpperCase();
+    }
+
+    function renderChatMembers(list, total, online) {
+      const panel = document.getElementById('chatMembersPanel');
+      const totalEl = document.getElementById('chatMemberTotal');
+      const onlineEl = document.getElementById('chatMemberOnline');
+      const listEl = document.getElementById('chatMemberList');
+      if (!panel || !listEl) return;
+      panel.hidden = false;
+      if (totalEl) totalEl.textContent = String(total == null ? '--' : total);
+      if (onlineEl) onlineEl.textContent = String(online == null ? '--' : online);
+      const rows = Array.isArray(list) ? list.slice(0, 18) : [];
+      if (!rows.length) {
+        listEl.innerHTML = '<span class="chat-member-empty">暂无成员数据</span>';
+        return;
+      }
+      listEl.innerHTML = rows.map((u) => {
+        const name = u.nickname || u.email || '站友';
+        const onlineCls = u.online ? ' online' : '';
+        return '<div class="chat-member-chip' + onlineCls + '" title="' + esc(name) + '">' +
+          '<span class="chat-member-avatar">' + esc(chatAvatarText(u.nickname, u.email)) + '<i></i></span>' +
+          '<span class="chat-member-name">' + esc(name) + '</span>' +
+        '</div>';
+      }).join('');
+    }
+
+    async function refreshChatMembers() {
+      if (currentRoom === 'private') {
+        const panel = document.getElementById('chatMembersPanel');
+        if (panel) panel.hidden = true;
+        return;
+      }
+      try {
+        const d = await sbRpc('chat_room_members', { p_room: currentRoom }, { timeoutMs: 6000 });
+        if (!d || !d.ok || !Array.isArray(d.list)) return;
+        renderChatMembers(d.list, d.total, d.online);
+      } catch (e) {
+        const panel = document.getElementById('chatMembersPanel');
+        if (panel) panel.hidden = true;
+      }
+    }
+
+    async function sendHeartbeat() {
+      try {
+        try {
+          await sbRpc('heartbeat', { p_session: getChatSessionId(), p_room: currentRoom, p_token: (__user && __user.token) || null }, { timeoutMs: 5000 });
+        } catch (err) {
+          await sbRpc('heartbeat', { p_session: getChatSessionId(), p_room: currentRoom }, { timeoutMs: 5000 });
+        }
+      } catch (e) { /* 静默失败 */ }
+    }
+
+    async function refreshOnlineCount() {
+      const el = document.getElementById('chatOnlineNum');
+      if (!el) return;
+      try {
+        const d = await sbRpc('online_count', { p_room: currentRoom });
+        const n = (d && typeof d === 'number') ? d : (d && d.count);
+        el.textContent = Number.isFinite(n) ? n : '0';
+      } catch (e) {
+        el.textContent = '0';
+      }
+    }
+
+    function renderEmojiPanel() {
+      const panel = document.getElementById('chatEmojiPanel');
+      if (!panel) return;
+      panel.innerHTML = EMOJIS.slice(0, 80).map(e => `<span>${e}</span>`).join('');
+    }
+
+    function toggleEmojiPanel(e) {
+      if (e) e.stopPropagation();
+      const panel = document.getElementById('chatEmojiPanel');
+      if (!panel) return;
+      panel.classList.toggle('open');
+      if (panel.classList.contains('open')) {
+        const isEmojiBtn = (target) => target && target.closest && target.closest('.chat-tool-btn[title="表情"]');
+        const closeOnClickOutside = (ev) => {
+          if (!panel.contains(ev.target) && !isEmojiBtn(ev.target)) {
+            panel.classList.remove('open');
+            document.removeEventListener('click', closeOnClickOutside);
+          }
+        };
+        setTimeout(() => document.addEventListener('click', closeOnClickOutside), 10);
+      }
+    }
+
+    function insertEmoji(e) {
+      if (!e.target.matches('span')) return;
+      const input = document.getElementById('chatInput');
+      if (!input) return;
+      const emoji = e.target.textContent;
+      const start = input.selectionStart;
+      const end = input.selectionEnd;
+      const text = input.value;
+      input.value = text.slice(0, start) + emoji + text.slice(end);
+      input.selectionStart = input.selectionEnd = start + emoji.length;
+      input.focus();
+      e.stopPropagation();
+    }
+
+    async function switchChatRoom(room, options) {
+      options = options || {};
+      currentRoom = room;
+      // 更新标签样式（用 getAttribute 避免个别浏览器 dataset 兼容性问题导致中断）
+      document.querySelectorAll('.chat-tab').forEach(t => t.classList.toggle('active', t.getAttribute('data-room') === room));
+      clearRoomUnread(room);
+
+      const vipLock = document.getElementById('chatVipLock');
+      const chatBox = document.getElementById('chatBox');
+      const messagesBox = document.getElementById('chatMessages');
+      const inputArea = document.getElementById('chatInputArea');
+      // VIP 标签先打开消息，再后台刷新会员状态，避免首屏被个人资料请求拖慢。
+      if (room === 'vip' && !options.skipUserRefresh && typeof fetchUser === 'function' && localStorage.getItem(USER_TOKEN_KEY) && !vipRefreshing) {
+        vipRefreshing = true;
+        fetchUser().catch(e => console.warn('[chat] refresh VIP user failed', e)).finally(() => { vipRefreshing = false; });
+      }
+
+// VIP 房间权限检查
+      if (room === 'vip') {
+        if (!__user.loggedIn || !__user.isVip) {
+          if (chatBox) chatBox.style.display = 'none';
+          if (vipLock) vipLock.style.display = 'flex';
+          const title = document.getElementById('chatVipLockTitle');
+          const text = document.getElementById('chatVipLockText');
+          if (title) title.textContent = __user.loggedIn ? '会员已到期' : '会员专属群聊';
+          if (text) text.textContent = __user.loggedIn ? '你的会员已到期，私聊白鹿原上续费后即可继续进入会员群聊。' : '登录并激活会员后即可进入会员群聊。';
+          return;
+        }
+      }
+
+      if (room === 'private') {
+        if (!__user.loggedIn) {
+          if (chatBox) chatBox.style.display = 'flex';
+          if (vipLock) vipLock.style.display = 'none';
+          if (messagesBox) messagesBox.innerHTML = '<div class="chat-empty">登录后可以和白鹿原上私聊</div>';
+          updateChatInputState();
+          return;
+        }
+        if (options.keepPrivate && currentPrivateConversationId) {
+          if (chatBox) chatBox.style.display = 'flex';
+          if (vipLock) vipLock.style.display = 'none';
+          if (messagesBox) messagesBox.style.display = 'block';
+          if (inputArea) inputArea.style.display = 'block';
+          updateChatInputState();
+          return;
+        }
+        if (messagesBox) messagesBox.innerHTML = '<div class="chat-loading">加载私聊中…</div>';
+        await openPrivateRoom();
+        return;
+      }
+
+      if (chatBox) chatBox.style.display = 'flex';
+      if (vipLock) vipLock.style.display = 'none';
+      if (messagesBox) messagesBox.style.display = 'block';
+      if (inputArea) inputArea.style.display = 'block';
+      if (messagesBox) messagesBox.innerHTML = '<div class="chat-loading">加载消息中…</div>';
+
+      updateChatInputState();
+      // 切到该频道即视为已读，清掉其未读角标
+      clearRoomUnread(room);
+      const banner = document.getElementById('chatUnreadBanner');
+      if (banner && unreadCounts.public + unreadCounts.vip + unreadCounts.private === 0) banner.hidden = true;
+      loadChatMessages(room);
+      setTimeout(() => { if (room === currentRoom) refreshChatMembers(); }, room === 'vip' ? 1800 : 500);
+      setTimeout(() => {
+        if (room !== currentRoom || !messagesBox || !messagesBox.querySelector('.chat-loading')) return;
+        messagesBox.innerHTML = renderChatLoadFailed(room, '网络较慢，消息还没有返回');
+      }, 22000);
+      refreshOnlineCount();
+      sendHeartbeat();
+    }
+
+    function shouldStayOnExpiredVipRoom() {
+      const lock = document.getElementById('chatVipLock');
+      return (currentRoom === 'vip' || chatManualRoom === 'vip' || (lock && lock.style.display === 'flex')) && __user && __user.loggedIn && !__user.isVip;
+    }
+
+    function isBlysAdminUser(user) {
+      user = user || __user || {};
+      const email = String(user.email || '').trim().toLowerCase();
+      return !!(user.isAdmin || user.is_admin || ['491788533@qq.com', '491788533@gmail.com'].includes(email));
+    }
+
+    function updateChatAdminMode() {
+      const on = isBlysAdminUser();
+      document.body.classList.toggle('chat-admin-mode', on);
+      if (!on) {
+        chatMembersPanelOpen = false;
+        const stats = document.getElementById('vipTabMemberStats');
+        const panel = document.getElementById('chatMembersAdmin');
+        if (stats) { stats.hidden = true; stats.textContent = ''; }
+        if (panel) { panel.hidden = true; panel.innerHTML = ''; }
+      }
+    }
+
+    function shouldShowMembersAdmin(room) {
+      return document.body.classList.contains('chat-admin-mode') && room === 'vip';
+    }
+
+    function updateVipTabMemberStats(data) {
+      const el = document.getElementById('vipTabMemberStats');
+      const isAdmin = isBlysAdminUser();
+      if (!el) return;
+      if (!isAdmin) {
+        el.hidden = true;
+        el.textContent = '';
+        return;
+      }
+      el.hidden = false;
+      if (!data || !data.ok) {
+        el.textContent = '总人数 -- · 在线 --';
+        return;
+      }
+      el.textContent = '总人数 ' + (Number(data.total) || 0) + ' · 在线 ' + (Number(data.online) || 0);
+    }
+
+    function toggleChatMembersAdmin(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      if (!shouldShowMembersAdmin('vip')) return;
+      chatMembersPanelOpen = !chatMembersPanelOpen;
+      const el = document.getElementById('chatMembersAdmin');
+      if (el) el.hidden = !chatMembersPanelOpen;
+      if (chatMembersPanelOpen) loadChatMembersAdmin('vip', { forcePanel: true });
+      else scheduleVipMemberStats('vip');
+    }
+
+    function scheduleVipMemberStats(room) {
+      clearTimeout(chatMembersStatsTimer);
+      if (!shouldShowMembersAdmin(room)) {
+        updateVipTabMemberStats(null);
+        return;
+      }
+      updateVipTabMemberStats(chatMembersStatsCache);
+      chatMembersStatsTimer = setTimeout(() => loadVipMemberCounts(), 1500);
+    }
+
+    async function loadVipMemberCounts() {
+      if (!shouldShowMembersAdmin('vip')) return;
+      try {
+        const d = await sbRpc('chat_room_member_counts', { p_room: 'vip' }, { timeoutMs: 5000 });
+        if (d && d.ok) {
+          chatMembersStatsCache = Object.assign({}, chatMembersStatsCache || {}, d);
+          updateVipTabMemberStats(chatMembersStatsCache);
+        }
+      } catch (e) {}
+    }
+
+    async function loadChatMembersAdmin(room, options) {
+      const el = document.getElementById('chatMembersAdmin');
+      if (!el) return;
+      if (!shouldShowMembersAdmin(room)) {
+        updateVipTabMemberStats(null);
+        el.hidden = true;
+        el.innerHTML = '';
+        return;
+      }
+      el.hidden = !chatMembersPanelOpen;
+      if (chatMembersPanelOpen && !el.innerHTML) el.innerHTML = '<div class="chat-members-loading">成员统计加载中...</div>';
+      try {
+        const d = await sbRpc('chat_room_members', { p_room: room }, { timeoutMs: 8000 });
+        if (!d || !d.ok) {
+          el.innerHTML = '<div class="chat-members-loading">成员统计加载失败</div>';
+          return;
+        }
+        chatMembersStatsCache = d;
+        updateVipTabMemberStats(d);
+        const list = Array.isArray(d.list) ? d.list : [];
+        const chips = list.map(m => {
+          const email = esc(m.email || '');
+          const nick = esc(m.nickname || m.email || '用户');
+          const online = m.online ? ' online' : '';
+          return '<span class="chat-member-chip' + online + '" title="' + email + '">' +
+            '<span class="chat-member-dot"></span><b>' + nick.slice(0, 1) + '</b><em>' + nick + '</em>' +
+            '<button type="button" onclick="removeChatRoomMember(\'' + escJs(room) + '\',\'' + escJs(m.email || '') + '\',\'' + escJs(nick) + '\')" title="从统计列表移除">×</button>' +
+          '</span>';
+        }).join('');
+        if (chatMembersPanelOpen || options.forcePanel) {
+          el.innerHTML = '<div class="chat-members-list">' + (chips || '<span class="chat-members-loading">暂无成员</span>') + '</div>';
+        }
+      } catch (e) {
+        el.innerHTML = '<div class="chat-members-loading">成员统计加载失败</div>';
+      }
+    }
+
+    async function removeChatRoomMember(room, email, nickname) {
+      if (!isBlysAdminUser() || !email) return;
+      if (!confirm('从当前群聊成员统计里移除 ' + (nickname || email) + '？')) return;
+      const d = await sbRpc('admin_remove_chat_room_member', { p_admin_token: __user.token, p_room: room, p_user_email: email }, { timeoutMs: 8000 });
+      if (!d || !d.ok) {
+        alert((d && d.msg) || '移除失败');
+        return;
+      }
+      loadChatMembersAdmin(currentRoom);
+    }
+
+    function escJs(s) {
+      return String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\r?\n/g, ' ');
+    }
+
+    function isBlysAdminIdentity(email, nickname) {
+      return ['491788533@qq.com', '491788533@gmail.com'].includes(String(email || '').trim().toLowerCase());
+    }
+
+    function isAdminMessage(message) {
+      const email = String((message && (message.user_email || message.sender_email || message.email)) || '').trim().toLowerCase();
+      return !!(message && message.is_admin) || ['491788533@qq.com', '491788533@gmail.com'].includes(email);
+    }
+
+    function clearRoomUnread(room) {
+      if (!room || !unreadCounts[room]) return;
+      unreadCounts[room] = 0;
+      updateUnreadBadges();
+    }
+
+    async function openPrivateRenewal() {
+      if (!__user.loggedIn) { openAuthModal(); return; }
+      location.hash = 'private';
+      await startPrivateChat(__user.email, __user.nickname || __user.email, { silent: true });
+      const input = document.getElementById('chatInput');
+      if (input && !input.value.trim()) {
+        input.value = '你好，我想续费会员';
+        input.focus();
+        updateChatComposerState();
+      }
+    }
+
+    async function openPrivateRoom() {
+      const box = document.getElementById('chatMessages');
+      const inputArea = document.getElementById('chatInputArea');
+      if (!__user.loggedIn) {
+        if (box) box.innerHTML = '<div class="chat-empty">登录后可以和白鹿原上私聊</div>';
+        updateChatInputState();
+        return;
+      }
+      if (isBlysAdminUser()) {
+        currentPrivateConversationId = '';
+        currentPrivateTitle = '';
+        if (inputArea) inputArea.style.display = 'none';
+        await loadPrivateConversations();
+      } else {
+        if (inputArea) inputArea.style.display = 'block';
+        await startPrivateChat(__user.email, __user.nickname || __user.email, { silent: false });
+      }
+    }
+
+    async function loadPrivateConversations(options) {
+      options = options || {};
+      const box = document.getElementById('chatMessages');
+      if (box && !options.silent) box.innerHTML = '<div class="chat-loading">加载私聊列表中…</div>';
+      try {
+        const d = await sbRpc('list_private_conversations', { p_token: __user.token }, { timeoutMs: 12000 });
+        if (!d || !d.ok || !Array.isArray(d.list)) {
+          if (box) box.innerHTML = renderPrivateEmpty('私聊列表加载失败');
+          return;
+        }
+        privateConversations = d.list || [];
+        unreadCounts.private = privateConversations.reduce((sum, c) => {
+          const unread = isBlysAdminUser() ? (Number(c.admin_unread) || 0) : (Number(c.user_unread) || 0);
+          return sum + unread;
+        }, 0);
+        updateUnreadBadges();
+        renderPrivateConversationList();
+      } catch (e) {
+        if (box) box.innerHTML = renderPrivateEmpty(e && e.message ? e.message : '私聊列表加载失败');
+      }
+    }
+
+    function renderPrivateEmpty(text) {
+      const hint = isBlysAdminUser()
+        ? '私聊列表会自动刷新，未读消息会显示在列表右侧。'
+        : '这里用于和站长发起私聊，列表会自动刷新。';
+      const retry = __user && __user.loggedIn ? '<div class="chat-empty-actions"><button class="btn btn-primary btn-small" type="button" onclick="openPrivateRoom()">重新打开私聊</button></div>' : '';
+      return '<div class="chat-empty private-empty"><b>' + esc(text || '暂无私聊') + '</b><p>' + esc(hint) + '</p>' + retry + '</div>';
+    }
+
+    function renderPrivateConversationList() {
+      const box = document.getElementById('chatMessages');
+      if (!box) return;
+      if (!privateConversations.length) {
+        box.innerHTML = renderPrivateEmpty('暂无私聊会话');
+        return;
+      }
+      box.innerHTML = '<div class="private-list">' + privateConversations.map(c => {
+        const unread = isBlysAdminUser() ? (Number(c.admin_unread) || 0) : (Number(c.user_unread) || 0);
+        const title = c.user_nickname || c.user_email || '用户';
+        const last = c.last_message || '还没有消息';
+        const time = c.last_message_at ? fmtDateTime(c.last_message_at) : '';
+        return '<button class="private-thread" type="button" onclick="openPrivateConversation(&quot;' + esc(c.id) + '&quot;)">' +
+          '<span class="private-thread-avatar">' + esc(String(title).charAt(0).toUpperCase()) + '</span>' +
+          '<span class="private-thread-main"><b>' + esc(title) + '</b><small>' + esc(last) + '</small></span>' +
+          '<span class="private-thread-side">' + (unread ? '<em>' + unread + '</em>' : '') + '<small>' + esc(time) + '</small></span>' +
+        '</button>';
+      }).join('') + '</div>';
+    }
+
+    async function openPrivateConversation(conversationId) {
+      const conv = privateConversations.find(c => String(c.id) === String(conversationId));
+      if (!conv) return;
+      currentPrivateConversationId = conv.id;
+      currentPrivateTitle = conv.user_nickname || conv.user_email || '用户';
+      currentRoom = 'private';
+      lastSeenTs.private = 0;
+      chatOldestTs.private = 0;
+      chatHasMore.private = true;
+      const inputArea = document.getElementById('chatInputArea');
+      if (inputArea) inputArea.style.display = 'block';
+      updateChatInputState();
+      await loadChatMessages('private', { isFirst: true });
+      try { await sbRpc('mark_private_read', { p_token: __user.token, p_conversation_id: currentPrivateConversationId }); } catch(e) {}
+      privateConversations = privateConversations.map(c => String(c.id) === String(currentPrivateConversationId)
+        ? Object.assign({}, c, isBlysAdminUser() ? { admin_unread: 0 } : { user_unread: 0 })
+        : c);
+      unreadCounts.private = privateConversations.reduce((sum, c) => {
+        const unread = isBlysAdminUser() ? (Number(c.admin_unread) || 0) : (Number(c.user_unread) || 0);
+        return sum + unread;
+      }, 0);
+      updateUnreadBadges();
+    }
+
+    async function startPrivateChat(email, nickname, options) {
+      options = options || {};
+      if (!__user.loggedIn) { openAuthModal(); return; }
+      const targetInputEmail = String(email || '').trim().toLowerCase();
+      const myEmail = String(__user.email || '').trim().toLowerCase();
+      const adminNow = isBlysAdminUser();
+      if (!targetInputEmail) {
+        if (!options.silent) alert('私聊打开失败：没有找到对方邮箱');
+        return;
+      }
+      if (!adminNow && !isBlysAdminIdentity(targetInputEmail, nickname) && targetInputEmail !== myEmail) {
+        alert('私聊只开放给站长和你自己，用户之间不能互相私聊');
+        return;
+      }
+      try {
+        const targetEmail = adminNow ? targetInputEmail : myEmail;
+        const d = await sbRpc('get_private_conversation', { p_token: __user.token, p_user_email: targetEmail }, { timeoutMs: 12000 });
+        if (!d || !d.ok) {
+          const msg = (d && (d.msg || d.message || d.details || d.hint || d._raw)) || ('私聊打开失败：接口没有返回成功，状态 ' + (d && d._status ? d._status : '未知'));
+          if (!options.silent) {
+            const box = document.getElementById('chatMessages');
+            if (box) box.innerHTML = renderPrivateEmpty(msg);
+            else alert(msg);
+          }
+          return;
+        }
+        currentPrivateConversationId = d.id;
+        currentPrivateTitle = adminNow ? (d.user_nickname || nickname || d.user_email) : '白鹿原上';
+        lastSeenTs.private = 0;
+        chatOldestTs.private = 0;
+        chatHasMore.private = true;
+        await switchChatRoom('private', { skipUserRefresh: true, keepPrivate: true });
+        await loadChatMessages('private', { isFirst: true });
+        try { await sbRpc('mark_private_read', { p_token: __user.token, p_conversation_id: currentPrivateConversationId }); } catch(e) {}
+      } catch (e) {
+        if (!options.silent) {
+          const msg = '私聊打开失败：' + (e && e.message ? e.message : '网络异常');
+          const box = document.getElementById('chatMessages');
+          if (box) box.innerHTML = renderPrivateEmpty(msg);
+          else alert(msg);
+        }
+      }
+    }
+
+    function renderChatLoadFailed(room, message) {
+      const isVip = room === 'vip';
+      const switchBtn = isVip ? '<button class="btn btn-secondary btn-small" type="button" onclick="switchChatRoom(\'public\')">切到注册群聊</button>' : '';
+      return '<div class="chat-empty chat-load-failed">' +
+        '<div>消息加载失败：' + esc(message || '请求超时') + '</div>' +
+        '<div class="chat-empty-actions">' +
+          '<button class="btn btn-primary btn-small" type="button" onclick="loadChatMessages(currentRoom, { isFirst: true })">重新加载</button>' +
+          switchBtn +
+        '</div>' +
+      '</div>';
+    }
+
+    function setChatLoginLoading(isLoading) {
+      const text = document.getElementById('chatLoginText');
+      const btn = document.getElementById('chatLoginBtn');
+      if (text) text.textContent = isLoading ? '正在检查登录状态…' : '登录后即可参与群聊';
+      if (btn) btn.style.display = isLoading ? 'none' : '';
+    }
+
+    function updateChatInputState() {
+      const mask = document.getElementById('chatLoginMask');
+      const wrap = document.getElementById('chatInputWrap');
+      if (!mask || !wrap) return;
+      if (__user && __user.loggedIn) {
+        mask.style.display = 'none';
+        wrap.style.display = 'flex';
+      } else {
+        mask.style.display = 'flex';
+        wrap.style.display = 'none';
+      }
+      setChatLoginLoading(false);
+    }
+
+    function fmtDateTime(dt){
+      const d = new Date(dt);
+      if (isNaN(d)) return '';
+      const p = n => String(n).padStart(2,'0');
+      return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+    }
+
+    async function loadChatMessages(room, opts) {
+      if (room === 'private') return loadPrivateMessages(opts || {});
+      opts = opts || {};
+      const isHistory = !!opts.history;
+      const loadSeq = isHistory ? chatLoadSeq : ++chatLoadSeq;
+      const box = document.getElementById('chatMessages');
+      if (!box) return;
+      const retry = opts.retry || 0;
+      const isFirst = opts.isFirst || box.querySelector('.chat-loading') != null;
+      if (isFirst) box.innerHTML = '<div class="chat-loading">加载消息中…</div>';
+      // 首屏/失败自动重试：网络抖动或 Supabase 冷启动时，避免“进来没内容”
+      const retryLater = () => {
+        if (retry < 2) setTimeout(() => {
+          if (room === currentRoom) loadChatMessages(room, { retry: retry + 1, history: opts.history });
+        }, 1500);
+      };
+
+      try {
+        console.log('[chat] loadChatMessages start', room, 'isFirst=', isFirst, 'history=', !!opts.history, 'retry=', retry);
+        // 首屏尽量轻，尤其 App WebView 遇到图片消息较多时更容易稳定出来。
+        const isNativeApp = isNativeNotificationApp();
+        const shouldStickToBottom = isFirst || (!isHistory && isChatNearBottom(box, 100) && Date.now() > chatUserReadingHistoryUntil);
+        const rpcParams = { p_room: room };
+        if (isHistory) {
+          rpcParams.p_limit = room === 'vip' ? 8 : 12;
+          rpcParams.p_before = chatTsToIso(chatOldestTs[room]);
+        } else if (isFirst) {
+          rpcParams.p_limit = room === 'vip' ? (isNativeApp ? 8 : 14) : (isNativeApp ? 10 : 20);
+        } else {
+          rpcParams.p_limit = room === 'vip' ? 20 : (isNativeApp ? 30 : 80);
+          rpcParams.p_after = chatTsToIso(lastSeenTs[room]);
+        }
+        const d = await sbRpc('list_messages', rpcParams, { timeoutMs: isFirst ? 18000 : 12000 });
+        console.log('[chat] list_messages response', room, d);
+        if ((!isHistory && loadSeq !== chatLoadSeq) || room !== currentRoom) return;
+        // list_messages 返回表，直接是数组；也兼容返回 {ok:true, list:[]} 的情况
+        const list = Array.isArray(d) ? d : (d && d.list);
+        if (!Array.isArray(list)) {
+          console.warn('[chat] list_messages not array', d);
+          if (retry < 2) { retryLater(); return; }
+          if (isFirst) box.innerHTML = renderChatLoadFailed(room, '接口返回格式异常');
+          return;
+        }
+
+        const myEmail = (__user && __user.email) || '';
+
+        if (isHistory) {
+          // 历史分页：把更早的消息插入列表顶部，并维持当前阅读位置
+          prependChatHistory(list, room, rpcParams.p_limit);
+        } else if (isFirst) {
+          // 首屏：最近 30 条为降序，翻转后整列表渲染，并滚到最新
+          renderChatMessages(list.slice().reverse(), room, true);
+          if (list.length) {
+            const minTs = list.reduce((mn, m) => Math.min(mn, m.created_at ? new Date(m.created_at).getTime() : 0), Infinity);
+            chatOldestTs[room] = minTs;
+            chatHasMore[room] = list.length >= rpcParams.p_limit;
+          }
+        } else {
+          // 增量：只把新消息追加到列表底部，不再重建整个列表
+          for (const m of list) appendChatMessage(m, room, { stickToBottom: shouldStickToBottom });
+        }
+
+        // 未读统计：仅后台/非当前房间，且为增量拉取的新消息
+        if (!isFirst && !isHistory) {
+          const fresh = list.filter(m => m.user_email !== myEmail);
+          if (fresh.length) {
+            if (!document.hidden && currentRoom === room) {
+              clearRoomUnread(room);
+            } else if (inAppNotifOn) {
+              unreadCounts[room] = (unreadCounts[room] || 0) + fresh.length;
+              updateUnreadBadges();
+            }
+          }
+        }
+
+        // 更新本房间最后已读消息时间戳（用于下一次增量拉取；历史分页不更新）
+        if (!isHistory && list.length) {
+          const maxTs = list.reduce((mx, m) => Math.max(mx, m.created_at ? new Date(m.created_at).getTime() : 0), 0);
+          lastSeenTs[room] = Math.max(lastSeenTs[room] || 0, maxTs);
+        }
+      } catch (e) {
+        console.error('[chat] loadChatMessages error', e);
+        if (retry < 2) { retryLater(); return; }
+        if (isFirst) box.innerHTML = renderChatLoadFailed(room, e && e.message ? e.message : String(e));
+      }
+    }
+
+    async function loadPrivateMessages(opts) {
+      opts = opts || {};
+      const box = document.getElementById('chatMessages');
+      if (!box) return;
+      if (!currentPrivateConversationId) {
+        if (isBlysAdminUser()) { await loadPrivateConversations(); return; }
+        const d = await sbRpc('get_private_conversation', { p_token: __user.token, p_user_email: __user.email }, { timeoutMs: 12000 });
+        if (!d || !d.ok) { box.innerHTML = renderPrivateEmpty((d && d.msg) || '私聊打开失败'); return; }
+        currentPrivateConversationId = d.id;
+        currentPrivateTitle = '白鹿原上';
+      }
+      const isHistory = !!opts.history;
+      const loadSeq = isHistory ? chatLoadSeq : ++chatLoadSeq;
+      const retry = opts.retry || 0;
+      const isFirst = opts.isFirst || box.querySelector('.chat-loading') != null;
+      if (isFirst) box.innerHTML = '<div class="chat-loading">加载私聊中…</div>';
+      const retryLater = () => {
+        if (retry < 2) setTimeout(() => {
+          if (currentRoom === 'private') loadPrivateMessages(Object.assign({}, opts, { retry: retry + 1 }));
+        }, 1500);
+      };
+      try {
+        const shouldStickToBottom = isFirst || (!isHistory && isChatNearBottom(box, 100) && Date.now() > chatUserReadingHistoryUntil);
+        const rpcParams = { p_token: __user.token, p_conversation_id: currentPrivateConversationId };
+        if (isHistory) {
+          rpcParams.p_limit = 30;
+          rpcParams.p_before = chatTsToIso(chatOldestTs.private);
+        } else if (isFirst) {
+          rpcParams.p_limit = isNativeNotificationApp() ? 10 : 20;
+        } else {
+          rpcParams.p_limit = isNativeNotificationApp() ? 30 : 80;
+          rpcParams.p_after = chatTsToIso(lastSeenTs.private);
+        }
+        const d = await sbRpc('list_private_messages', rpcParams, { timeoutMs: isFirst ? 18000 : 12000 });
+        if ((!isHistory && loadSeq !== chatLoadSeq) || currentRoom !== 'private') return;
+        const list = Array.isArray(d) ? d : (d && d.list);
+        if (!Array.isArray(list)) {
+          if (retry < 2) { retryLater(); return; }
+          if (isFirst) box.innerHTML = renderChatLoadFailed('private', '私聊接口返回异常');
+          return;
+        }
+        if (isHistory) {
+          prependChatHistory(list, 'private');
+        } else if (isFirst) {
+          renderChatMessages(list.slice().reverse(), 'private', true);
+          if (!list.length) box.innerHTML = '<div class="chat-empty">这里是你和' + esc(currentPrivateTitle || '白鹿原上') + '的私聊</div>';
+          if (list.length) {
+            const minTs = list.reduce((mn, m) => Math.min(mn, m.created_at ? new Date(m.created_at).getTime() : 0), Infinity);
+            chatOldestTs.private = minTs;
+            chatHasMore.private = list.length >= rpcParams.p_limit;
+          }
+        } else {
+          for (const m of list) appendChatMessage(m, 'private', { stickToBottom: shouldStickToBottom });
+        }
+        if (!isHistory && list.length) {
+          const maxTs = list.reduce((mx, m) => Math.max(mx, m.created_at ? new Date(m.created_at).getTime() : 0), 0);
+          lastSeenTs.private = Math.max(lastSeenTs.private || 0, maxTs);
+        }
+      } catch (e) {
+        if (retry < 2) { retryLater(); return; }
+        if (isFirst) box.innerHTML = renderChatLoadFailed('private', e && e.message ? e.message : '私聊加载失败');
+      }
+    }
+
+    function renderChatMessageContent(m) {
+      const text = (m.content || '').trim();
+      const img = m.image;
+      let html = '';
+      if (m.reply_to_id) {
+        const replyName = esc(m.reply_to_nickname || '群友');
+        const replyText = (m.reply_to_content || '').trim();
+        const replyPreview = replyText ? esc(replyText).replace(/\n/g, '<br>') : (m.reply_to_image ? '[图片]' : '[空消息]');
+        html += `<div class="chat-quoted-message" data-quote-id="${esc(m.reply_to_id)}">
+          <span class="chat-quoted-label">↩ 引用 ${replyName}</span>
+          <span class="chat-quoted-text">${replyPreview}</span>
+        </div>`;
+      }
+      if (img) {
+        html += `<img class="chat-msg-img" src="${esc(img)}" alt="图片" loading="lazy" />`;
+      }
+      if (text) {
+        html += `<div class="chat-msg-text">${esc(text).replace(/\n/g, '<br>')}</div>`;
+      }
+      return html || '<div class="chat-msg-text">[空消息]</div>';
+    }
+
+    // 图片查看器（点击聊天里的图片放大查看）
+    function openChatImageViewer(src){
+      const v = document.getElementById('chatImageViewer');
+      const img = document.getElementById('chatImageViewerImg');
+      if(!v || !img) { window.open(src, '_blank'); return; }
+      img.src = src;
+      img.alt = '图片';
+      img.style.transform = 'scale(1)';
+      v.hidden = false;
+      v.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeChatImageViewer(){
+      const v = document.getElementById('chatImageViewer');
+      if(!v || v.hidden) return;
+      v.hidden = true;
+      v.classList.remove('open');
+      document.body.style.overflow = '';
+      const i = document.getElementById('chatImageViewerImg');
+      if(i) i.src = '';
+    }
+
+    // 图片查看器事件绑定（一次绑定，全局生效；通过事件委托处理动态消息）
+    function bindChatImageViewer(){
+      const v = document.getElementById('chatImageViewer');
+      const closeBtn = document.getElementById('chatImageViewerClose');
+      const img = document.getElementById('chatImageViewerImg');
+      const msgBox = document.getElementById('chatMessages');
+      if(!v || !closeBtn || !img) return;
+
+      // 点击聊天里的图片 → 打开查看器
+      if(msgBox && !msgBox.__chatImgBound){
+        msgBox.addEventListener('click', (e) => {
+          const t = e.target;
+          if(t && t.classList && t.classList.contains('chat-msg-img')){
+            e.preventDefault();
+            openChatImageViewer(t.src);
+          }
+        });
+        msgBox.__chatImgBound = true;
+      }
+
+      // 关闭按钮
+      if(!closeBtn.__bound){
+        closeBtn.addEventListener('click', closeChatImageViewer);
+        closeBtn.__bound = true;
+      }
+
+      // 点击遮罩空白处关闭（点在图片上不关闭）
+      if(!v.__bgBound){
+        v.addEventListener('click', (e) => {
+          if(e.target === v) closeChatImageViewer();
+        });
+        v.__bgBound = true;
+      }
+
+      // Esc 关闭
+      if(!v.__escBound){
+        document.addEventListener('keydown', (e) => {
+          if(e.key === 'Escape' && !v.hidden) closeChatImageViewer();
+        });
+        v.__escBound = true;
+      }
+
+      // 双击图片切换放大/还原（原生支持的浏览器可双指捏合）
+      if(!img.__dblkBound){
+        let zoomed = false;
+        img.addEventListener('dblclick', (e) => {
+          e.stopPropagation();
+          zoomed = !zoomed;
+          img.style.transform = zoomed ? 'scale(2)' : 'scale(1)';
+          img.style.cursor = zoomed ? 'zoom-out' : 'zoom-in';
+        });
+        img.__dblkBound = true;
+      }
+    }
+
+    function renderChatMessageHtml(m, room) {
+      const myEmail = (__user && __user.email) || '';
+      const isMe = m.user_email === myEmail;
+      const time = m.created_at ? fmtDateTime(m.created_at) : '';
+      const rawName = m.user_nickname || m.user_email?.split('@')[0] || '匿名';
+      const name = esc(rawName);
+      const isAdminMsg = isAdminMessage(m);
+      const avatarLabel = isAdminMsg ? '主' : name.charAt(0).toUpperCase();
+      const ownerBadge = isAdminMsg ? '<span class="chat-owner-badge">群主</span>' : '';
+      chatMessageCache.set(`${room}:${m.id}`, m);
+      const pending = !!m.__pending;
+      const failed = !!m.__failed;
+      const canRecall = room !== 'private' && isMe && !pending && !failed && !m.recalled_at && m.id && m.created_at && (Date.now() - new Date(m.created_at).getTime() <= 2 * 60 * 1000);
+      const recalled = !!m.recalled_at;
+      const stateCls = pending ? ' chat-msg-pending' : (failed ? ' chat-msg-failed' : '');
+      const pendingText = m.__sendState || '发送中…';
+      const timeHtml = failed
+        ? `<span class="chat-msg-state chat-msg-state-failed">发送失败 <button type="button" class="chat-retry-btn" onclick="retryChatSend('${esc(m.id)}')">重试</button></span>`
+        : (pending ? `<span class="chat-msg-state">${esc(pendingText)}</span>` : `<span class="chat-msg-time">${time}</span>`);
+      const avatarEmail = encodeURIComponent(m.user_email || '');
+      const avatarName = encodeURIComponent(m.user_nickname || m.user_email?.split('@')[0] || '匿名');
+      return `<div class="chat-msg ${isMe ? 'chat-msg-me' : 'chat-msg-other'}${isAdminMsg ? ' chat-msg-admin' : ''}${stateCls}" data-message-id="${esc(m.id || '')}" data-room="${esc(room)}">
+        ${canRecall ? `<button class="chat-recall-btn" type="button" onclick="recallChatMessage('${esc(m.id)}')">撤回</button>` : ''}
+        <button class="chat-msg-avatar" type="button" title="${isAdminMsg ? '群主' : (isMe ? '自己' : '发起私聊')}" onclick="startPrivateFromMessage('${avatarEmail}','${avatarName}')">${avatarLabel}</button>
+        <div class="chat-msg-body">
+          <div class="chat-msg-meta">
+            <span class="chat-msg-name">${name}</span>${ownerBadge}
+            ${timeHtml}
+          </div>
+          ${recalled ? '<div class="chat-recalled">消息已撤回</div>' : renderChatMessageContent(m)}
+        </div>
+      </div>`;
+    }
+
+    function startPrivateFromMessage(encodedEmail, encodedName) {
+      const email = decodeURIComponent(encodedEmail || '');
+      const nickname = decodeURIComponent(encodedName || '');
+      if (!email) return;
+      if (!__user.loggedIn) { openAuthModal(); return; }
+      if (email === __user.email) return;
+      if (!isBlysAdminUser() && !isBlysAdminIdentity(email, nickname)) {
+        alert('私聊只开放给站长和你自己，用户之间不能互相私聊');
+        return;
+      }
+      startPrivateChat(email, nickname);
+    }
+
+    function syncOldestTsFromDom(room) {
+      const box = document.getElementById('chatMessages');
+      if (!box) return;
+      let oldest = chatOldestTs[room] || 0;
+      box.querySelectorAll('.chat-msg').forEach(node => {
+        const id = node.getAttribute('data-message-id');
+        const m = chatMessageCache.get(room + ':' + id);
+        const ts = m && m.created_at ? new Date(m.created_at).getTime() : 0;
+        if (ts && (!oldest || ts < oldest)) oldest = ts;
+      });
+      if (oldest) chatOldestTs[room] = oldest;
+    }
+
+    function loadOlderChatMessages() {
+      if (chatHistLoading) return;
+      syncOldestTsFromDom(currentRoom);
+      chatHasMore[currentRoom] = true;
+      chatHistLoading = true;
+      loadChatMessages(currentRoom, { history: true }).finally(() => {
+        setTimeout(() => { chatHistLoading = false; }, 400);
+      });
+    }
+
+    function renderHistoryMoreButton(room) {
+      return '<button class="chat-history-more" type="button" onclick="loadOlderChatMessages()">加载更早消息</button>';
+    }
+
+    function ensureHistoryMoreButton(room) {
+      const box = document.getElementById('chatMessages');
+      if (!box) return;
+      const old = box.querySelector('.chat-history-more');
+      if (old) old.remove();
+      if (room !== 'private') box.insertAdjacentHTML('afterbegin', renderHistoryMoreButton(room));
+    }
+
+    function isChatNearBottom(box, distance) {
+      if (!box) return true;
+      return box.scrollTop + box.clientHeight >= box.scrollHeight - (distance || 80);
+    }
+
+    function scheduleFillChatViewport(room) {
+      const box = document.getElementById('chatMessages');
+      if (!box || room === 'private') return;
+      const nativeApp = document.documentElement.classList.contains('blys-native-app');
+      let tries = 0;
+      const run = () => {
+        if (room !== currentRoom || chatHistLoading || !chatHasMore[room]) return;
+        const tooShort = box.scrollHeight <= box.clientHeight + (nativeApp ? 24 : 160);
+        if (!tooShort || tries >= (nativeApp ? 1 : 4)) return;
+        tries += 1;
+        chatHistLoading = true;
+        loadChatMessages(room, { history: true }).finally(() => {
+          setTimeout(() => { chatHistLoading = false; run(); }, nativeApp ? 500 : 120);
+        });
+      };
+      setTimeout(run, nativeApp ? 900 : 120);
+      if (!nativeApp) setTimeout(run, 500);
+    }
+
+    function getChatScrollAnchor(box) {
+      if (!box) return null;
+      const boxTop = box.getBoundingClientRect().top;
+      const nodes = Array.from(box.querySelectorAll('.chat-msg'));
+      for (const node of nodes) {
+        const rect = node.getBoundingClientRect();
+        if (rect.bottom > boxTop + 8) {
+          return {
+            id: node.getAttribute('data-message-id') || '',
+            offset: rect.top - boxTop
+          };
+        }
+      }
+      return null;
+    }
+
+    function restoreChatScrollAnchor(box, anchor) {
+      if (!box || !anchor || !anchor.id) return;
+      const node = box.querySelector('[data-message-id="' + String(anchor.id).replace(/"/g, '\\"') + '"]');
+      if (!node) return;
+      const boxTop = box.getBoundingClientRect().top;
+      const currentOffset = node.getBoundingClientRect().top - boxTop;
+      box.scrollTop += currentOffset - anchor.offset;
+    }
+
+    function appendChatMessage(message, room, options) {
+      options = options || {};
+      const box = document.getElementById('chatMessages');
+      if (!box || room !== currentRoom) return;
+      // 增量轮询可能重复拉回已渲染的消息（如自己刚发的），按 id 去重；
+      // 若已存在且远端标记为“已撤回”，则就地更新为撤回样式
+      if (message && message.id) {
+        const sel = '[data-message-id="' + String(message.id).replace(/"/g, '\\"') + '"]';
+        const exist = box.querySelector(sel);
+        if (exist) {
+          if (message.recalled_at && !exist.querySelector('.chat-recalled')) {
+            exist.outerHTML = renderChatMessageHtml(message, room);
+          }
+          return;
+        }
+      }
+      // 轮询拉回的可能正是自己"发送中"的那条：就地替换占位消息，避免重复两条
+      if (message && !message.__pending && message.user_email === ((__user && __user.email) || '')) {
+        const key = chatSendKey(room, (message.content || '').trim(), message.image || '');
+        const tempId = chatPendingKeys.get(key);
+        if (tempId) {
+          const holder = box.querySelector('[data-message-id="' + tempId + '"]');
+          chatPendingKeys.delete(key);
+          chatPendingSends.delete(tempId);
+          if (holder) {
+            holder.outerHTML = renderChatMessageHtml(message, room);
+            return;
+          }
+        }
+      }
+      const empty = box.querySelector('.chat-empty, .chat-loading');
+      if (empty) box.innerHTML = '';
+      const wasNearBottom = typeof options.stickToBottom === 'boolean'
+        ? options.stickToBottom
+        : isChatNearBottom(box, 60);
+      box.insertAdjacentHTML('beforeend', renderChatMessageHtml(message, room));
+      const isOwnMessage = message.user_email === ((__user && __user.email) || '');
+      const allowOwnScroll = isOwnMessage && Date.now() > chatUserReadingHistoryUntil;
+      if (wasNearBottom || allowOwnScroll) {
+        box.scrollTop = box.scrollHeight;
+        // 图片异步解码会撑高内容，稍后补滚一次以停留在最新
+        setTimeout(() => {
+          if (wasNearBottom || allowOwnScroll) box.scrollTop = box.scrollHeight;
+        }, 120);
+      }
+    }
+
+    // 历史分页：把更早的消息插入到列表顶部，并维持用户当前阅读位置
+    function prependChatHistory(list, room, pageLimit) {
+      const box = document.getElementById('chatMessages');
+      if (!box || !list || !list.length) { chatHasMore[room] = false; const oldBtn = box && box.querySelector('.chat-history-more'); if (oldBtn) oldBtn.textContent = '没有更早消息了'; return; }
+      const existingIds = new Set(Array.from(box.querySelectorAll('.chat-msg')).map(node => node.getAttribute('data-message-id')).filter(Boolean));
+      // list 为降序（最新在前），转成升序以便按时间顺序插入顶部；边界重复的消息先去重。
+      const ordered = list.slice().reverse().filter(m => !m.id || !existingIds.has(String(m.id)));
+      if (!ordered.length) {
+        const oldest = list.reduce((mn, m) => Math.min(mn, m.created_at ? new Date(m.created_at).getTime() : Infinity), Infinity);
+        if (Number.isFinite(oldest)) chatOldestTs[room] = Math.min(chatOldestTs[room] || Infinity, oldest);
+        chatHasMore[room] = list.length >= (pageLimit || 30);
+      if (!chatHasMore[room]) { const oldBtn = box.querySelector('.chat-history-more'); if (oldBtn) oldBtn.textContent = '没有更早消息了'; }
+        return;
+      }
+      const anchor = getChatScrollAnchor(box);
+      const html = ordered.map(m => renderChatMessageHtml(m, room)).join('');
+      const oldBtn = box.querySelector('.chat-history-more');
+      if (oldBtn) oldBtn.remove();
+      box.insertAdjacentHTML('afterbegin', html);
+      if (list.length >= (pageLimit || 30)) box.insertAdjacentHTML('afterbegin', renderHistoryMoreButton(room));
+      const inserted = Array.from(box.querySelectorAll('.chat-msg')).slice(box.querySelector('.chat-history-more') ? 1 : 0, (box.querySelector('.chat-history-more') ? 1 : 0) + ordered.length);
+      // 固定当前可见消息的位置，图片解码后高度变化也要继续校准几次。
+      restoreChatScrollAnchor(box, anchor);
+      requestAnimationFrame(() => restoreChatScrollAnchor(box, anchor));
+      setTimeout(() => restoreChatScrollAnchor(box, anchor), 80);
+      setTimeout(() => restoreChatScrollAnchor(box, anchor), 220);
+      setTimeout(() => restoreChatScrollAnchor(box, anchor), 520);
+      inserted.forEach(node => {
+        node.querySelectorAll('img').forEach(img => {
+          img.addEventListener('load', () => restoreChatScrollAnchor(box, anchor), { once: true });
+          img.addEventListener('error', () => restoreChatScrollAnchor(box, anchor), { once: true });
+          if (img.complete) restoreChatScrollAnchor(box, anchor);
+        });
+      });
+      const minTs = ordered.reduce((mn, m) => Math.min(mn, m.created_at ? new Date(m.created_at).getTime() : 0), Infinity);
+      chatOldestTs[room] = Math.min(chatOldestTs[room] || Infinity, minTs);
+      chatHasMore[room] = list.length >= (pageLimit || 30);
+    }
+
+    function renderChatMessages(list, room, isFirst) {
+      const box = document.getElementById('chatMessages');
+      if (!box) return;
+      if (list.length === 0) {
+        box.innerHTML = '<div class="chat-empty">暂无消息，来做第一个发言的人吧～</div>';
+        return;
+      }
+
+      const html = list.map(m => renderChatMessageHtml(m, room)).join('');
+      box.innerHTML = html;
+      
+      ensureHistoryMoreButton(room);// 首屏始终滚到最新；图片是 base64 异步解码，会撑高内容，故多次兜底滚动
+      const scrollToBottom = () => { box.scrollTop = box.scrollHeight; };
+      if (isFirst) {
+        chatSuppressHistoryUntil = Date.now() + 1500;
+        scrollToBottom();
+        requestAnimationFrame(scrollToBottom);
+        setTimeout(scrollToBottom, 60);
+        setTimeout(scrollToBottom, 300);
+        setTimeout(scrollToBottom, 700);
+        setTimeout(() => {
+          scrollToBottom();
+          chatSuppressHistoryUntil = 0;
+        }, 1200);
+      }
+    }
+
+    function setChatQuote(message) {
+      if (!message || !message.id) return;
+      pendingChatQuote = {
+        id: message.id,
+        nickname: message.user_nickname || message.user_email?.split('@')[0] || '群友',
+        content: (message.content || '').trim(),
+        image: message.image || ''
+      };
+      const preview = document.getElementById('chatQuotePreview');
+      const name = document.getElementById('chatQuotePreviewName');
+      const text = document.getElementById('chatQuotePreviewText');
+      if (name) name.textContent = pendingChatQuote.nickname;
+      if (text) text.textContent = pendingChatQuote.content || (pendingChatQuote.image ? '[图片]' : '[空消息]');
+      if (preview) preview.hidden = false;
+      const input = document.getElementById('chatInput');
+      if (input) {
+        input.placeholder = `回复 ${pendingChatQuote.nickname}…`;
+        input.focus();
+      }
+    }
+
+    function clearChatQuote() {
+      pendingChatQuote = null;
+      const preview = document.getElementById('chatQuotePreview');
+      if (preview) preview.hidden = true;
+      const input = document.getElementById('chatInput');
+      if (input) input.placeholder = '文明发言，禁止荐股与广告…';
+    }
+
+    function updateChatComposerState() {
+      const input = document.getElementById('chatInput');
+      const sendBtn = document.getElementById('chatSendBtn');
+      const hasContent = !!(input && (input.value || '').trim());
+      const hasImage = !!pendingChatImage;
+      if (sendBtn) sendBtn.classList.toggle('is-visible', hasContent || hasImage);
+    }
+
+    function bindChatQuoteActions() {
+      const box = document.getElementById('chatMessages');
+      if (!box || box.__chatQuoteBound) return;
+      let pressTimer = null;
+      let pressTarget = null;
+      const cancel = () => {
+        if (pressTimer) clearTimeout(pressTimer);
+        pressTimer = null;
+        pressTarget = null;
+      };
+      const trigger = (target) => {
+        const msgEl = target && target.closest('.chat-msg-other');
+        if (!msgEl) return;
+        const id = msgEl.getAttribute('data-message-id');
+        const room = msgEl.getAttribute('data-room');
+        const message = chatMessageCache.get(`${room}:${id}`);
+        if (message) {
+          setChatQuote(message);
+          msgEl.classList.add('chat-msg-quoted');
+          setTimeout(() => msgEl.classList.remove('chat-msg-quoted'), 500);
+        }
+      };
+      box.addEventListener('pointerdown', (event) => {
+        const msgEl = event.target.closest('.chat-msg-other');
+        if (!msgEl || event.target.closest('.chat-quoted-message')) return;
+        pressTarget = event.target;
+        pressTimer = setTimeout(() => { trigger(pressTarget); cancel(); }, 550);
+      });
+      ['pointerup', 'pointercancel', 'pointerleave'].forEach(type => box.addEventListener(type, cancel));
+      box.addEventListener('contextmenu', (event) => {
+        if (event.target.closest('.chat-msg-other')) event.preventDefault();
+      });
+      box.addEventListener('click', (event) => {
+        const quoted = event.target.closest('.chat-quoted-message');
+        if (!quoted) return;
+        const quoteId = quoted.dataset.quoteId || '';
+        const target = Array.from(box.querySelectorAll('.chat-msg')).find(el => el.getAttribute('data-message-id') === quoteId);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+      box.__chatQuoteBound = true;
+    }
+
+    async function recallChatMessage(messageId) {
+      if (!messageId || !__user.loggedIn) return;
+      if (!confirm('确定撤回这条消息吗？2分钟内可以撤回。')) return;
+      try {
+        const d = await sbRpc('recall_message', { p_token: __user.token, p_message_id: messageId });
+        if (d && d.ok) {
+          // 就地把这条改成“已撤回”，不再整列表重载
+          const box = document.getElementById('chatMessages');
+          const node = box && box.querySelector('[data-message-id="' + String(messageId).replace(/"/g, '\\"') + '"]');
+          const cached = chatMessageCache.get(`${currentRoom}:${messageId}`);
+          if (node && cached) {
+            node.outerHTML = renderChatMessageHtml(Object.assign({}, cached, { recalled_at: new Date().toISOString() }), currentRoom);
+          } else {
+            loadChatMessages(currentRoom, { isFirst: true });
+          }
+        } else {
+          alert('撤回失败：' + ((d && (d.msg || d.message)) || '消息可能已超过2分钟'));
+        }
+      } catch (e) {
+        alert('撤回失败：' + (e && e.message ? e.message : '请检查网络'));
+      }
+    }
+
+    async function sendChatMessage() {
+      if (!__user.loggedIn) { openAuthModal(); return; }
+      if (currentRoom === 'vip' && !__user.isVip) { openRedeemModal(); return; }
+      if (currentRoom === 'private') { sendPrivateMessage(); return; }
+
+      const input = document.getElementById('chatInput');
+      const content = (input.value || '').trim();
+      const image = pendingChatImage;
+
+      if (!content && !image) return;
+      if (content.length > 500) { alert('单条消息最多 500 字'); return; }
+
+      const room = currentRoom;
+      const quote = pendingChatQuote;
+      const payload = {
+        p_token: __user.token,
+        p_room: room,
+        p_content: content,
+        p_image: image || null,
+        p_reply_to_id: quote && quote.id ? quote.id : null
+      };
+      const tempId = 'pending-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+      const optimistic = {
+        id: tempId,
+        user_email: __user.email,
+        user_nickname: __user.nickname || __user.email?.split('@')[0] || '我',
+        content,
+        image,
+        reply_to_id: quote && quote.id ? quote.id : null,
+        reply_to_nickname: quote && quote.nickname ? quote.nickname : null,
+        reply_to_content: quote && quote.content ? quote.content : null,
+        reply_to_image: quote && quote.image ? quote.image : null,
+        created_at: new Date().toISOString(),
+        __pending: true,
+        __sendState: '发送中…'
+      };
+      const key = chatSendKey(room, content, image);
+
+      // 乐观渲染：先清空输入框并立即上屏，用户无需等待网络往返
+      input.value = '';
+      input.style.height = 'auto';
+      clearChatImage();
+      clearChatQuote();
+      updateChatComposerState();
+      chatPendingSends.set(tempId, { key, room, message: optimistic, payload, createdAt: Date.now(), delivering: false, attempts: 0 });
+      chatPendingKeys.set(key, tempId);
+      try {
+        appendChatMessage(optimistic, room);
+      } catch (e) {
+        console.error('[chat] optimistic append failed, continue delivery', e);
+      }
+
+      // 后台发送，不阻塞输入框；发送按钮保持可用，允许连续发言
+      updateChatPendingState(tempId, '发送中…');
+      deliverChatMessage(tempId);
+      window.setTimeout(() => deliverChatMessage(tempId), 800);
+      window.setTimeout(() => {
+        if (chatPendingSends.has(tempId)) markChatSendFailed(tempId, '发送超时，请点重试');
+      }, 18000);
+    }
+
+    async function sendPrivateMessage() {
+      if (!__user.loggedIn) { openAuthModal(); return; }
+      if (!currentPrivateConversationId) {
+        await openPrivateRoom();
+        if (!currentPrivateConversationId) return;
+      }
+      const input = document.getElementById('chatInput');
+      const content = (input.value || '').trim();
+      const image = pendingChatImage;
+      if (!content && !image) return;
+      if (content.length > 500) { alert('单条消息最多 500 字'); return; }
+      const quote = pendingChatQuote;
+      const payload = {
+        p_token: __user.token,
+        p_conversation_id: currentPrivateConversationId,
+        p_content: content,
+        p_image: image || null,
+        p_reply_to_id: quote && quote.id ? quote.id : null
+      };
+      const tempId = 'pending-private-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+      const optimistic = {
+        id: tempId,
+        user_email: __user.email,
+        user_nickname: __user.nickname || __user.email?.split('@')[0] || '我',
+        content,
+        image,
+        reply_to_id: quote && quote.id ? quote.id : null,
+        reply_to_nickname: quote && quote.nickname ? quote.nickname : null,
+        reply_to_content: quote && quote.content ? quote.content : null,
+        reply_to_image: quote && quote.image ? quote.image : null,
+        created_at: new Date().toISOString(),
+        __pending: true,
+        __sendState: '发送中…'
+      };
+      input.value = '';
+      input.style.height = 'auto';
+      clearChatImage();
+      clearChatQuote();
+      updateChatComposerState();
+      try { appendChatMessage(optimistic, 'private'); } catch (e) {}
+      try {
+        const d = await sbRpc('send_private_message', payload, { timeoutMs: 15000 });
+        if (d && d.ok) {
+          const box = document.getElementById('chatMessages');
+          const node = box && box.querySelector('[data-message-id="' + tempId + '"]');
+          if (node) node.outerHTML = renderChatMessageHtml(Object.assign({}, optimistic, { id: d.id, __pending: false }), 'private');
+          lastSeenTs.private = Math.max(lastSeenTs.private || 0, new Date(optimistic.created_at).getTime());
+        } else {
+          const box = document.getElementById('chatMessages');
+          const node = box && box.querySelector('[data-message-id="' + tempId + '"]');
+          if (node) node.outerHTML = renderChatMessageHtml(Object.assign({}, optimistic, { __pending: false, __failed: true }), 'private');
+          alert((d && d.msg) || '私聊发送失败');
+        }
+      } catch (e) {
+        const box = document.getElementById('chatMessages');
+        const node = box && box.querySelector('[data-message-id="' + tempId + '"]');
+        if (node) node.outerHTML = renderChatMessageHtml(Object.assign({}, optimistic, { __pending: false, __failed: true }), 'private');
+        alert('私聊发送失败：' + (e && e.message ? e.message : '网络异常'));
+      }
+    }
+
+    // 实际把消息发到服务器，成功后把本地占位消息替换为真实消息
+    async function deliverChatMessage(tempId) {
+      const task = chatPendingSends.get(tempId);
+      if (!task) return;
+      if (task.delivering) return;
+      task.delivering = true;
+      task.attempts = (task.attempts || 0) + 1;
+      task.lastAttemptAt = Date.now();
+      console.log('[chat] deliverChatMessage start', tempId, 'attempt=', task.attempts);
+      updateChatPendingState(tempId, task.attempts > 1 ? '重试发送中…' : '发送中…');
+      try {
+        // 写操作可能受 Supabase 冷启动/网络影响而变慢，加超时兜底：
+        // 避免 fetch 挂起导致气泡永久停在“发送中…”。超时则转失败可重试。
+        const d = await sbRpc('send_message', task.payload, { timeoutMs: 15000 });
+        console.log('[chat] send_message response', d);
+        if (d && d.ok) {
+          updateChatPendingState(tempId, '发送成功…');
+          triggerChatPushNotification(task).catch(e => console.warn('[chat] push notify failed', e));
+          finalizeChatSend(tempId, d.id || d.message_id || null);
+        } else {
+          const status = (d && d._status) ? ' [HTTP ' + d._status + ']' : '';
+          const detail = d && (d.msg || d.message || d.error || d.details || (d._raw ? d._raw.slice(0, 200) : JSON.stringify(d)));
+          markChatSendFailed(tempId, (detail || '未知错误') + status);
+        }
+      } catch (e) {
+        console.error('[chat] deliverChatMessage error', e);
+        markChatSendFailed(tempId, (e && e.message) ? e.message : '网络异常');
+      } finally {
+        const latest = chatPendingSends.get(tempId);
+        if (latest) latest.delivering = false;
+      }
+    }
+
+    function updateChatPendingState(tempId, text) {
+      const task = chatPendingSends.get(tempId);
+      if (task && task.message) task.message.__sendState = text;
+      const box = document.getElementById('chatMessages');
+      const node = box && box.querySelector('[data-message-id="' + tempId + '"]');
+      const state = node && node.querySelector('.chat-msg-state');
+      if (state) state.textContent = text;
+    }
+
+    function startChatSendWatchdog() {
+      if (chatSendWatchdogTimer) clearInterval(chatSendWatchdogTimer);
+      chatSendWatchdogTimer = setInterval(() => {
+        const now = Date.now();
+        chatPendingSends.forEach((task, tempId) => {
+          if (!task || task.message.__failed) return;
+          const age = now - (task.createdAt || now);
+          const lastAttemptAge = now - (task.lastAttemptAt || 0);
+          if (!task.delivering && (!task.lastAttemptAt || lastAttemptAge > 5000) && (task.attempts || 0) < 2) {
+            console.warn('[chat] watchdog redeliver pending send', tempId, 'age=', age);
+            deliverChatMessage(tempId);
+            return;
+          }
+          if (age > 20000) {
+            markChatSendFailed(tempId, '发送超时，请点重试');
+          }
+        });
+      }, 2000);
+    }
+
+    // 发送成功：把占位消息就地换成带真实 id 的消息（可撤回、可被引用）
+    function finalizeChatSend(tempId, realId) {
+      const task = chatPendingSends.get(tempId);
+      chatPendingSends.delete(tempId);
+      if (task) chatPendingKeys.delete(task.key);
+      if (!task) return;
+      const box = document.getElementById('chatMessages');
+      if (!box) return;
+      const node = box.querySelector('[data-message-id="' + tempId + '"]');
+      if (!node) return;
+      // 轮询可能已把真实消息追加进来，此时直接移除占位，避免重复
+      if (realId && box.querySelector('[data-message-id="' + String(realId).replace(/"/g, '\\"') + '"]')) {
+        node.remove();
+        return;
+      }
+      const finalMessage = Object.assign({}, task.message, { id: realId || task.message.id, __pending: false });
+      node.outerHTML = renderChatMessageHtml(finalMessage, task.room);
+      if (realId) lastSeenTs[task.room] = Math.max(lastSeenTs[task.room] || 0, new Date(finalMessage.created_at).getTime());
+    }
+
+    // 发送失败：占位消息标红并提供重试，不丢用户内容
+    function markChatSendFailed(tempId, detail) {
+      const task = chatPendingSends.get(tempId);
+      if (!task) return;
+      task.message.__pending = false;
+      task.message.__failed = true;
+      task.message.__sendState = '';
+      task.delivering = false;
+      task.error = detail;
+      const box = document.getElementById('chatMessages');
+      const node = box && box.querySelector('[data-message-id="' + tempId + '"]');
+      if (node) node.outerHTML = renderChatMessageHtml(task.message, task.room);
+      console.warn('[chat] send failed:', detail);
+    }
+
+    // 点“重试”重新投递同一条消息
+    function retryChatSend(tempId) {
+      const task = chatPendingSends.get(tempId);
+      if (!task) return;
+      task.message.__failed = false;
+      task.message.__pending = true;
+      task.createdAt = Date.now();
+      task.delivering = false;
+      task.lastAttemptAt = 0;
+      const box = document.getElementById('chatMessages');
+      const node = box && box.querySelector('[data-message-id="' + tempId + '"]');
+      if (node) node.outerHTML = renderChatMessageHtml(task.message, task.room);
+      deliverChatMessage(tempId);
+    }
+
+    function onChatImageSelected(input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      prepareChatImageFile(file).finally(() => { input.value = ''; });
+    }
+
+    function handleChatPaste(event) {
+      const items = event.clipboardData && event.clipboardData.items;
+      if (!items || !items.length) return;
+
+      let imageFile = null;
+      for (const item of items) {
+        if (item && item.kind === 'file' && item.type && item.type.startsWith('image/')) {
+          imageFile = item.getAsFile();
+          break;
+        }
+      }
+      if (!imageFile) return;
+
+      event.preventDefault();
+      const ext = (imageFile.type.split('/')[1] || 'png').replace(/[^a-z0-9]/gi, '').toLowerCase() || 'png';
+      const pastedFile = new File([imageFile], `粘贴图片.${ext}`, { type: imageFile.type });
+      prepareChatImageFile(pastedFile);
+    }
+
+    function prepareChatImageFile(file) {
+      if (!file.type.startsWith('image/')) { alert('请选择图片文件'); return Promise.resolve(); }
+      if (file.size > 8 * 1024 * 1024) { alert('图片最大支持 8MB'); return Promise.resolve(); }
+
+      // 压缩：最大宽度 720，质量 0.7，控制 base64 在合理范围
+      return compressChatImage(file, 720, 0.7).then(({ base64, name }) => {
+        // base64 超过 600KB 时再次压缩
+        const roughSize = Math.round(base64.length * 0.75);
+        if (roughSize > 600 * 1024) {
+          return compressChatImage(file, 480, 0.6);
+        }
+        return { base64, name };
+      }).then(({ base64, name }) => {
+        const finalSize = Math.round(base64.length * 0.75);
+        if (finalSize > 1 * 1024 * 1024) {
+          throw new Error('图片压缩后仍超过 1MB，请换一张更小的图片');
+        }
+        pendingChatImage = base64;
+        const thumb = document.getElementById('chatImgPreviewThumb');
+        const preview = document.getElementById('chatImgPreview');
+        const nameEl = document.getElementById('chatImgPreviewName');
+        if (thumb) thumb.src = base64;
+        if (nameEl) nameEl.textContent = name;
+        if (preview) preview.classList.add('active');
+        updateChatComposerState();
+      }).catch(err => {
+        alert('图片处理失败: ' + (err && err.message || '未知错误'));
+        clearChatImage();
+      });
+    }
+
+    function clearChatImage() {
+      pendingChatImage = null;
+      const preview = document.getElementById('chatImgPreview');
+      const thumb = document.getElementById('chatImgPreviewThumb');
+      if (preview) preview.classList.remove('active');
+      if (thumb) thumb.src = '';
+      const input = document.getElementById('chatImgInput');
+      if (input) input.value = '';
+      updateChatComposerState();
+    }
+
+    function compressChatImage(file, maxWidth, quality) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            let { width, height } = img;
+            if (width > maxWidth) {
+              height = Math.round(height * maxWidth / width);
+              width = maxWidth;
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            const base64 = canvas.toDataURL('image/jpeg', quality);
+            resolve({ base64, name: file.name, width, height });
+          };
+          img.onerror = () => reject(new Error('图片加载失败'));
+          img.src = e.target.result;
+        };
+        reader.onerror = () => reject(new Error('图片读取失败'));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function startChatPoll() {
+      if (chatPollTimer) clearInterval(chatPollTimer);
+      chatPollTimer = setInterval(() => {
+        // 私聊不自动轮询，避免列表/内容自己刷新；需要时切换会话或下拉历史再加载
+        if (currentRoom === 'private') return;
+        // VIP 房间未解锁时不轮询
+        if (currentRoom === 'vip' && (!__user.loggedIn || !__user.isVip)) return;
+        if (chatHistLoading) return;
+        loadChatMessages(currentRoom);
+        if (shouldShowMembersAdmin(currentRoom) && chatMembersPanelOpen) loadChatMembersAdmin('vip');
+      }, 5000);
+    }
+
+    // ===== 新消息提醒 =====
+    function initChatNotification() {
+      if (window.BLYS_APP && typeof window.BLYS_APP.isNativeApp === 'function' && window.BLYS_APP.isNativeApp()) {
+        initNativeChatNotification();
+        return;
+      }
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('sw.js?v=2026082414', { updateViaCache: 'none' }).then(() => {
+          refreshChatPushSubscription();
+        }).catch(() => {});
+      }
+      inAppNotifOn = localStorage.getItem('blys_notif_inapp') === 'on';
+      notifEnabled = false;
+      updateNotifBtn();
+      if (inAppNotifOn && typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        setTimeout(refreshChatPushSubscription, 500);
+      }
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) return;
+        inAppNotifOn = localStorage.getItem('blys_notif_inapp') === 'on';
+        if (!notifEnabled) refreshChatPushSubscription();
+        updateNotifBtn();
+        clearRoomUnread(currentRoom);
+        // 回到页面：展示未读横幅
+        showUnreadBanner();
+        if (currentRoom !== 'private') loadChatMessages(currentRoom);
+      });
+    }
+
+    function initNativeChatNotification() {
+      const diagEl = document.getElementById('chatNotifDiag');
+      if (diagEl) diagEl.hidden = true;
+      inAppNotifOn = false;
+      notifEnabled = localStorage.getItem('blys_native_push_switch') !== 'off';
+      cleanupNativeAppWebPushSubscription();
+      updateNotifBtn();
+      refreshNativeNotifDiag();
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) return;
+        cleanupNativeAppWebPushSubscription();
+        refreshNativeNotifDiag();
+        clearRoomUnread(currentRoom);
+        showUnreadBanner();
+        if (currentRoom !== 'private') loadChatMessages(currentRoom);
+      });
+      window.addEventListener('blys:user:change', () => {
+        cleanupNativeAppWebPushSubscription();
+        setTimeout(cleanupNativeAppWebPushSubscription, 1200);
+      });
+      window.addEventListener('blys:native-push-diag', () => {
+        refreshNativeNotifDiag();
+      });
+    }
+
+    async function cleanupNativeAppWebPushSubscription() {
+      if (!isNativeNotificationApp()) return;
+      localStorage.removeItem('blys_notif');
+      localStorage.removeItem('blys_notif_inapp');
+      inAppNotifOn = false;
+      try {
+        if (!('serviceWorker' in navigator)) return;
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (const reg of regs) {
+          try { await clearChatPushSubscription(reg); } catch (e) {}
+        }
+        if (__user && __user.loggedIn && __user.token) {
+          try { await sbRpc('delete_push_subscriptions_for_user', { p_token: __user.token }, { timeoutMs: 8000 }); } catch (e) {}
+        }
+      } catch (e) {
+        console.warn('[chat] cleanup native app web push failed', e);
+      }
+    }
+
+    let browserAutoResetRunning = false;
+    function scheduleBrowserNotificationAutoReset(reason) {
+      if (isNativeNotificationApp()) return;
+      if (!supportsSystemPush()) return;
+      setTimeout(() => autoResetBrowserNotification(reason), reason === 'init' ? 1200 : 300);
+    }
+
+    async function autoResetBrowserNotification(reason) {
+      if (isNativeNotificationApp()) return;
+      if (!supportsSystemPush()) return;
+      if (!__user || !__user.loggedIn || !__user.token) return;
+      if (Notification.permission !== 'granted') return;
+      if (localStorage.getItem('blys_notif') !== 'on') return;
+      if (browserAutoResetRunning) return;
+      const key = 'blys_browser_auto_reset_' + __user.token + '_2026082202';
+      if (sessionStorage.getItem(key) === 'done') return;
+      browserAutoResetRunning = true;
+      try {
+        sessionStorage.setItem(key, 'done');
+        setNotifDiag('正在刷新浏览器提醒...');
+        await unsubscribeChatPush();
+        await subscribeChatPush();
+        notifEnabled = true;
+        localStorage.setItem('blys_notif', 'on');
+        setNotifDiag('系统弹窗提醒已开启');
+      } catch (e) {
+        sessionStorage.removeItem(key);
+        console.warn('[chat] browser notification auto reset failed', reason, e);
+        setNotifDiag(getNotifErrorText(e));
+      } finally {
+        browserAutoResetRunning = false;
+        updateNotifBtn();
+      }
+    }
+
+    let nativeAutoResetRunning = false;
+    function scheduleNativeNotificationAutoReset(reason) {
+      if (!isNativeNotificationApp()) return;
+      setTimeout(() => autoResetNativeNotification(reason), reason === 'init' ? 1600 : 300);
+    }
+
+    async function autoResetNativeNotification(reason) {
+      if (!isNativeNotificationApp()) return;
+      if (!__user || !__user.loggedIn || !__user.token) return;
+      if (nativeAutoResetRunning) return;
+      const key = 'blys_native_auto_reset_' + __user.token + '_2026082202';
+      if (sessionStorage.getItem(key) === 'done') return;
+      nativeAutoResetRunning = true;
+      try {
+        sessionStorage.setItem(key, 'done');
+        setNotifDiag('正在刷新 App 提醒...');
+        await cleanupNativeAppWebPushSubscription();
+        if (window.BLYS_APP && typeof window.BLYS_APP.resetNotifications === 'function') {
+          await window.BLYS_APP.resetNotifications();
+        } else if (window.BLYS_APP && typeof window.BLYS_APP.enableNotifications === 'function') {
+          await window.BLYS_APP.enableNotifications({ skipSelfTest: true });
+        }
+        notifEnabled = true;
+        localStorage.setItem('blys_native_push_switch', 'on');
+        await refreshNativeNotifDiag();
+      } catch (e) {
+        sessionStorage.removeItem(key);
+        console.warn('[chat] native notification auto reset failed', reason, e);
+        setNotifDiag('App 提醒自动刷新失败：' + ((e && e.message) ? e.message : 'unknown'));
+      } finally {
+        nativeAutoResetRunning = false;
+        updateNotifBtn();
+      }
+    }
+
+    function supportsSystemPush() {
+      return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+    }
+
+    function isNativeNotificationApp() {
+      return !!(window.BLYS_APP && typeof window.BLYS_APP.isNativeApp === 'function' && window.BLYS_APP.isNativeApp());
+    }
+
+    function formatDiagDateTime(value) {
+      if (!value) return '';
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return String(value);
+      const pad = (n) => String(n).padStart(2, '0');
+      return d.getMonth() + 1 + '-' + d.getDate() + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
+    }
+
+    function getNativeDiagText(diag) {
+      if (!diag) return 'App 诊断读取中...';
+      const lines = [];
+      lines.push(diag.switchWanted ? '原生推送开关：开启' : '原生推送开关：关闭');
+      lines.push('登录状态：' + (diag.loggedIn ? '已登录' : '未登录'));
+      lines.push('推送服务：' + (diag.pushProvider === 'getui' || diag.pushProvider === 'getui_android' ? '个推' : (diag.pushProvider === 'firebase_android' ? 'Firebase' : '未确认')));
+      if (diag.getuiPlugin) {
+        lines.push('个推配置：' + (diag.getuiConfigured ? '已配置' : '未配置AppId'));
+        lines.push('个推CID：' + (diag.getuiCidPresent ? '已获取' : '未获取'));
+        lines.push('个推开关：' + (diag.getuiPushTurnedOn ? '开启' : '未确认'));
+        if (diag.getuiLastEvent) lines.push('个推事件：' + diag.getuiLastEvent);
+      }
+      lines.push('推送权限：' + (diag.nativePermission || '未读取'));
+      lines.push('弹窗权限：' + (diag.localPermission || '未读取'));
+      if (diag.pushProvider !== 'getui') lines.push('Google服务：' + (typeof diag.googlePlayServicesAvailable === 'boolean' ? (diag.googlePlayServicesAvailable ? '可用' : '不可用') : '未读取'));
+      lines.push('设备令牌：' + (diag.tokenPresent ? (diag.tokenPreview || '已获取') : '未获取'));
+      lines.push('服务器绑定：' + (diag.tokenSavedToServer ? '成功' : '未确认'));
+      if (diag.firebaseTokenError) lines.push('Firebase取token：' + diag.firebaseTokenError);
+      lines.push('本地通知自检：' + (diag.localAlertSelfTestAt ? (diag.localAlertSelfTestOk ? '成功 ' : '失败 ') + formatDiagDateTime(diag.localAlertSelfTestAt) : '未测试'));
+      lines.push('最近收到推送：' + (diag.lastPushReceivedAt ? formatDiagDateTime(diag.lastPushReceivedAt) : '暂无'));
+      lines.push('前台弹窗补发：' + (diag.lastForegroundPopupAt ? formatDiagDateTime(diag.lastForegroundPopupAt) : '暂无'));
+      if (diag.lastError) lines.push('最近错误：' + diag.lastError);
+      return lines.join('\n');
+    }
+
+    async function refreshNativeNotifDiag() {
+      if (!isNativeNotificationApp()) return;
+      const el = document.getElementById('chatNotifDiag');
+      if (!el) return;
+      try {
+        const diag = await window.BLYS_APP.getDiagnostics();
+        notifEnabled = !!diag.switchWanted;
+        setNotifDiag(getNativeDiagText(diag));
+        updateNotifBtn();
+      } catch (e) {
+        setNotifDiag('App 诊断读取失败：' + ((e && e.message) ? e.message : 'unknown'));
+      }
+    }
+
+    function getNotifErrorText(err) {
+      const name = err && err.name ? String(err.name) : '';
+      const msg = err && err.message ? String(err.message) : '';
+      const raw = msg ? '：' + msg : '';
+      if (!supportsSystemPush()) return '当前环境不支持系统弹窗推送';
+      if (typeof Notification !== 'undefined' && Notification.permission === 'denied') return '系统通知权限已被禁止';
+      if (msg.includes('SW rebuild failed')) return '重建推送组件失败' + (name ? '（' + name + '）' : '') + raw;
+      if (msg.includes('SW ready failed')) return '读取推送组件失败' + (name ? '（' + name + '）' : '') + raw;
+      if (msg.includes('Get subscription failed')) return '读取旧推送订阅失败' + (name ? '（' + name + '）' : '') + raw;
+      if (msg.includes('不支持系统推送')) return '当前浏览器不支持系统弹窗推送';
+      if (msg.includes('请先登录')) return '请先登录后再开启提醒';
+      if (msg.includes('没有允许浏览器通知权限')) return '系统通知权限没有允许';
+      if (msg.includes('订阅保存失败')) return '推送订阅保存失败，服务器没有记住这台手机';
+      if (msg.includes('Registration failed')) return '浏览器注册系统弹窗失败' + (name ? '（' + name + '）' : '') + raw;
+      if (msg.includes('Subscription failed')) return '浏览器创建推送订阅失败' + (name ? '（' + name + '）' : '') + raw;
+      if (msg.includes('Permission denied')) return '系统通知权限没有允许';
+      return '系统弹窗开启失败，已退回页内提醒' + (name ? '（' + name + '）' : '') + raw;
+    }
+
+    function setNotifDiag(msg) {
+      notifDiagMsg = msg || '';
+      const el = document.getElementById('chatNotifDiag');
+      if (!el) return;
+      el.textContent = notifDiagMsg;
+      el.style.whiteSpace = isNativeNotificationApp() ? 'pre-line' : 'normal';
+    }
+
+    function urlBase64ToUint8Array(base64String) {
+      const padding = '='.repeat((4 - base64String.length % 4) % 4);
+      const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+      const rawData = atob(base64);
+      const outputArray = new Uint8Array(rawData.length);
+      for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+      return outputArray;
+    }
+
+    async function saveChatPushSubscription(subscription) {
+      if (!subscription || !__user.loggedIn || !__user.token) return false;
+      const d = await sbRpc('save_push_subscription', {
+        p_token: __user.token,
+        p_subscription: subscription.toJSON(),
+        p_user_agent: navigator.userAgent || ''
+      }, { timeoutMs: 10000 });
+      return !!(d && d.ok);
+    }
+
+    async function clearChatPushSubscription(reg) {
+      try {
+        const sub = await reg.pushManager.getSubscription();
+        if (!sub) return;
+        const endpoint = sub.endpoint;
+        await sub.unsubscribe();
+        if (__user && __user.loggedIn && __user.token && endpoint) {
+          await sbRpc('delete_push_subscription', { p_token: __user.token, p_endpoint: endpoint }, { timeoutMs: 8000 });
+        }
+      } catch (e) {
+        console.warn('[chat] clear push subscription failed', e);
+      }
+    }
+
+    async function rebuildChatServiceWorker() {
+      if (!('serviceWorker' in navigator)) return navigator.serviceWorker.ready;
+      try {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (const reg of regs) {
+          const url = reg.active && reg.active.scriptURL ? reg.active.scriptURL : '';
+          const waiting = reg.waiting && reg.waiting.scriptURL ? reg.waiting.scriptURL : '';
+          const installing = reg.installing && reg.installing.scriptURL ? reg.installing.scriptURL : '';
+          const hit = [url, waiting, installing].some((s) => String(s).includes('/sw.js'));
+          if (hit) {
+            try { await clearChatPushSubscription(reg); } catch (e) {}
+            try { await reg.unregister(); } catch (e) {}
+          }
+        }
+      } catch (e) {
+        console.warn('[chat] rebuild service worker scan failed', e);
+      }
+      try {
+        return await navigator.serviceWorker.register('sw.js?v=2026082414', { updateViaCache: 'none' });
+      } catch (e) {
+        throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
+      }
+    }
+
+    async function subscribeChatPush(retryMode) {
+      if (!supportsSystemPush()) throw new Error('当前浏览器不支持系统推送');
+      if (!__user.loggedIn || !__user.token) throw new Error('请先登录后再开启提醒');
+      const permission = Notification.permission === 'granted'
+        ? 'granted'
+        : await Notification.requestPermission();
+      if (permission !== 'granted') throw new Error('你没有允许浏览器通知权限');
+
+      let reg;
+      try {
+        reg = await navigator.serviceWorker.ready;
+      } catch (e) {
+        throw new Error('SW ready failed: ' + ((e && e.message) ? e.message : 'unknown'));
+      }
+      try {
+        let sub;
+        try {
+          sub = await reg.pushManager.getSubscription();
+        } catch (e) {
+          throw new Error('Get subscription failed: ' + ((e && e.message) ? e.message : 'unknown'));
+        }
+        if (!sub) {
+          try {
+            sub = await reg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(PUSH_VAPID_PUBLIC_KEY)
+            });
+          } catch (e) {
+            throw new Error('Subscription failed: ' + ((e && e.message) ? e.message : 'unknown'));
+          }
+        }
+        const saved = await saveChatPushSubscription(sub);
+        if (!saved) throw new Error('订阅保存失败，请确认已执行 push_upgrade.sql');
+        return sub;
+      } catch (e) {
+        if (retryMode === 'after-reset') throw e;
+        console.warn('[chat] subscribe failed, retry after reset', e);
+        await clearChatPushSubscription(reg);
+        await rebuildChatServiceWorker();
+        return subscribeChatPush('after-reset');
+      }
+    }
+
+    async function unsubscribeChatPush() {
+      if (!supportsSystemPush() || !__user.loggedIn || !__user.token) return;
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        if (!sub) return;
+        const endpoint = sub.endpoint;
+        await sub.unsubscribe();
+        await sbRpc('delete_push_subscription', { p_token: __user.token, p_endpoint: endpoint }, { timeoutMs: 8000 });
+      } catch (e) {
+        console.warn('[chat] unsubscribe push failed', e);
+      }
+    }
+
+    async function refreshChatPushSubscription() {
+      if (!supportsSystemPush()) return;
+      if (localStorage.getItem('blys_notif') !== 'on' && localStorage.getItem('blys_notif_inapp') !== 'on') return;
+      if (Notification.permission !== 'granted') return;
+      if (!__user.loggedIn || !__user.token) return;
+      try {
+        await subscribeChatPush();
+        notifEnabled = true;
+        localStorage.setItem('blys_notif', 'on');
+        setNotifDiag('系统弹窗提醒已开启');
+        updateNotifBtn();
+      } catch (e) {
+        notifEnabled = false;
+        setNotifDiag(getNotifErrorText(e));
+        console.warn('[chat] refresh push subscription failed', e);
+        updateNotifBtn();
+      }
+    }
+
+    function getBrowserTip() {
+      const ua = navigator.userAgent || '';
+      const isWeChat = /MicroMessenger/i.test(ua);
+      const isQQ = /QQ\//i.test(ua) || /Qzone/i.test(ua);
+      const isTikTok = /douyin|aweme|tiktok/i.test(ua);
+      const mobileTip = '苹果手机请用 Safari 把网站添加到主屏幕，然后从桌面图标进入聊天室后开启提醒；安卓手机请使用群里的 App 开启 App 提醒。';
+      if (isWeChat) return '微信内置浏览器不支持网页通知。请点右上角「···」→「在浏览器打开」后再按教程操作。' + mobileTip;
+      if (isQQ) return 'QQ 内置浏览器不支持网页通知。请换到系统浏览器后再按教程操作。' + mobileTip;
+      if (isTikTok) return '抖音内置浏览器不支持网页通知。请换到系统浏览器后再按教程操作。' + mobileTip;
+      return '当前浏览器暂时无法开启系统弹窗，已为你开启「页内提醒」。' + mobileTip;
+    }
+
+    function getBrowserName() {
+      const ua = navigator.userAgent || '';
+      if (/MicroMessenger/i.test(ua)) return '微信';
+      if (/QQ\//i.test(ua) || /Qzone/i.test(ua)) return 'QQ';
+      if (/douyin|aweme|tiktok/i.test(ua)) return '抖音';
+      if (/Oppo|ColorOS/i.test(ua)) return 'OPPO 自带浏览器';
+      if (/vivo/i.test(ua)) return 'vivo 自带浏览器';
+      if (/Miui|Redmi|Xiaomi/i.test(ua)) return '小米自带浏览器';
+      if (/Huawei|Harmony/i.test(ua)) return '华为浏览器';
+      if (/Chrome/i.test(ua)) return 'Chrome';
+      if (/Edg/i.test(ua)) return 'Edge';
+      return '当前浏览器';
+    }
+
+    function updateNotifBtn() {
+      const btn = document.getElementById('chatNotifBtn');
+      if (!btn) return;
+      if (isNativeNotificationApp()) {
+        if (notifEnabled) {
+          btn.textContent = '🔔 App提醒已开';
+          btn.classList.add('on');
+          btn.title = 'Android 原生推送已开启';
+        } else {
+          btn.textContent = '🔕 开启App提醒';
+          btn.classList.remove('on');
+          btn.title = '开启 Android 原生推送提醒';
+        }
+        if (!notifDiagMsg) setNotifDiag('App 诊断读取中...');
+        return;
+      }
+      if (notifEnabled) {
+        btn.textContent = '🔔 已开启';
+        btn.classList.add('on');
+        btn.title = '系统弹窗提醒已开启';
+        setNotifDiag('系统弹窗提醒已开启');
+        return;
+      }
+      // 优先显示「页内提醒」状态（任何浏览器都生效，且可持久化）
+      if (inAppNotifOn) {
+        btn.textContent = '📬 页内提醒';
+        btn.classList.add('on');
+        btn.title = '页内未读提醒已开启（切走再回来会看到未读横幅）';
+        if (!notifDiagMsg) setNotifDiag('当前只开启了页内提醒');
+        return;
+      }
+      // 未开启
+      if (typeof Notification !== 'undefined' && Notification.permission === 'denied') {
+        btn.textContent = '🔕 已禁止';
+        setNotifDiag('系统通知权限已被禁止');
+      } else {
+        btn.textContent = '🔔 开启提醒';
+        if (!notifDiagMsg) setNotifDiag('');
+      }
+      btn.classList.remove('on');
+      btn.title = '新消息弹窗提醒 / 页内提醒';
+    }
+
+    async function toggleChatNotification() {
+      if (isNativeNotificationApp()) {
+        if (!__user.loggedIn) {
+          openAuthModal();
+          return;
+        }
+        const btn = document.getElementById('chatNotifBtn');
+        const withTimeout = (promise, ms, label) => Promise.race([
+          promise,
+          new Promise((_, rej) => setTimeout(() => rej(new Error(label + ' timeout')), ms))
+        ]);
+        try {
+          if (notifEnabled) {
+            if (btn) {
+              btn.textContent = '正在关闭...';
+              btn.disabled = true;
+            }
+            setNotifDiag('正在关闭 App 提醒...');
+            await withTimeout(window.BLYS_APP.disableNotifications(), 8000, 'disable notifications');
+            notifEnabled = false;
+            localStorage.setItem('blys_native_push_switch', 'off');
+          } else {
+            if (btn) {
+              btn.textContent = '正在开启...';
+              btn.disabled = true;
+            }
+            setNotifDiag('正在开启 App 提醒，请稍等...');
+            await cleanupNativeAppWebPushSubscription();
+            await withTimeout(window.BLYS_APP.enableNotifications(), 12000, 'enable notifications');
+            notifEnabled = true;
+            localStorage.setItem('blys_native_push_switch', 'on');
+          }
+          await refreshNativeNotifDiag();
+        } catch (e) {
+          setNotifDiag('App 提醒切换失败：' + ((e && e.message) ? e.message : 'unknown'));
+          updateNotifBtn();
+        } finally {
+          if (btn) btn.disabled = false;
+          updateNotifBtn();
+        }
+        return;
+      }
+      if (notifEnabled || inAppNotifOn) {
+        // 关闭提醒
+        inAppNotifOn = false;
+        localStorage.setItem('blys_notif_inapp', 'off');
+        notifEnabled = false;
+        localStorage.setItem('blys_notif', 'off');
+        setNotifDiag('');
+        unsubscribeChatPush();
+        updateNotifBtn();
+        return;
+      }
+      if (!__user.loggedIn) {
+        openAuthModal();
+        return;
+      }
+
+      // 开启：优先尝试系统 Web Push，失败再退回页内提醒
+      inAppNotifOn = true;
+      localStorage.setItem('blys_notif_inapp', 'on');
+      try {
+        await subscribeChatPush();
+        notifEnabled = true;
+        localStorage.setItem('blys_notif', 'on');
+        setNotifDiag('系统弹窗提醒已开启');
+      } catch (e) {
+        console.warn('[chat] system push unavailable', e);
+        notifEnabled = false;
+        localStorage.setItem('blys_notif', 'off');
+        setNotifDiag(getNotifErrorText(e));
+      }
+      updateNotifBtn();
+      unreadCounts = { public: 0, vip: 0, private: 0 };
+      updateUnreadBadges();
+      if (!notifEnabled) {
+        const bname = getBrowserName();
+        alert('已开启「页内提醒」。' + bname + '暂时无法开启系统弹窗，但你切走再回来时，会看到未读横幅和频道红点提醒。\n\n苹果手机：请用 Safari 把网站添加到主屏幕，然后一定要从桌面图标进入聊天室，再点击开启提醒。\n\n安卓手机：请使用群里的 App 开启 App 提醒。');
+      }
+    }
+
+    function dismissUnreadBanner() {
+      const banner = document.getElementById('chatUnreadBanner');
+      if (banner) banner.hidden = true;
+      unreadCounts = { public: 0, vip: 0, private: 0 };
+      updateUnreadBadges();
+      const box = document.getElementById('chatMessages');
+      if (box) box.scrollTop = box.scrollHeight;
+    }
+
+    function showUnreadBanner() {
+      const total = (Number(unreadCounts.public) || 0) + (Number(unreadCounts.vip) || 0) + (Number(unreadCounts.private) || 0);
+      const banner = document.getElementById('chatUnreadBanner');
+      if (!banner) return;
+      if (inAppNotifOn && total > 0) {
+        document.getElementById('chatUnreadCount').textContent = total;
+        banner.hidden = false;
+      } else {
+        banner.hidden = true;
+      }
+    }
+
+    function updateUnreadBadges() {
+      ['public', 'vip', 'private'].forEach(room => {
+        const el = document.getElementById('badge-' + room);
+        if (!el) return;
+        const n = unreadCounts[room] || 0;
+        if (n > 0) {
+          el.textContent = n > 99 ? '99+' : n;
+          el.hidden = false;
+        } else {
+          el.hidden = true;
+        }
+      });
+      // 未读变化后同步横幅：未读为 0 则横幅自动隐藏
+      showUnreadBanner();
+    }
+
+    async function notifyNewMessage(room, name, preview, count) {
+      const title = room === 'private' ? '✉️ 私聊 · 白鹿原上' : (room === 'vip' ? '⭐ 会员群聊 · 白鹿原上' : '🌐 注册群聊 · 白鹿原上');
+      const body = (count > 1 ? `[${count}条新消息] ` : '') + name + '：' + preview;
+      try {
+        if ('serviceWorker' in navigator) {
+          const reg = await navigator.serviceWorker.ready;
+          await reg.showNotification(title, { body, icon: '/assets/favicon.png', badge: '/assets/favicon.png', tag: 'blys-chat', data: { url: '/chat.html' } });
+          return;
+        }
+      } catch (e) { /* 回退到普通通知 */ }
+      try { new Notification(title, { body }); } catch (e) { /* 忽略 */ }
+    }
+
+    async function triggerChatPushNotification(task) {
+      if (!task || !task.payload || !__user.loggedIn || !__user.token) return;
+      const body = {
+        token: __user.token,
+        room: task.room,
+        content: task.payload.p_content || '',
+        image: !!task.payload.p_image
+      };
+      const results = await Promise.allSettled([
+        callEdge('notify-chat', body),
+        callEdge('notify-native-chat', body)
+      ]);
+      const nativeResult = results[1];
+      if (nativeResult.status === 'fulfilled') {
+        const d = nativeResult.value || {};
+        const text = d.ok
+          ? `App推送已请求：sent=${d.sent || 0}, skipped=${d.skipped || 0}, failed=${d.failed || 0}`
+          : `App推送请求失败：${d.msg || d.message || JSON.stringify(d).slice(0, 120)}`;
+        if (isNativeNotificationApp()) setNotifDiag(text);
+        console.log('[chat] notify-native-chat result', d);
+      } else {
+        const err = nativeResult.reason;
+        const text = 'App推送调用异常：' + ((err && err.message) ? err.message : String(err || 'unknown'));
+        if (isNativeNotificationApp()) setNotifDiag(text);
+        console.warn('[chat] notify-native-chat failed', err);
+      }
+    }
+
+    // 页面离开时清理轮询
+    window.addEventListener('beforeunload', () => {
+      if (chatPollTimer) clearInterval(chatPollTimer);
+      if (chatOnlineTimer) clearInterval(chatOnlineTimer);
+      if (chatHeartbeatTimer) clearInterval(chatHeartbeatTimer);
+      if (chatSendWatchdogTimer) clearInterval(chatSendWatchdogTimer);
+    });
+  </script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"9c945e9c8adf4848b8b5fe9ee493d669","r":1}' crossorigin="anonymous"></script>
+</body>
+</html>
+
