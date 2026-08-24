@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082402" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082403" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -211,8 +211,8 @@
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082402"></script>
-  <script src="assets/mobile-app.js?v=2026082402"></script>
+  <script src="assets/app.js?v=2026082403"></script>
+  <script src="assets/mobile-app.js?v=2026082403"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -228,7 +228,7 @@
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    console.log('[chat] build v2026082402 (home escape + expired vip)');
+    console.log('[chat] build v2026082403 (expired vip stay + private visible errors + history trigger)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
     let lastSeenTs = { public: 0, vip: 0, private: 0 };
@@ -309,7 +309,7 @@
         updateChatAdminMode();
         updateChatInputState();
         const preferredRoom = location.hash === '#private' ? 'private' : (__user.loggedIn && __user.isVip ? 'vip' : 'public');
-        if (currentRoom !== preferredRoom && !(currentRoom === 'vip' && __user.loggedIn && !__user.isVip)) switchChatRoom(preferredRoom, { skipUserRefresh: true });
+        if (currentRoom !== preferredRoom && !shouldStayOnExpiredVipRoom()) switchChatRoom(preferredRoom, { skipUserRefresh: true });
       }, 300);
       // Enter 发送（Shift+Enter换行）
       const input = document.getElementById('chatInput');
@@ -335,7 +335,7 @@
           if (histBox.querySelector('.chat-loading')) return;
           const nearBottom = isChatNearBottom(histBox, 100);
           chatUserReadingHistoryUntil = nearBottom ? 0 : Date.now() + 15000;
-          if (histBox.scrollTop <= 60 && chatHasMore[currentRoom] && !chatHistLoading) {
+          if (histBox.scrollTop <= 140 && chatHasMore[currentRoom] && !chatHistLoading) {
             chatHistLoading = true;
             loadChatMessages(currentRoom, { history: true }).finally(() => {
               setTimeout(() => { chatHistLoading = false; }, 400);
@@ -556,6 +556,10 @@
       sendHeartbeat();
     }
 
+    function shouldStayOnExpiredVipRoom() {
+      return currentRoom === 'vip' && __user && __user.loggedIn && !__user.isVip;
+    }
+
     function isBlysAdminUser(user) {
       user = user || __user || {};
       const email = String(user.email || '').trim().toLowerCase();
@@ -723,7 +727,7 @@
         await loadPrivateConversations();
       } else {
         if (inputArea) inputArea.style.display = 'block';
-        await startPrivateChat(__user.email, __user.nickname || __user.email, { silent: true });
+        await startPrivateChat(__user.email, __user.nickname || __user.email, { silent: false });
       }
     }
 
@@ -818,7 +822,12 @@
         const targetEmail = adminNow ? targetInputEmail : myEmail;
         const d = await sbRpc('get_private_conversation', { p_token: __user.token, p_user_email: targetEmail }, { timeoutMs: 12000 });
         if (!d || !d.ok) {
-          if (!options.silent) alert((d && d.msg) || '私聊打开失败');
+          const msg = (d && d.msg) || '私聊打开失败';
+          if (!options.silent) {
+            const box = document.getElementById('chatMessages');
+            if (box) box.innerHTML = renderPrivateEmpty(msg);
+            else alert(msg);
+          }
           return;
         }
         currentPrivateConversationId = d.id;
@@ -830,7 +839,12 @@
         await loadChatMessages('private', { isFirst: true });
         try { await sbRpc('mark_private_read', { p_token: __user.token, p_conversation_id: currentPrivateConversationId }); } catch(e) {}
       } catch (e) {
-        if (!options.silent) alert('私聊打开失败：' + (e && e.message ? e.message : '网络异常'));
+        if (!options.silent) {
+          const msg = '私聊打开失败：' + (e && e.message ? e.message : '网络异常');
+          const box = document.getElementById('chatMessages');
+          if (box) box.innerHTML = renderPrivateEmpty(msg);
+          else alert(msg);
+        }
       }
     }
 
@@ -1759,7 +1773,7 @@
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082402', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082403', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -2028,7 +2042,7 @@
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082402', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082403', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
