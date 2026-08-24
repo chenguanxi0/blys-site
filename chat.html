@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082415" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082416" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -216,8 +216,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082415"></script>
-  <script src="assets/mobile-app.js?v=2026082415"></script>
+  <script src="assets/app.js?v=2026082416"></script>
+  <script src="assets/mobile-app.js?v=2026082416"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -233,7 +233,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    console.log('[chat] build v2026082415 (manual room lock + app history swipe)');
+    console.log('[chat] build v2026082416 (persistent room + app vip latest/history)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
     let lastSeenTs = { public: 0, vip: 0, private: 0 };
@@ -261,7 +261,26 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     let inAppNotifOn = false;
     let notifDiagMsg = '';
     let unreadCounts = { public: 0, vip: 0, private: 0 };
+    const CHAT_LAST_ROOM_KEY = 'blys_chat_last_room';
     let chatManualRoom = null;
+    function normalizeChatRoom(room) {
+      return ['public','vip','private'].includes(room) ? room : '';
+    }
+    function getStoredChatRoom() {
+      try { return normalizeChatRoom(sessionStorage.getItem(CHAT_LAST_ROOM_KEY) || localStorage.getItem(CHAT_LAST_ROOM_KEY)); } catch(e) { return ''; }
+    }
+    function rememberChatRoom(room) {
+      room = normalizeChatRoom(room);
+      if (!room) return;
+      chatManualRoom = room;
+      try { sessionStorage.setItem(CHAT_LAST_ROOM_KEY, room); localStorage.setItem(CHAT_LAST_ROOM_KEY, room); } catch(e) {}
+    }
+    function getPreferredChatRoom() {
+      if (location.hash === '#private') return 'private';
+      const stored = normalizeChatRoom(chatManualRoom || getStoredChatRoom());
+      if (stored) return stored;
+      return (__user.loggedIn && __user.isVip) ? 'vip' : 'public';
+    }
     const PUSH_VAPID_PUBLIC_KEY = 'BA2xT4Y1plL6c9JNmBJI8aqp_vjxrnOG1-p-nhazGbm_QGnnuq8A7hbYbBIpZKd3MQ3-jx0EfXZGnKYQQuFHFac';
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -287,7 +306,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       console.log('[chat] fetchUser done');
       updateChatAdminMode();
       updateChatInputState();
-      const preferredRoom = location.hash === '#private' ? 'private' : (chatManualRoom || (__user.loggedIn && __user.isVip ? 'vip' : 'public'));
+      const preferredRoom = getPreferredChatRoom();
       await switchChatRoom(preferredRoom, { skipUserRefresh: true });
       // 启动轮询
       startChatPoll();
@@ -303,8 +322,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         updateChatAdminMode();
         updateChatInputState();
         // 登录、会员激活或退出后，自动切换到身份对应的聊天室
-        const preferredRoom = location.hash === '#private' ? 'private' : (chatManualRoom || (__user.loggedIn && __user.isVip ? 'vip' : 'public'));
-        if (currentRoom !== preferredRoom && !shouldStayOnExpiredVipRoom()) {
+        const preferredRoom = getPreferredChatRoom();
+        if (currentRoom !== preferredRoom && (chatManualRoom || !shouldStayOnExpiredVipRoom())) {
           switchChatRoom(preferredRoom, { skipUserRefresh: true });
         }
         refreshChatPushSubscription();
@@ -314,8 +333,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         setChatLoginLoading(false);
         updateChatAdminMode();
         updateChatInputState();
-        const preferredRoom = location.hash === '#private' ? 'private' : (chatManualRoom || (__user.loggedIn && __user.isVip ? 'vip' : 'public'));
-        if (currentRoom !== preferredRoom && !shouldStayOnExpiredVipRoom()) switchChatRoom(preferredRoom, { skipUserRefresh: true });
+        const preferredRoom = getPreferredChatRoom();
+        if (currentRoom !== preferredRoom && (chatManualRoom || !shouldStayOnExpiredVipRoom())) switchChatRoom(preferredRoom, { skipUserRefresh: true });
       }, 300);
       // Enter 发送（Shift+Enter换行）
       const input = document.getElementById('chatInput');
@@ -343,7 +362,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
           chatUserReadingHistoryUntil = nearBottom ? 0 : Date.now() + 15000;
           const nativeApp = document.documentElement.classList.contains('blys-native-app');
           const topThreshold = nativeApp ? 160 : 180;
-          if (histBox.scrollTop <= topThreshold && !isChatNearBottom(histBox, 320) && chatHasMore[currentRoom] && !chatHistLoading && currentRoom !== 'private') {
+          if (histBox.scrollTop <= topThreshold && (!nativeApp || currentRoom === 'vip' || !isChatNearBottom(histBox, 320)) && chatHasMore[currentRoom] && !chatHistLoading && currentRoom !== 'private') {
             loadOlderChatMessages();
           }
         });
@@ -355,7 +374,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
           if (currentRoom === 'private' || chatHistLoading || !chatHasMore[currentRoom]) return;
           const startTop = Number(histBox.__touchStartTop || 0);
           const movedTowardTop = histBox.scrollTop < startTop - 8;
-          if (movedTowardTop && histBox.scrollTop <= 180 && !isChatNearBottom(histBox, 320)) loadOlderChatMessages();
+          if (movedTowardTop && histBox.scrollTop <= 220 && (currentRoom === 'vip' || !isChatNearBottom(histBox, 320))) loadOlderChatMessages();
         };
         histBox.addEventListener('touchmove', maybeLoadByTouch, { passive: true });
         histBox.addEventListener('touchend', maybeLoadByTouch, { passive: true });
@@ -507,7 +526,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
 
     async function switchChatRoom(room, options) {
       options = options || {};
-      if (options.manual) chatManualRoom = room;
+      if (!chatManualRoom) chatManualRoom = getStoredChatRoom();
+      if (options.manual) rememberChatRoom(room);
       currentRoom = room;
       // 更新标签样式（用 getAttribute 避免个别浏览器 dataset 兼容性问题导致中断）
       document.querySelectorAll('.chat-tab').forEach(t => t.classList.toggle('active', t.getAttribute('data-room') === room));
@@ -939,7 +959,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
           rpcParams.p_limit = room === 'vip' ? 8 : 12;
           rpcParams.p_before = chatTsToIso(chatOldestTs[room]);
         } else if (isFirst) {
-          rpcParams.p_limit = room === 'vip' ? (isNativeApp ? 8 : 14) : (isNativeApp ? 10 : 20);
+          rpcParams.p_limit = room === 'vip' ? (isNativeApp ? 16 : 14) : (isNativeApp ? 10 : 20);
         } else {
           rpcParams.p_limit = room === 'vip' ? 20 : (isNativeApp ? 30 : 80);
           rpcParams.p_after = chatTsToIso(lastSeenTs[room]);
@@ -1389,8 +1409,13 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       const html = list.map(m => renderChatMessageHtml(m, room)).join('');
       box.innerHTML = html;
       
-      ensureHistoryMoreButton(room);// 首屏始终滚到最新；图片是 base64 异步解码，会撑高内容，故多次兜底滚动
-      const scrollToBottom = () => { box.scrollTop = box.scrollHeight; };
+      ensureHistoryMoreButton(room);
+      // 首屏始终滚到最新；图片是 base64 异步解码，会撑高内容，故多次兜底滚动
+      const scrollToBottom = () => {
+        const target = Math.max(0, box.scrollHeight - box.clientHeight + 160);
+        box.scrollTop = target;
+        try { box.scrollTo({ top: target, behavior: 'auto' }); } catch(e) {}
+      };
       if (isFirst) {
         chatSuppressHistoryUntil = Date.now() + 1500;
         scrollToBottom();
@@ -1398,10 +1423,12 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         setTimeout(scrollToBottom, 60);
         setTimeout(scrollToBottom, 300);
         setTimeout(scrollToBottom, 700);
+        setTimeout(scrollToBottom, 1200);
+        setTimeout(scrollToBottom, 1800);
         setTimeout(() => {
           scrollToBottom();
           chatSuppressHistoryUntil = 0;
-        }, 1200);
+        }, 2200);
       }
     }
 
@@ -1855,7 +1882,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082415', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082416', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -2124,7 +2151,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082415', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082416', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
