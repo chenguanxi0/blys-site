@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082416" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082417" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -197,7 +197,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         <div class="vip-lock">🔒</div>
         <h3>会员专属群聊</h3>
         <p>只有激活会员才能进入会员群聊频道</p>
-        <button class="btn btn-primary" onclick="openRedeemModal()">激活会员</button>
+        <button class="btn btn-primary" onclick="openMembershipPrivateChat()">开通会员</button>
       </div>
     </div>
   </main>
@@ -216,8 +216,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082416"></script>
-  <script src="assets/mobile-app.js?v=2026082416"></script>
+  <script src="assets/app.js?v=2026082417"></script>
+  <script src="assets/mobile-app.js?v=2026082417"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -233,7 +233,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    console.log('[chat] build v2026082416 (app latest stable + touch history)');
+    console.log('[chat] build v2026082417 (vip renewal private auto-send)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
     let lastSeenTs = { public: 0, vip: 0, private: 0 };
@@ -551,7 +551,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
           const title = document.getElementById('chatVipLockTitle');
           const text = document.getElementById('chatVipLockText');
           if (title) title.textContent = __user.loggedIn ? '会员已到期' : '会员专属群聊';
-          if (text) text.textContent = __user.loggedIn ? '你的会员已到期，私聊白鹿原上续费后即可继续进入会员群聊。' : '登录并激活会员后即可进入会员群聊。';
+          if (text) text.textContent = __user.loggedIn ? '开通或续费会员后即可进入会员群聊，点击下方按钮会自动私聊白鹿原上。' : '登录后可私聊白鹿原上开通会员。';
           return;
         }
       }
@@ -744,15 +744,21 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     }
 
     async function openPrivateRenewal() {
+      return openMembershipPrivateChat();
+    }
+
+    async function openMembershipPrivateChat() {
       if (!__user.loggedIn) { openAuthModal(); return; }
       location.hash = 'private';
+      chatManualRoom = 'private';
+      await switchChatRoom('private', { manual: true, skipUserRefresh: true });
       await startPrivateChat(__user.email, __user.nickname || __user.email, { silent: true });
       const input = document.getElementById('chatInput');
-      if (input && !input.value.trim()) {
-        input.value = '你好，我想续费会员';
-        input.focus();
-        updateChatComposerState();
-      }
+      if (!input) return;
+      input.value = '开通会员';
+      input.focus();
+      updateChatComposerState();
+      await sendPrivateMessage();
     }
 
     async function openPrivateRoom() {
@@ -1537,7 +1543,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
 
     async function sendChatMessage() {
       if (!__user.loggedIn) { openAuthModal(); return; }
-      if (currentRoom === 'vip' && !__user.isVip) { openRedeemModal(); return; }
+      if (currentRoom === 'vip' && !__user.isVip) { openMembershipPrivateChat(); return; }
       if (currentRoom === 'private') { sendPrivateMessage(); return; }
 
       const input = document.getElementById('chatInput');
@@ -1883,7 +1889,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082416', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082417', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -2152,7 +2158,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082416', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082417', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
