@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082420" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082421" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -216,8 +216,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082420"></script>
-  <script src="assets/mobile-app.js?v=2026082420"></script>
+  <script src="assets/app.js?v=2026082421"></script>
+  <script src="assets/mobile-app.js?v=2026082421"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -233,7 +233,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    console.log('[chat] build v2026082420 (stable latest chat order)');
+    console.log('[chat] build v2026082421 (faster vip app first load)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
     let lastSeenTs = { public: 0, vip: 0, private: 0 };
@@ -596,7 +596,11 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       const banner = document.getElementById('chatUnreadBanner');
       if (banner && unreadCounts.public + unreadCounts.vip + unreadCounts.private === 0) banner.hidden = true;
       loadChatMessages(room);
-      setTimeout(() => { if (room === currentRoom) refreshChatMembers(); }, room === 'vip' ? 1800 : 500);
+      // 成员/人数统计不影响聊天首屏，VIP 群尤其在 App 里延后加载
+      const memberDelay = room === 'vip'
+        ? (document.documentElement.classList.contains('blys-native-app') ? 6000 : 3000)
+        : 800;
+      setTimeout(() => { if (room === currentRoom) refreshChatMembers(); }, memberDelay);
       setTimeout(() => {
         if (room !== currentRoom || !messagesBox || !messagesBox.querySelector('.chat-loading')) return;
         messagesBox.innerHTML = renderChatLoadFailed(room, '网络较慢，消息还没有返回');
@@ -1016,7 +1020,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
           rpcParams.p_limit = room === 'vip' ? 8 : 12;
           rpcParams.p_before = chatTsToIso(chatOldestTs[room]);
         } else if (isFirst) {
-          rpcParams.p_limit = room === 'vip' ? (isNativeApp ? 16 : 14) : (isNativeApp ? 10 : 20);
+          rpcParams.p_limit = room === 'vip' ? (isNativeApp ? 8 : 14) : (isNativeApp ? 10 : 20);
         } else {
           rpcParams.p_limit = room === 'vip' ? 20 : (isNativeApp ? 30 : 80);
           rpcParams.p_after = chatTsToIso(lastSeenTs[room]);
@@ -1949,7 +1953,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082420', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082421', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -2218,7 +2222,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082420', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082421', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
