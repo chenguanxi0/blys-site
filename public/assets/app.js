@@ -1998,8 +1998,10 @@ window.addEventListener('popstate', () => {
 function blysRememberCurrentPage(){
   try {
     var name = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
-    if (['chat.html','daily.html','diary.html'].indexOf(name) >= 0) {
+    if (['daily.html','diary.html'].indexOf(name) >= 0) {
       localStorage.setItem('blys_last_page', name);
+    } else if (name === 'chat.html') {
+      localStorage.removeItem('blys_last_page');
     }
   } catch(e){}
 }
@@ -2011,10 +2013,7 @@ function blysEnhanceHomeEntry(){
     var params = new URLSearchParams(location.search);
     if (params.get('home') === '1') { localStorage.removeItem('blys_last_page'); }
     var last = localStorage.getItem('blys_last_page') || '';
-    if (last === 'chat.html' && params.get('home') !== '1') {
-      location.replace('chat.html');
-      return;
-    }
+    if (last === 'chat.html') localStorage.removeItem('blys_last_page');
     var grid = document.querySelector('.hero .entry-grid');
     if (!grid) return;
     var existing = grid.querySelector('a[href="chat.html"]');
