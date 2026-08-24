@@ -1377,7 +1377,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
 
       const html = list.map(m => renderChatMessageHtml(m, room)).join('');
       box.innerHTML = html;
-      // 首屏始终滚到最新；图片是 base64 异步解码，会撑高内容，故多次兜底滚动
+      
+      ensureHistoryMoreButton(room);// 首屏始终滚到最新；图片是 base64 异步解码，会撑高内容，故多次兜底滚动
       const scrollToBottom = () => { box.scrollTop = box.scrollHeight; };
       if (isFirst) {
         chatSuppressHistoryUntil = Date.now() + 1500;
