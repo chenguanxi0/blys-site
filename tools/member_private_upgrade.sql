@@ -204,29 +204,36 @@ $$;
 create or replace function get_private_conversation(p_token text, p_user_email text default null)
 returns json
 language plpgsql security definer
-as $$
+as $
 declare
   v_me record;
-  v_target record;
   v_conv record;
+  v_is_admin boolean := false;
   v_target_email text;
+  v_target_nickname text;
 begin
   select email, nickname, is_admin into v_me from public.profiles where token = p_token;
   if v_me is null then return json_build_object('ok', false, 'msg', '请先登录'); end if;
 
-  if coalesce(v_me.is_admin, false) = true or lower(v_me.email) in ('491788533@qq.com', '491788533@gmail.com') then
+  v_is_admin := coalesce(v_me.is_admin, false) = true
+    or lower(v_me.email) in ('491788533@qq.com', '491788533@gmail.com');
+
+  if v_is_admin then
     v_target_email := lower(trim(coalesce(p_user_email, '')));
     if v_target_email = '' then return json_build_object('ok', false, 'msg', '请选择私聊用户'); end if;
-    select email, nickname into v_target from public.profiles where lower(email) = v_target_email;
-    if v_target is null then return json_build_object('ok', false, 'msg', '用户不存在'); end if;
-    if lower(v_target.email) = lower(v_me.email) then return json_build_object('ok', false, 'msg', '不能和自己私聊'); end if;
+    select email, nickname into v_target_email, v_target_nickname
+    from public.profiles
+    where lower(email) = v_target_email
+    limit 1;
+    if v_target_email is null then return json_build_object('ok', false, 'msg', '用户不存在'); end if;
+    if lower(v_target_email) = lower(v_me.email) then return json_build_object('ok', false, 'msg', '不能和自己私聊'); end if;
   else
-    v_target.email := v_me.email;
-    v_target.nickname := v_me.nickname;
+    v_target_email := v_me.email;
+    v_target_nickname := v_me.nickname;
   end if;
 
   insert into public.private_conversations(user_email, user_nickname, updated_at)
-  values(v_target.email, coalesce(v_target.nickname, split_part(v_target.email, '@', 1)), now())
+  values(v_target_email, coalesce(v_target_nickname, split_part(v_target_email, '@', 1)), now())
   on conflict(user_email) do update
     set user_nickname = excluded.user_nickname,
         updated_at = public.private_conversations.updated_at
@@ -243,7 +250,7 @@ begin
     'user_unread', v_conv.user_unread
   );
 end;
-$$;
+$;
 
 create or replace function list_private_conversations(p_token text)
 returns json
