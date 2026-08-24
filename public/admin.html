@@ -93,6 +93,7 @@
         <div class="cmt-bar">
           <select id="cmtFilter" onchange="renderComments()">
             <option value="">全部文章</option>
+            <option value="__reviews">复盘评论</option>
             <option value="market-overview">市场大局观</option>
             <option value="trading-mindset">四种心态</option>
           </select>
@@ -232,8 +233,41 @@
     }
 
     let __allComments = [];
+    let __commentArticles = [
+      { id:'market-overview', label:'市场大局观', group:'article' },
+      { id:'trading-mindset', label:'四种心态', group:'article' }
+    ];
+    async function loadReviewCommentArticles(){
+      try{
+        const r = await fetch('assets/reviews/index.json?t=' + Date.now(), { cache:'no-store' });
+        if(!r.ok) return [];
+        const arr = await r.json();
+        return (Array.isArray(arr) ? arr : [])
+          .map(x => String(x && (x.date || x.id || '')).trim())
+          .filter(Boolean)
+          .sort((a,b) => b.localeCompare(a))
+          .map(date => ({ id:'review:' + date, label:'复盘 ' + date.slice(5).replace('-', '/'), group:'review' }));
+      }catch(e){
+        return [];
+      }
+    }
+    function cmtArticleLabel(article){
+      const hit = __commentArticles.find(a => a.id === article);
+      if(hit) return hit.label;
+      if(String(article || '').startsWith('review:')){
+        const date = String(article).slice(7);
+        return '复盘 ' + date.slice(5).replace('-', '/');
+      }
+      return article || '-';
+    }
     async function loadComments(){
-      const arts = ['market-overview','trading-mindset'];
+      const reviewArts = await loadReviewCommentArticles();
+      __commentArticles = [
+        { id:'market-overview', label:'市场大局观', group:'article' },
+        { id:'trading-mindset', label:'四种心态', group:'article' },
+        ...reviewArts
+      ];
+      const arts = __commentArticles.map(a => a.id);
       let all = [];
       for(const a of arts){
         const d = await sbRpc('list_comments', { p_article: a });
@@ -248,11 +282,12 @@
       const filter = document.getElementById('cmtFilter').value;
       const search = (document.getElementById('cmtSearch').value || '').trim().toLowerCase();
       let list = __allComments;
-      if(filter) list = list.filter(c => c.article === filter);
+      if(filter === '__reviews') list = list.filter(c => String(c.article || '').startsWith('review:'));
+      else if(filter) list = list.filter(c => c.article === filter);
       if(search) list = list.filter(c => (c.content||'').toLowerCase().includes(search) || (c.nickname||'').toLowerCase().includes(search));
       if(!list.length){ box.innerHTML = '<p>暂无评论</p>'; return; }
       box.innerHTML = '<table class="admin-table"><tr><th>昵称</th><th>邮箱</th><th>文章</th><th>评论</th><th>时间</th><th>操作</th></tr>' +
-        list.map(c=>`<tr><td>${esc(c.nickname||'匿名')}</td><td class="email">${esc(c.email||'-')}</td><td><span class="badge">${c.article}</span></td><td class="wrap">${esc(c.content||'')}</td><td>${fmt(c.created_at)}</td><td><button class="danger" onclick="delComment(${c.id})">删除</button></td></tr>`).join('') +
+        list.map(c=>`<tr><td>${esc(c.nickname||'匿名')}</td><td class="email">${esc(c.email||'-')}</td><td><span class="badge">${esc(cmtArticleLabel(c.article))}</span></td><td class="wrap">${esc(c.content||'')}</td><td>${fmt(c.created_at)}</td><td><button class="danger" onclick="delComment(${c.id})">删除</button></td></tr>`).join('') +
         '</table>';
     }
 
