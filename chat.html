@@ -971,7 +971,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       if (privateUnreadRefreshing) return;
       privateUnreadRefreshing = true;
       try {
-        const d = await sbRpc('list_private_conversations', { p_token: __user.token }, { timeoutMs: options.fast ? 4500 : 7000 });
+        const d = await sbRpc('list_private_conversations', { p_token: __user.token, p_limit: 10, p_offset: 0 }, { timeoutMs: options.fast ? 4500 : 7000 });
         if (!d || !d.ok || !Array.isArray(d.list)) return;
         unreadCounts.private = getPrivateUnreadFromList(d.list);
         updateUnreadBadges();
@@ -1042,7 +1042,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       const box = document.getElementById('chatMessages');
       if (box && !options.silent) box.innerHTML = '<div class="chat-loading">加载私聊列表中…</div>';
       try {
-        const d = await sbRpc('list_private_conversations', { p_token: __user.token }, { timeoutMs: 12000 });
+        const d = await sbRpc('list_private_conversations', { p_token: __user.token, p_limit: 10, p_offset: 0 }, { timeoutMs: 12000 });
         if (!d || !d.ok || !Array.isArray(d.list)) {
           if (box) box.innerHTML = renderPrivateEmpty('私聊列表加载失败');
           return;
@@ -1252,9 +1252,11 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         if (isHistory) {
           // 历史分页：把更早的消息插入列表顶部，并维持当前阅读位置
           prependChatHistory(list, room, rpcParams.p_limit);
+          setTimeout(() => hydrateChatImagePlaceholders(4), 80);
         } else if (isFirst) {
           // 首屏：按时间升序渲染，底部一定是最新消息
           renderChatMessages(sortMessagesAsc(list), room, true);
+          setTimeout(() => hydrateChatImagePlaceholders(room === 'vip' ? 4 : 6), 120);
           if (list.length) {
             const minTs = list.reduce((mn, m) => Math.min(mn, m.created_at ? new Date(m.created_at).getTime() : 0), Infinity);
             chatOldestTs[room] = minTs;
@@ -1263,6 +1265,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         } else {
           // 增量：只把新消息追加到列表底部，不再重建整个列表
           for (const m of list) appendChatMessage(m, room, { stickToBottom: shouldStickToBottom });
+          setTimeout(() => hydrateChatImagePlaceholders(3), 120);
         }
 
         // 未读统计：仅后台/非当前房间，且为增量拉取的新消息
@@ -1371,7 +1374,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       if (img) {
         html += `<img class="chat-msg-img" src="${esc(img)}" data-full-src="${esc(m.image_full || img)}" alt="图片" loading="lazy" />`;
       } else if (hasImage && m.id) {
-        html += `<button class="chat-msg-img-placeholder" type="button" onclick="openChatImageFromMessage('${esc(m.id)}')">查看图片</button>`;
+        html += `<button class="chat-msg-img-placeholder" type="button" data-message-id="${esc(m.id)}" onclick="openChatImageFromMessage('${esc(m.id)}')">加载图片中</button>`;
       }
       if (text) {
         html += `<div class="chat-msg-text">${esc(text).replace(/\n/g, '<br>')}</div>`;
@@ -1413,6 +1416,35 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         openChatImageViewer(d.image);
       } catch (e) {
         alert('图片加载失败：' + (e && e.message ? e.message : '网络异常'));
+      }
+    }
+
+    async function hydrateChatImagePlaceholders(limit){
+      const box = document.getElementById('chatMessages');
+      if (!box || !__user || !__user.loggedIn || !__user.token) return;
+      const nodes = Array.from(box.querySelectorAll('.chat-msg-img-placeholder:not([data-loading]):not([data-loaded])')).slice(0, limit || 6);
+      for (const node of nodes) {
+        const messageId = node.getAttribute('data-message-id');
+        if (!messageId) continue;
+        node.setAttribute('data-loading', '1');
+        try {
+          const d = await sbRpc('get_chat_message_image', { p_token: __user.token, p_message_id: messageId }, { timeoutMs: 15000 });
+          if (d && d.ok && d.image) {
+            const img = document.createElement('img');
+            img.className = 'chat-msg-img';
+            img.src = d.image;
+            img.setAttribute('data-full-src', d.image);
+            img.alt = '图片';
+            img.loading = 'lazy';
+            node.replaceWith(img);
+          } else {
+            node.textContent = '查看图片';
+            node.removeAttribute('data-loading');
+          }
+        } catch (e) {
+          node.textContent = '查看图片';
+          node.removeAttribute('data-loading');
+        }
       }
     }
 
@@ -2786,5 +2818,6 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
 <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"9c945e9c8adf4848b8b5fe9ee493d669","r":1}' crossorigin="anonymous"></script>
 </body>
 </html>
+
 
 
