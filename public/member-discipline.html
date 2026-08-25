@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>会员交易纪律 · 白鹿原上-交易笔记</title>
+  <meta name="description" content="白鹿原上会员交易纪律，仅供会员学习和复盘参考，不构成投资建议。" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082444" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="assets/favicon.png" />
+</head>
+<body>
+  <div class="risk-bar">
+    风险提示：本站所有内容仅为个人复盘与经验分享，不构成任何投资建议，市场有风险，投资需谨慎。
+  </div>
+
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html?home=1">
+        <span class="brand-logo">白</span>
+        <span class="brand-name">白鹿原上-交易笔记 <small>· blys.site</small></span>
+      </a>
+      <div class="nav-right">
+        <nav class="nav-links" id="navLinks">
+          <a href="chat.html">聊天室</a>
+          <a href="ideas.html">每日思路</a>
+          <a href="daily.html">每日复盘</a>
+          <a href="diary.html">实盘日记</a>
+          <a href="index.html#vip">心得分享</a>
+          <a href="index.html#vipzone">会员专享</a>
+          <div class="nav-dropdown">
+            <button class="nav-dropdown-trigger" type="button">关于<span class="nav-dropdown-chevron" aria-hidden="true"></span></button>
+            <div class="nav-dropdown-menu">
+              <a href="index.html#about">关于我</a>
+              <a href="notification-guide.html">弹窗教程</a>
+              <a href="changelog.html">更新日志</a>
+              <a href="admin.html" class="admin-nav-link" hidden>后台</a>
+            </div>
+          </div>
+        </nav>
+        <div class="vip-status" id="vipStatus"></div>
+        <button class="nav-toggle" id="navToggle" aria-label="菜单">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="discipline-page">
+    <section class="discipline-hero">
+      <small>白鹿原上</small>
+      <h1>会员交易纪律</h1>
+      <p>先理解纪律，再谈操作。稳住心态，严格执行。</p>
+    </section>
+
+    <section class="discipline-lock" id="disciplineLock">
+      <h2>会员可查看</h2>
+      <p>这页是会员群专属内容。开通或续费会员后，可以在这里查看交易纪律。</p>
+      <button class="btn btn-primary" type="button" onclick="openDisciplineRenewChat()">私聊开通会员</button>
+    </section>
+
+    <section id="disciplineContent" hidden>
+      <div class="discipline-notice">
+        <b>声明：</b>新进来的朋友，先把下面这些问题和纪律多看几遍。不要着急马上跟手操作，前期先慢慢熟悉节奏。遇到不懂的问题，可以在群里问，也可以私聊我。
+      </div>
+
+      <div class="discipline-list">
+        <article class="discipline-card">
+          <div class="discipline-num">1</div>
+          <div>
+            <h2>怎么通知具体操作？</h2>
+            <p>所有需要跟进的操作，我会在会员群里明确通知。没有通知的时候，大家不要随意操作；持仓和变化也会尽量实时更新在群里。</p>
+          </div>
+        </article>
+        <article class="discipline-card">
+          <div class="discipline-num">2</div>
+          <div>
+            <h2>应该如何跟随操作？</h2>
+            <p>我会说清楚标的、方向和仓位，大家按纪律执行即可，不要自己临时加仓、减仓或追着情绪操作。</p>
+          </div>
+        </article>
+        <article class="discipline-card">
+          <div class="discipline-num">3</div>
+          <div>
+            <h2>如果看到消息晚了，还要进吗？</h2>
+            <p>已经明显拉高的，不追；走势已经走坏的，不去。其他情况拿不准，先在群里问我，不要自己硬冲。</p>
+          </div>
+        </article>
+        <article class="discipline-card">
+          <div class="discipline-num">4</div>
+          <div>
+            <h2>进场有什么要注意的？</h2>
+            <p>进场尽量慢慢低吸，不要一次性打满。比如计划买 400 股，可以分 2-3 次买。成本越舒服，心态越稳定，也越容易执行后面的计划。</p>
+          </div>
+        </article>
+        <article class="discipline-card warn">
+          <div class="discipline-num">5</div>
+          <div>
+            <h2>特别提醒 1</h2>
+            <p>盘面变化很快，极端情况下可能刚提示关注就直线拉升或下砸。拉起来不追，砸下去不急，先等确认。没有任何人能每次判断都对，纪律比一两次盈亏更重要。</p>
+          </div>
+        </article>
+        <article class="discipline-card">
+          <div class="discipline-num">6</div>
+          <div>
+            <h2>心态应该怎么调整？</h2>
+            <p>炒股很大一部分是在炒心态。不要上头，不要因为一两次波动改变计划。跟随纪律、控制仓位、少做无效操作，结果才会慢慢稳定。</p>
+          </div>
+        </article>
+        <article class="discipline-card">
+          <div class="discipline-num">7</div>
+          <div>
+            <h2>手里原来的持仓怎么办？</h2>
+            <p>能处理的尽快处理，拿不准的可以问我。后面尽量按统一节奏来，不要一边跟群里操作，一边被旧仓位拖住心态。</p>
+          </div>
+        </article>
+        <article class="discipline-card warn">
+          <div class="discipline-num">8</div>
+          <div>
+            <h2>特别提醒 2</h2>
+            <p>不要幻想每只都赚钱，也不要幻想每次都买在最低、卖在最高。保持耐心，接受波动，按规则做，才有长期复利的可能。</p>
+          </div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script src="assets/app.js?v=2026082444"></script>
+  <script src="assets/mobile-app.js?v=2026082444"></script>
+  <script>
+    (function () {
+      var toggle = document.getElementById('navToggle');
+      var links = document.getElementById('navLinks');
+      if (toggle && links) {
+        toggle.addEventListener('click', function () {
+          links.classList.toggle('open');
+        });
+      }
+      document.querySelectorAll('.nav-dropdown-trigger').forEach(function (btn) {
+        btn.addEventListener('click', function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+          var box = btn.closest('.nav-dropdown');
+          if (box) box.classList.toggle('open');
+        });
+      });
+      document.addEventListener('click', function () {
+        document.querySelectorAll('.nav-dropdown').forEach(function (box) { box.classList.remove('open'); });
+      });
+    }());
+
+    function isDisciplineMember() {
+      var cached = {};
+      try { cached = JSON.parse(localStorage.getItem('blys_user_profile_cache') || '{}') || {}; } catch(e) {}
+      var u = (window.__user && window.__user.loggedIn) ? window.__user : cached;
+      var email = String(u.email || '').trim().toLowerCase();
+      return !!((u.loggedIn || email) && (u.isVip || u.isAdmin || u.is_admin || email === '491788533@qq.com' || email === '491788533@gmail.com'));
+    }
+    function renderDisciplineAccess() {
+      var lock = document.getElementById('disciplineLock');
+      var content = document.getElementById('disciplineContent');
+      var ok = isDisciplineMember();
+      if (lock) lock.hidden = ok;
+      if (content) content.hidden = !ok;
+    }
+    function openDisciplineRenewChat() {
+      try { localStorage.setItem('blys_pending_private_text', '开通会员'); } catch(e) {}
+      location.href = 'chat.html?room=private&renew=1';
+    }
+    renderDisciplineAccess();
+    window.addEventListener('blys:user:change', renderDisciplineAccess);
+    if (typeof fetchUser === 'function') {
+      Promise.race([
+        fetchUser(),
+        new Promise(function (resolve) { setTimeout(resolve, 1200); })
+      ]).then(renderDisciplineAccess).catch(renderDisciplineAccess);
+    }
+  </script>
+</body>
+</html>
