@@ -1332,8 +1332,8 @@ html.blys-native-app body.chat-body .chat-tabs-wrapper { top: calc(64px + var(--
 .chat-announcement.expanded .chat-announcement-main { align-items:flex-start; flex-direction:column; gap:3px; }
 .chat-announcement.expanded .chat-announcement-main em { white-space:normal; overflow:visible; }
 
-.chat-box { background:#fff; border:1px solid var(--line); border-radius:14px; overflow:hidden; box-shadow:var(--shadow-sm); display:flex; flex-direction:column; position:sticky; top:128px; height:calc(100dvh - 128px); min-height:360px; }
-html.blys-native-app body.chat-body .chat-box { top: calc(128px + var(--app-safe-top)); height: calc(100dvh - 128px - var(--app-safe-top)); }
+.chat-box { background:#fff; border:1px solid var(--line); border-radius:14px; overflow:hidden; box-shadow:var(--shadow-sm); display:flex; flex-direction:column; position:sticky; top:var(--chat-box-top, 128px); height:calc(100dvh - var(--chat-box-top, 128px)); min-height:360px; }
+html.blys-native-app body.chat-body .chat-box { top: var(--chat-box-top, calc(128px + var(--app-safe-top))); height: calc(100dvh - var(--chat-box-top, calc(128px + var(--app-safe-top)))); }
 html.blys-native-app body.chat-body .chat-input-area { position:sticky; bottom:0; }
 .chat-messages { flex:1; min-height:0; overflow-y:auto; padding:16px; background:#f8fafc; scroll-behavior:auto; overflow-anchor:none; overscroll-behavior:auto; -webkit-overflow-scrolling:touch; }
 .chat-page, .chat-box, .chat-messages { box-sizing:border-box; }
