@@ -1269,6 +1269,10 @@ body.chat-body .footer { display:none; }
 .chat-notif-btn.on { border-color:var(--brand); color:var(--brand); background:var(--brand-light); }
 
 .chat-tabs-wrapper { position:sticky; top:64px; z-index:20; background:var(--bg); padding:8px 0; }
+@media (min-width: 561px) {
+  body.chat-body .chat-page { padding-top:0; }
+  body.chat-body .chat-tabs-wrapper { padding-top:0; }
+}
 html.blys-native-app body.chat-body .chat-tabs-wrapper { top: calc(64px + var(--app-safe-top)); }
 .chat-notif-diag { display:none; }
 .nav-dropdown-action {
