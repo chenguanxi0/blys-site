@@ -2025,6 +2025,7 @@ function blysEnhanceHomeEntry(){
     var grid = document.querySelector('.hero .entry-grid');
     if (!grid) return;
     var existing = grid.querySelector('a[href="chat.html"]');
+    if (existing) return;
     if (!existing) {
       existing = document.createElement('a');
       existing.className = 'entry-card';
