@@ -133,11 +133,10 @@
     }
     function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;","&gt;":"&gt;","\"":"&quot;"}[c])); }
     function fmt(dt){ const d=new Date(dt); if(isNaN(d))return"-"; const p=n=>String(n).padStart(2,"0"); return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes()); }
-    function vipDays(start, expire){
+    function vipDays(start){
       const s = start ? new Date(start) : null;
-      const e = expire ? new Date(expire) : null;
-      if(!s || !e || isNaN(s) || isNaN(e) || e <= s) return '-';
-      return Math.ceil((e - s) / 86400000) + ' 天';
+      if(!s || isNaN(s)) return '-';
+      return Math.max(1, Math.floor((Date.now() - s.getTime()) / 86400000) + 1) + ' 天';
     }
     function getTok(){ return localStorage.getItem(ADMIN_TOKEN_KEY); }
 
@@ -170,7 +169,7 @@
       if(!d || !d.ok){ box.innerHTML = '<p>加载失败：' + (d&&d.msg) + '</p>'; return; }
       if(!d.list.length){ box.innerHTML = '<p>暂无用户</p>'; return; }
       box.innerHTML = '<table class="admin-table"><tr><th>昵称</th><th>邮箱</th><th>注册时间</th><th>会员</th><th>开通时间</th><th>会员天数</th><th>到期</th><th>操作</th></tr>' +
-        d.list.map(u=>`<tr><td>${esc(u.nickname||'')}</td><td class="email">${esc(u.email||'')}</td><td>${u.created_at?fmt(u.created_at):'-'}</td><td>${u.is_vip?'是':'否'}</td><td>${u.vip_started_at?fmt(u.vip_started_at):'-'}</td><td>${vipDays(u.vip_started_at,u.vip_expire)}</td><td>${u.vip_expire?fmt(u.vip_expire):'-'}</td><td><button onclick="openVipModal('${esc(u.email||'')}')">设会员</button> <button class="secondary" onclick="extendVip('${esc(u.email||'')}',30)">续30天</button> <button class="secondary" onclick="prefillCodeEmail('${esc(u.email||'')}')">给续费码</button></td></tr>`).join('') +
+        d.list.map(u=>`<tr><td>${esc(u.nickname||'')}</td><td class="email">${esc(u.email||'')}</td><td>${u.created_at?fmt(u.created_at):'-'}</td><td>${u.is_vip?'是':'否'}</td><td>${u.vip_started_at?fmt(u.vip_started_at):'-'}</td><td>${vipDays(u.vip_started_at)}</td><td>${u.vip_expire?fmt(u.vip_expire):'-'}</td><td><button onclick="openVipModal('${esc(u.email||'')}')">设会员</button> <button class="secondary" onclick="extendVip('${esc(u.email||'')}',30)">续30天</button> <button class="secondary" onclick="prefillCodeEmail('${esc(u.email||'')}')">给续费码</button></td></tr>`).join('') +
         '</table>';
     }
 
