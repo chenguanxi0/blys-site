@@ -1,0 +1,413 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>短线核心：市场大局观 · 白鹿原上-交易笔记</title>
+  <link rel="stylesheet" href="../assets/styles.css?v=2026082436" />
+  <link rel="icon" type="image/png" href="../assets/favicon.png" />
+  <style>
+    .tutorial { max-width:800px; margin:0 auto; padding:20px; }
+    .tutorial h1 { font-size:28px; margin-bottom:6px; }
+    .tutorial .sub { color:var(--muted); margin-bottom:30px; }
+    .tut-section { background:#fff; border-radius:12px; padding:24px; margin-bottom:20px;
+      box-shadow:0 1px 3px rgba(0,0,0,.06); border-left:4px solid var(--brand); }
+    .tut-section h2 { font-size:20px; margin-top:0; display:flex; align-items:center; gap:10px; }
+    .tut-section h3 { font-size:16px; margin:18px 0 8px; color:#333; }
+    .tut-section p, .tut-section li { line-height:1.8; color:#444; }
+    .tut-section ul { padding-left:20px; }
+    .tut-section li { margin-bottom:6px; }
+    .highlight-box { background:#f0f7ff; border-radius:8px; padding:16px; margin:14px 0;
+      border-left:4px solid #2563eb; }
+    .warn-box { background:#fff7ed; border-radius:8px; padding:16px; margin:14px 0;
+      border-left:4px solid #ea580c; }
+    .success-box { background:#f0fdf4; border-radius:8px; padding:16px; margin:14px 0;
+      border-left:4px solid #16a34a; }
+    .formula-table { width:100%; border-collapse:collapse; margin:12px 0; font-size:14px; }
+    .formula-table th,.formula-table td { border:1px solid #e5e7eb; padding:10px 12px; text-align:left; }
+    .formula-table th { background:#f9fafb; font-weight:600; }
+    .stage-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:14px 0; }
+    .stage-card { background:#f9fafb; border-radius:8px; padding:14px; text-align:center;
+      border:2px solid transparent; transition:.2s; cursor:pointer; }
+    .stage-card:hover { border-color:var(--brand); transform:translateY(-2px); }
+    .stage-card .stage-name { font-weight:700; font-size:15px; }
+    .stage-card .stage-pos { font-size:12px; color:var(--muted); margin-top:4px; }
+    .checklist { list-style:none; padding:0; }
+    .checklist li { padding:10px 12px; border-radius:8px; margin-bottom:8px;
+      background:#fafafa; cursor:pointer; display:flex; align-items:center; gap:10px;
+      transition:.2s; user-select:none; }
+    .checklist li.done { background:#f0fdf4; text-decoration:line-through; color:#888; }
+    .checklist li::before { content:"☐"; font-size:18px; flex-shrink:0; }
+    .checklist li.done::before { content:"☑"; color:#16a34a; }
+    .qa-block { margin:16px 0; }
+    .qa-q { font-weight:700; color:#1e40af; margin-bottom:6px; }
+    .qa-a { background:#f8fafc; border-radius:8px; padding:14px; color:#374151;
+      line-height:1.7; display:none; }
+    .qa-a.show { display:block; }
+    .btn-sm { font-size:13px; padding:4px 12px; margin-top:6px; }
+    .mantra-card { background:linear-gradient(135deg,#1e3a5f,#0f172a); color:#fff;
+      border-radius:12px; padding:24px; margin:20px 0; text-align:center; }
+    .mantra-card p { color:#cbd5e1; font-size:15px; line-height:2; margin:6px 0; }
+    .back-link { display:inline-flex; align-items:center; gap:6px; color:var(--brand);
+      text-decoration:none; font-size:14px; margin-bottom:20px; }
+    .back-link:hover { text-decoration:underline; }
+    @media (max-width:600px) {
+      .stage-grid { grid-template-columns:repeat(2,1fr); }
+      .tut-section { padding:16px; }
+    }
+  </style>
+</head>
+<body>
+<div class="risk-bar">⚠️ 风险提示：本站所有内容仅为个人复盘与经验分享，不构成任何投资建议，市场有风险，投资需谨慎。</div>
+
+<header class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="../index.html">
+      <span class="brand-logo">白</span>
+      <span class="brand-name">白鹿原上-交易笔记</span>
+    </a>
+    <div class="nav-right">
+      <nav class="nav-links" id="navLinks">
+        <a href="../chat.html">聊天室</a>
+        <a href="../ideas.html">每日思路</a>
+        <a href="../daily.html">每日复盘</a>
+        <a href="../diary.html">实盘日记</a>
+        <a href="../index.html#vip">心得分享</a>
+        <a href="../index.html#vipzone">会员专享</a>
+        <div class="nav-dropdown">
+          <button class="nav-dropdown-trigger" type="button">关于<span class="nav-dropdown-chevron" aria-hidden="true"></span></button>
+          <div class="nav-dropdown-menu">
+            <a href="../index.html#about">关于我</a>
+            <a href="../notification-guide.html">弹窗教程</a>
+            <a href="../changelog.html">更新日志</a>
+            <a href="../admin.html" class="admin-nav-link" hidden>后台</a>
+          </div>
+        </div>
+      </nav>
+      <div class="vip-status" id="vipStatus"></div>
+      <button class="nav-toggle" id="navToggle" aria-label="菜单" aria-expanded="false">☰</button>
+    </div>
+  </div>
+</header>
+<script>
+  (function () {
+    var toggle = document.getElementById('navToggle');
+    var links = document.getElementById('navLinks');
+    if (!toggle || !links) return;
+    var dropdowns = document.querySelectorAll('.nav-dropdown');
+    dropdowns.forEach(function (dropdown) {
+      var trigger = dropdown.querySelector('.nav-dropdown-trigger');
+      if (!trigger) return;
+      trigger.addEventListener('click', function (event) {
+        event.preventDefault(); event.stopPropagation();
+        dropdowns.forEach(function (item) { if (item !== dropdown) item.classList.remove('open'); });
+        dropdown.classList.toggle('open');
+      });
+    });
+    document.addEventListener('click', function () {
+      dropdowns.forEach(function (item) { item.classList.remove('open'); });
+    });
+    toggle.dataset.navReady = '1';
+    toggle.addEventListener('click', function (event) {
+      event.preventDefault();
+      var open = links.classList.toggle('open');
+      toggle.setAttribute('aria-expanded', String(open));
+    });
+    links.addEventListener('click', function (event) {
+      if (event.target.closest('a')) {
+        links.classList.remove('open');
+        toggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+    document.addEventListener('click', function (event) {
+      if (!event.target.closest('.nav-inner')) {
+        links.classList.remove('open');
+        toggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }());
+</script>
+
+<main class="tutorial gate-content">
+  <a class="back-link" href="../index.html#vip">← 返回心得分享</a>
+
+  <h1>🧭 短线核心：市场大局观</h1>
+  <p class="sub">不盯单只票的涨跌，先看清自己站在什么样的「天时、地利」里。约 15 分钟阅读</p>
+  <p class="sub" style="color:#16a34a;margin-top:6px">👁 浏览 <b id="tutViews">--</b> 次</p>
+
+  <!-- 核心问题 -->
+  <div class="tut-section">
+    <h2>🎯 本课程要解决的核心问题</h2>
+    <p>短线客最容易犯的错：<strong>一开盘就盯着单只股票涨跌，忘了自己正站在什么样的「天时、地利」里。</strong></p>
+    <div class="highlight-box">
+      <table class="formula-table">
+        <tr><th>前置问题</th><th>对应动作</th></tr>
+        <tr><td>现在这盘棋，能不能下？</td><td>重仓 / 轻仓 / 空仓？</td></tr>
+        <tr><td>钱在往哪个方向流？</td><td>主线在哪？</td></tr>
+        <tr><td>我在周期的什么位置出手？</td><td>启动 / 主升 / 分歧 / 退潮？</td></tr>
+      </table>
+    </div>
+    <p><strong>一句话：大局观决定"仓位与方向"，技术买点只决定"进场位置"。顺序不能反。</strong></p>
+  </div>
+
+  <!-- 什么是大局观 -->
+  <div class="tut-section">
+    <h2>🌏 什么是"市场大局观"</h2>
+    <p style="text-align:center;font-size:18px;margin:16px 0;">
+      先看<strong>「天」</strong> ➜ 再看<strong>「地」</strong> ➜ 最后看<strong>「人」</strong>
+    </p>
+    <ul>
+      <li><strong>🌤️ 看天</strong> — 宏观 + 政策：<b>市场水位</b>（钱多不多、风往哪吹、适不适合做多）</li>
+      <li><strong>🌊 看地</strong> — 周期 + 情绪：<b>仓位大小</b>（现在该几成仓、处于情绪哪一阶段）</li>
+      <li><strong>🧍 看人</strong> — 产业链 + 资金 + 个股：<b>做哪个方向</b>（选哪条线、挑哪只票）</li>
+    </ul>
+    <div class="warn-box">
+      ⚠️ 大局观 ≠ 看大盘指数涨跌。指数红绿只是结果，真正的"大局"是：<strong>钱多不多、情绪好不好、主线清不清晰。</strong>
+    </div>
+  </div>
+
+  <!-- 看天 -->
+  <div class="tut-section">
+    <h2>🌤️ 看"天"：宏观与政策（决定市场水位）</h2>
+    <p>每天花 3 分钟，快速判断三件事：</p>
+    <h3>💰 货币政策 — 钱多不多</h3>
+    <p>降息/降准/MLF/逆回购方向；国债收益率下行、资金面宽松 → 易涨；钱紧利率上行 → 难涨、控仓。</p>
+    <h3>📜 政策方向 — 风往哪吹</h3>
+    <p>盯政治局会议、发改委、工信部重点方向：新质生产力、AI、半导体、低空经济、消费、机器人……</p>
+    <h3>🌍 外部环境 — 影响情绪</h3>
+    <p>美股、人民币汇率、大宗（原油/铜/黄金）。多属"情绪扰动"，非 A 股主线本因。</p>
+    <div class="success-box">
+      <strong>结论模板 —— 每天给自己一句话定性：</strong>
+      <ul style="margin-top:8px">
+        <li><b>偏多 · 可做多</b> — 货币宽松 + 政策友好 → 找主线，上仓位</li>
+        <li><b>震荡 · 轻仓</b> — 货币中性 + 区间震荡 → 高抛低吸，控仓</li>
+        <li><b>偏空 · 防守</b> — 收紧 + 高位放量杀跌 → 少动甚至空仓</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- 看地：情绪周期 -->
+  <div class="tut-section">
+    <h2>🌊 看"地"：情绪周期四阶段（决定仓位）</h2>
+    <p>短线大局观的核心就是<strong>情绪周期</strong>。市场像潮水有涨落，分四个阶段：</p>
+    <div class="stage-grid">
+      <div class="stage-card"><div class="stage-name">① 启动期</div><div class="stage-pos">仓位：1–2 成</div></div>
+      <div class="stage-card"><div class="stage-name">② 主升期</div><div class="stage-pos">仓位：5–8 成</div></div>
+      <div class="stage-card"><div class="stage-name">③ 分歧期</div><div class="stage-pos">仓位：3 成</div></div>
+      <div class="stage-card"><div class="stage-name">④ 退潮期</div><div class="stage-pos">仓位：≤2 成或空仓</div></div>
+    </div>
+    <h3>① 启动期（仓位 1–2 成）</h3>
+    <ul>
+      <li>连板开始增多、跌停变少</li>
+      <li>龙头率先涨停，新方向冒头</li>
+      <li>操作：小仓试错，错了止损不恋战</li>
+      <li>心态：宁错过，不买错</li>
+    </ul>
+    <div class="highlight-box"><strong>铁律口诀：主升敢重仓，退潮绝不硬扛。</strong></div>
+    <h3>辅助判断信号</h3>
+    <table class="formula-table">
+      <tr><th>信号怎么读</th><th>含义</th></tr>
+      <tr><td>昨日涨停今日表现</td><td>正 = 接力赚钱效应好；负 = 打板生态恶劣</td></tr>
+      <tr><td>涨停家数 vs 跌停家数</td><td>跌停激增 = 风险 > 机会</td></tr>
+      <tr><td>连板高度</td><td>高度被压制 = 情绪冰点 / 退潮</td></tr>
+    </table>
+  </div>
+
+  <!-- 看人 -->
+  <div class="tut-section">
+    <h2>🧍 看"人"：产业链、估值与资金（决定方向）</h2>
+    <h3>🌱 行业生命周期 — 成长期 vs 衰退</h3>
+    <p>成长期（AI、机器人、储能、半导体）→ 易出大行情、敢格局；衰退/饱和期 → 多是反弹，快进快出不格局。</p>
+    <h3>📊 估值位置 — 历史分位</h3>
+    <p>PE/PB 历史高位 → 别追；历史低位 → 敢拿，赔率好。</p>
+    <h3>💸 资金流向 — 钱去哪势就在哪</h3>
+    <p>北向、两融、板块成交额。<strong>持续放大 = 真主线</strong>；缩量轮动、一日游 = 小热点，不重仓。</p>
+  </div>
+
+  <!-- 锁定热点 -->
+  <div class="tut-section">
+    <h2>🔥 如何锁定当下热点（每天 5 分钟）</h2>
+    <p>真热点 ≠ 零散几个涨停。真热点 = <strong>政策/事件催化 + 板块效应 + 资金持续流入</strong>。</p>
+    <table class="formula-table">
+      <tr><th>看什么</th><th>问自己</th></tr>
+      <tr><td>1</td><td>板块涨幅榜谁在最前面？</td></tr>
+      <tr><td>2</td><td>涨停梯队哪个板块涨停最多、连板最多？</td></tr>
+      <tr><td>3</td><td>板块成交额是否持续放大？（没量走不远）</td></tr>
+      <tr><td>4</td><td>催化消息为什么涨？政策/订单/技术/涨价？</td></tr>
+    </table>
+    <div class="success-box">
+      <strong>四字诀：</strong><br/>
+      <b>抓主线</b> — 有持续性的大方向，不是一日游<br/>
+      <b>看催化</b> — 上涨的"理由"够不够硬<br/>
+      <b>认龙头</b> — 板块里辨识度最高、最先表态的票<br/>
+      <b>分强弱</b> — 只做前排，后排跟风性价比低
+    </div>
+  </div>
+
+  <!-- 操作顺序铁律 -->
+  <div class="tut-section">
+    <h2>⚡ 操作顺序铁律（刻进肌肉记忆）</h2>
+    <div class="highlight-box" style="font-size:16px;text-align:center;line-height:2.4">
+      第一步 <b>① 定仓位</b> → 现在能不能做？（看天 + 看地）<br/>
+      第二步 <b>② 定方向</b> → 做什么？（政策 + 产业 + 资金）<br/>
+      第三步 <b>③ 选个股</b> → 做哪只？（主线龙头 / 中军）
+    </div>
+    <div class="warn-box">
+      ❌ <strong>误区：</strong>很多人反过来 —— 先刷到一只票，再去找"它为什么涨"的理由。这是被动追涨，容易被情绪带着走。
+    </div>
+  </div>
+
+  <!-- 盘前检查清单 -->
+  <div class="tut-section">
+    <h2>✅ 实战：每日盘前检查清单</h2>
+    <p>开盘前逐项打钩，顺序就是上面教的大局观流程。点击条目即可勾选：</p>
+    <ul class="checklist" id="preCheckList">
+      <li onclick="this.classList.toggle('done')"><b>天时</b>：货币/政策定性——今天偏多、偏震荡、还是偏空？</li>
+      <li onclick="this.classList.toggle('done')"><b>周期定位</b>：当前处在启动 / 主升 / 分歧 / 退潮哪一阶段？</li>
+      <li onclick="this.classList.toggle('done')"><b>仓位上限</b>：据此阶段给自己定一个上限（如退潮期 ≤ 2 成）。</li>
+      <li onclick="this.classList.toggle('done')"><b>主线确认</b>：今天最强板块是谁？有无持续催化？</li>
+      <li onclick="this.classList.toggle('done')"><b>龙头锁定</b>：该板块前排是谁？封单/换手是否健康？</li>
+      <li onclick="this.classList.toggle('done')"><b>风险信号</b>：跌停家数是否激增？高位股是否开始杀？</li>
+      <li onclick="this.classList.toggle('done')"><b>交易计划</b>：买点后置（确认强度再出手），卖点提前（有利润先锁定）。</li>
+    </ul>
+    <p id="checkProgress" style="text-align:center;color:var(--brand);font-weight:700;margin-top:10px"></p>
+  </div>
+
+  <!-- 新手误区 -->
+  <div class="tut-section">
+    <h2>⚠️ 新手常见误区</h2>
+    <ol>
+      <li><b>只看个股不看势</b> — 票再好，退潮期也容易被拖下水。</li>
+      <li><b>缩量反弹中追高</b> — 所有缩量反弹都可能是诱多，等放量确认。</li>
+      <li><b>盲目接力中位股</b> — 3–4 板最易吃面：要么做前排龙头，要么做低位试错。</li>
+      <li><b>老题材反抽当新主线</b> — 退潮期老题材回流多是出货，不是机会。</li>
+      <li><b>把"对与错"割裂</b> — 盈亏对错交替连续，用仓位和纪律应对，不靠预测。</li>
+      <li><b>顺序颠倒</b> — 先瞄到票再找理由 = 被动追涨，务必先定势再选股。</li>
+    </ol>
+  </div>
+
+  <!-- 思考练习 -->
+  <div class="tut-section">
+    <h2>💡 课堂思考 / 练习</h2>
+    <p>先自己写答案，再点"看参考答案"。</p>
+
+    <div class="qa-block">
+      <div class="qa-q">1. 今天盘面是"启动期"还是"退潮期"？列出你的 3 条判断依据。</div>
+      <button class="btn btn-ghost btn-sm" onclick="this.nextElementSibling.classList.toggle('show')">看参考答案</button>
+      <div class="qa-a">看：①连板高度与数量（多在增加=启动，在压缩=退潮）；②跌停家数（激增=退潮）；③昨日涨停今日溢价（负=退潮）。用这三条各找 1 个证据，再下结论。</div>
+    </div>
+
+    <div class="qa-block">
+      <div class="qa-q">2. 某板块涨停 8 家但成交额没放大、次日无新催化——这是真主线还是一日游？为什么？</div>
+      <button class="btn btn-ghost btn-sm" onclick="this.nextElementSibling.classList.toggle('show')">看参考答案</button>
+      <div class="qa-a">更偏<b>一日游</b>。真主线 = 催化 + 板块效应 + <b>资金持续</b>。缺"成交额持续放大"和"持续催化"两条，涨停多可能是情绪脉冲，次日易分化回落，不宜重仓。</div>
+    </div>
+
+    <div class="qa-block">
+      <div class="qa-q">3. 当前你的仓位上限应该定几成？写出"天/地/人"三项依据。</div>
+      <button class="btn btn-ghost btn-sm" onclick="this.nextElementSibling.classList.toggle('show')">看参考答案</button>
+      <div class="qa-a">先定天（货币/政策偏多→可多，偏空→压仓）、再定地（周期阶段→启动1-2成/主升5-8成/分歧3成/退潮≤2成）、最后看人（主线清晰度）。三者取最谨慎的那个作为上限。</div>
+    </div>
+
+    <div class="qa-block">
+      <div class="qa-q">4. 找一只你熟悉的高辨识度龙头，描述它在主升期 vs 退潮期分别该怎么处理。</div>
+      <button class="btn btn-ghost btn-sm" onclick="this.nextElementSibling.classList.toggle('show')">看参考答案</button>
+      <div class="qa-a">主升期：敢于上仓位、沿趋势持有、只做前排；退潮期：不硬扛、冲高即减/清、宁可空仓等下一轮启动。同一只票，周期位置不同，操作完全相反。</div>
+    </div>
+  </div>
+
+  <!-- 口诀卡 -->
+  <div class="mantra-card">
+    <h2 style="color:#fff;margin-bottom:16px">📋 关键口诀卡（建议保存）</h2>
+    <p>先看天，再看地，最后看人。</p>
+    <p>货币宽松+政策友好=可做多；收紧+高位杀=防守。</p>
+    <p>启动试错、主升重仓、分歧降仓、退潮空仓。</p>
+    <p><b>主升敢重仓，退潮绝不硬扛。</b></p>
+    <p>真热点 = 催化 + 板块效应 + 资金持续。</p>
+    <p>抓主线、看催化、认龙头、分强弱。</p>
+    <p>先定仓位，再定方向，最后选股。</p>
+    <p>在周期末端，活下来比赚钱更重要。</p>
+  </div>
+
+  <p style="text-align:center;margin:30px 0">
+    <a class="btn btn-primary" href="trading-mindset.html">下一课：交易中必备的四种心态 →</a>
+  </p>
+
+  <!-- 评论区（与文章同宽，置于 main 容器内） -->
+  <section class="tut-section" id="comments">
+    <h2>💬 评论区（登录后可见 / 可评论）</h2>
+    <div id="commentList"><p class="muted">加载评论…</p></div>
+    <div class="comment-form">
+      <textarea id="commentInput" rows="3" placeholder="登录后发表你的看法…"></textarea>
+      <div class="comment-form-row">
+        <span id="commentHint" class="muted"></span>
+        <button class="btn btn-primary" id="commentBtn" onclick="tutSubmit()">发表评论</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <p>&copy; 2026 白鹿原上-交易笔记 · blys.top ｜ 本内容为个人分享，不构成投资建议</p>
+</footer>
+
+<script src="../assets/app.js?v=2026082436"></script>
+<script>
+// 盘前检查清单进度
+document.querySelectorAll('#preCheckList li').forEach(function(li){
+  li.addEventListener('click', function(){
+    var done = document.querySelectorAll('#preCheckList li.done').length;
+    var total = document.querySelectorAll('#preCheckList li').length;
+    document.getElementById('checkProgress').textContent = '已完成 ' + done + ' / ' + total;
+  });
+});
+
+// ---- 评论系统 ----
+const TUT_SUPABASE_URL = "https://ojioiglffglyuellvcex.supabase.co";
+const TUT_SUPABASE_ANON = "sb_publishable_rGCr3ILVWQpvpURhctuYQg_K_jC-WHV";
+const TUT_ARTICLE = "market-overview";
+async function tutRpc(fn, params){
+  const r = await fetch(TUT_SUPABASE_URL + "/rest/v1/rpc/" + fn, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json", "apikey":TUT_SUPABASE_ANON, "Authorization":"Bearer "+TUT_SUPABASE_ANON },
+    body: JSON.stringify(params||{})
+  });
+  return r.json();
+}
+function tutEsc(s){ return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
+function tutFmt(dt){ const d=new Date(dt); if(isNaN(d))return""; const p=n=>String(n).padStart(2,"0"); return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes()); }
+async function tutLoad(){
+  const box=document.getElementById("commentList");
+  try{
+    const d=await tutRpc("list_comments",{p_article:TUT_ARTICLE});
+    if(d&&d.ok&&Array.isArray(d.list)){
+      if(d.list.length===0){ box.innerHTML='<p class="muted">还没有评论，来抢沙发～</p>'; return; }
+      box.innerHTML=d.list.map(c=>'<div class="comment-item"><div class="comment-head"><b>'+tutEsc(c.nickname||"匿名")+'</b><span class="comment-time">'+tutFmt(c.created_at)+'</span></div><div class="comment-body">'+tutEsc(c.content)+'</div></div>').join("");
+    }
+  }catch(e){ box.innerHTML='<p class="muted">评论加载失败</p>'; }
+}
+async function tutSubmit(){
+  const token=localStorage.getItem("blys_user_token");
+  if(!token){ document.getElementById("commentHint").textContent="请先在首页 blys.site 登录后再评论"; return; }
+  const ta=document.getElementById("commentInput");
+  const content=(ta.value||"").trim();
+  if(!content){ alert("写点什么再发吧"); return; }
+  const d=await tutRpc("add_comment",{p_token:token,p_article:TUT_ARTICLE,p_content:content});
+  if(!d||!d.ok){ alert((d&&d.msg)||"发送失败"); return; }
+  ta.value=""; document.getElementById("commentBtn").textContent="已发送 ✓";
+  tutLoad();
+  if(d.points!=null) alert("评论成功 +2 积分，当前积分 " + d.points);
+  setTimeout(function(){ document.getElementById("commentBtn").textContent="发表评论"; },1500);
+}
+tutLoad();
+// 浏览量统计（服务端）
+if (typeof recordPageView === "function"){
+  recordPageView("article", TUT_ARTICLE);
+  getPageViews("article", TUT_ARTICLE).then(function(n){
+    var el=document.getElementById("tutViews");
+    if(el) el.textContent=n;
+  });
+}
+</script>
+</body>
+</html>
