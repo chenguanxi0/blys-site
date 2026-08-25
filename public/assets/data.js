@@ -1197,5 +1197,88 @@ const DAILY_LOG = [
         "open": true
       }
     ]
+  },
+  {
+    "date": "2026-08-25",
+    "day": 22,
+    "total": 561225.90,
+    "dayPnl": 0.58,
+    "pos": 40.0,
+    "floatPnl": 3167.50,
+    "cash": 336905.90,
+    "holdings": [
+      {
+        "name": "中石科技",
+        "code": "300684",
+        "shares": 1100,
+        "avail": 0,
+        "mv": 94611.00,
+        "pnlPct": 2.129,
+        "cost": 84.217,
+        "cur": 86.010
+      },
+      {
+        "name": "宝鼎科技",
+        "code": "002552",
+        "shares": 1300,
+        "avail": 0,
+        "mv": 72280.00,
+        "pnlPct": 0.196,
+        "cost": 55.491,
+        "cur": 55.600
+      },
+      {
+        "name": "中钨高新",
+        "code": "000657",
+        "shares": 900,
+        "avail": 0,
+        "mv": 57429.00,
+        "pnlPct": 0.326,
+        "cost": 63.603,
+        "cur": 63.810
+      },
+      {
+        "name": "创新药ETF国泰",
+        "code": "517110",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.00,
+        "pnlPct": 1.105,
+        "cost": 0.784,
+        "cur": 0.804
+      }
+    ],
+    "note": "持仓截图(平安证券 **5362)。当日参考盈亏 +3,245.00 / +0.58%，总市值 224,320.00，可用资金 336,905.90，仓位 40.0%。清仓创新药ETF国泰，新买入中石科技、宝鼎科技、中钨高新；三只新股当日可用0（T+1未解锁）。",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "创新药ETF国泰",
+        "code": "517110",
+        "shares": 100000,
+        "close": true
+      },
+      {
+        "action": "buy",
+        "name": "中石科技",
+        "code": "300684",
+        "shares": 1100,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "宝鼎科技",
+        "code": "002552",
+        "shares": 1300,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "中钨高新",
+        "code": "000657",
+        "shares": 900,
+        "open": true
+      }
+    ]
   }
 ];
