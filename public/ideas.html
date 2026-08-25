@@ -1,0 +1,248 @@
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>每日思路 · 白鹿原上-交易笔记</title>
+  <meta name="description" content="每日开盘前交易思路记录，仅为个人交易记录，不构成投资建议。blys.site" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082436" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23e23b3b'/%3E%3Cstop offset='100%25' stop-color='%23f87171'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='18' cy='18' r='17' fill='url(%23g)'/%3E%3Ctext x='18' y='23' text-anchor='middle' fill='white' font-family='-apple-system,PingFang SC,Microsoft YaHei,sans-serif' font-size='18' font-weight='700'%3E白%3C/text%3E%3C/svg%3E" />
+  <link rel="apple-touch-icon" href="assets/favicon.png" />
+</head>
+<body>
+  <div class="risk-bar">
+    ⚠️ 风险提示：本站所有内容仅为个人复盘与经验分享，不构成任何投资建议，市场有风险，投资需谨慎。
+  </div>
+
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-logo">白</span>
+        <span class="brand-name">白鹿原上-交易笔记 <small>· blys.site</small></span>
+      </a>
+      <div class="nav-right">
+        <nav class="nav-links" id="navLinks">
+          <a href="chat.html">聊天室</a>
+          <a href="ideas.html" class="active">每日思路</a>
+          <a href="daily.html">每日复盘</a>
+          <a href="diary.html">实盘日记</a>
+          <a href="index.html#vip">心得分享</a>
+          <a href="index.html#vipzone">会员专享</a>
+          <div class="nav-dropdown">
+            <button class="nav-dropdown-trigger" type="button">关于<span class="nav-dropdown-chevron" aria-hidden="true"></span></button>
+            <div class="nav-dropdown-menu">
+              <a href="index.html#about">关于我</a>
+              <a href="notification-guide.html">弹窗教程</a>
+              <a href="changelog.html">更新日志</a>
+              <a href="admin.html" class="admin-nav-link" hidden>后台</a>
+            </div>
+          </div>
+        </nav>
+        <div class="vip-status" id="vipStatus"></div>
+        <div class="online-counter" id="onlineCounter" title="当前在线访客">
+          <span class="online-dot"></span>
+          <span id="onlineNum">--</span> 在线
+        </div>
+        <button class="nav-toggle" id="navToggle" aria-label="菜单">☰</button>
+      </div>
+    </div>
+  </header>
+  <script>
+    (function () {
+      var toggle = document.getElementById('navToggle');
+      var links = document.getElementById('navLinks');
+      if (!toggle || !links) return;
+      var dropdowns = document.querySelectorAll('.nav-dropdown');
+      dropdowns.forEach(function (dropdown) {
+        var trigger = dropdown.querySelector('.nav-dropdown-trigger');
+        if (!trigger) return;
+        trigger.addEventListener('click', function (event) {
+          event.preventDefault(); event.stopPropagation();
+          dropdowns.forEach(function (item) { if (item !== dropdown) item.classList.remove('open'); });
+          dropdown.classList.toggle('open');
+        });
+      });
+      document.addEventListener('click', function () {
+        dropdowns.forEach(function (item) { item.classList.remove('open'); });
+      });
+      toggle.dataset.navReady = '1';
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.addEventListener('click', function (event) {
+        event.preventDefault();
+        var open = links.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', String(open));
+      });
+      links.addEventListener('click', function (event) {
+        if (event.target.closest('a')) {
+          links.classList.remove('open');
+          toggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+      document.addEventListener('click', function (event) {
+        if (!event.target.closest('.nav-inner')) {
+          links.classList.remove('open');
+          toggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }());
+  </script>
+
+  <section class="section section-alt ideas-page" id="dailyIdeas">
+    <div class="section-head">
+      <h2>🧭 每日思路</h2>
+      <p>每天开盘前记录当日交易思路。<em>仅为个人交易记录，不构成任何投资建议。</em></p>
+    </div>
+
+    <div class="ideas-admin" id="ideasAdmin" hidden>
+      <div class="ideas-admin-head">
+        <div>
+          <h3>编辑每日思路</h3>
+          <p>每天只保存一条；再次保存同一天会覆盖更新。</p>
+        </div>
+        <label>日期
+          <input type="date" id="ideaDate" />
+        </label>
+      </div>
+      <input class="ideas-title-input" id="ideaTitle" maxlength="80" placeholder="标题，可不填，如：8月25日盘前思路" />
+      <textarea id="ideaContent" maxlength="5000" placeholder="写下今天开盘前的交易思路、重点观察方向、风险提醒等..."></textarea>
+      <div class="ideas-admin-actions">
+        <button class="btn btn-primary" type="button" onclick="saveDailyIdea()">保存 / 更新</button>
+        <button class="btn btn-secondary" type="button" onclick="loadDailyIdeaForEdit()">读取当天</button>
+        <span id="ideaSaveMsg"></span>
+      </div>
+    </div>
+
+    <div class="ideas-layout">
+      <aside class="ideas-date-list" id="ideasDateList">加载日期中...</aside>
+      <main class="ideas-detail" id="ideasDetail">加载每日思路中...</main>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>© <span id="year"></span> 白鹿原上-交易笔记 · blys.site ｜ 本内容为个人分享，不构成投资建议</p>
+  </footer>
+
+  <script src="assets/data.js?v=2026082416"></script>
+  <script src="assets/app.js?v=2026082436"></script>
+  <script src="assets/mobile-app.js?v=2026082021"></script>
+  <script>
+    let __ideas = [];
+    let __activeIdeaDate = '';
+
+    function ideaEsc(s){ return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+    function todayStr(){
+      const d = new Date();
+      const p = n => String(n).padStart(2, '0');
+      return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+    }
+    function ideaDateLabel(date){
+      const d = new Date(date + 'T00:00:00');
+      if (isNaN(d)) return date;
+      const week = ['周日','周一','周二','周三','周四','周五','周六'][d.getDay()];
+      return date.slice(5).replace('-', '/') + ' ' + week;
+    }
+    function isIdeaAdmin(){
+      const u = window.__user || {};
+      return !!(u.loggedIn && (u.isAdmin || u.is_admin));
+    }
+    function renderIdeaAdmin(){
+      const admin = document.getElementById('ideasAdmin');
+      if (!admin) return;
+      admin.hidden = !isIdeaAdmin();
+      const date = document.getElementById('ideaDate');
+      if (date && !date.value) date.value = todayStr();
+    }
+    async function loadDailyIdeas(){
+      const listBox = document.getElementById('ideasDateList');
+      const detail = document.getElementById('ideasDetail');
+      try {
+        const d = await sbRpc('list_daily_ideas', {});
+        if (!d || !d.ok) throw new Error((d && d.msg) || '加载失败');
+        __ideas = Array.isArray(d.list) ? d.list : [];
+        renderIdeasList();
+        const urlDate = new URLSearchParams(location.search).get('date');
+        const first = __ideas.find(x => x.idea_date === urlDate) || __ideas[0];
+        if (first) renderIdeaDetail(first.idea_date);
+        else if (detail) detail.innerHTML = '<div class="idea-empty">还没有每日思路。</div>';
+      } catch(e) {
+        if (listBox) listBox.innerHTML = '<div class="idea-empty">日期加载失败</div>';
+        if (detail) detail.innerHTML = '<div class="idea-empty">每日思路加载失败：' + ideaEsc(e.message || e) + '</div>';
+      }
+    }
+    function renderIdeasList(){
+      const box = document.getElementById('ideasDateList');
+      if (!box) return;
+      if (!__ideas.length) { box.innerHTML = '<div class="idea-empty">暂无记录</div>'; return; }
+      box.innerHTML = __ideas.map(item => {
+        const active = item.idea_date === __activeIdeaDate ? ' active' : '';
+        return '<button class="idea-date-item' + active + '" type="button" onclick="renderIdeaDetail(\\'' + item.idea_date + '\\')">' +
+          '<b>' + ideaDateLabel(item.idea_date) + '</b>' +
+          '<span>' + ideaEsc(item.title || '每日思路') + '</span>' +
+        '</button>';
+      }).join('');
+    }
+    function renderIdeaDetail(date){
+      __activeIdeaDate = date;
+      const item = __ideas.find(x => x.idea_date === date);
+      const detail = document.getElementById('ideasDetail');
+      if (!detail || !item) return;
+      history.replaceState(null, '', 'ideas.html?date=' + encodeURIComponent(date));
+      renderIdeasList();
+      detail.innerHTML = '<article class="idea-card">' +
+        '<div class="idea-card-kicker">每日思路 · ' + ideaDateLabel(item.idea_date) + '</div>' +
+        '<h1>' + ideaEsc(item.title || (item.idea_date + ' 盘前思路')) + '</h1>' +
+        '<div class="idea-disclaimer">仅为个人交易记录，不构成任何投资建议。市场有风险，投资需谨慎。</div>' +
+        '<div class="idea-content">' + ideaEsc(item.content || '').replace(/\\n/g, '<br>') + '</div>' +
+      '</article>';
+      if (isIdeaAdmin()) {
+        const dateInput = document.getElementById('ideaDate');
+        const titleInput = document.getElementById('ideaTitle');
+        const contentInput = document.getElementById('ideaContent');
+        if (dateInput) dateInput.value = item.idea_date;
+        if (titleInput) titleInput.value = item.title || '';
+        if (contentInput) contentInput.value = item.content || '';
+      }
+    }
+    async function loadDailyIdeaForEdit(){
+      if (!isIdeaAdmin()) return;
+      const date = document.getElementById('ideaDate').value || todayStr();
+      const msg = document.getElementById('ideaSaveMsg');
+      if (msg) msg.textContent = '读取中...';
+      try {
+        const d = await sbRpc('get_daily_idea', { p_date: date });
+        if (d && d.ok && d.item) {
+          document.getElementById('ideaTitle').value = d.item.title || '';
+          document.getElementById('ideaContent').value = d.item.content || '';
+          if (msg) msg.textContent = '已读取 ' + date;
+        } else {
+          document.getElementById('ideaTitle').value = '';
+          document.getElementById('ideaContent').value = '';
+          if (msg) msg.textContent = date + ' 暂无记录，可直接新建';
+        }
+      } catch(e) {
+        if (msg) msg.textContent = '读取失败';
+      }
+    }
+    async function saveDailyIdea(){
+      if (!isIdeaAdmin()) { alert('只有管理员可以编辑'); return; }
+      const date = document.getElementById('ideaDate').value || todayStr();
+      const title = (document.getElementById('ideaTitle').value || '').trim();
+      const content = (document.getElementById('ideaContent').value || '').trim();
+      const msg = document.getElementById('ideaSaveMsg');
+      if (!content) { alert('内容不能为空'); return; }
+      if (msg) msg.textContent = '保存中...';
+      const d = await sbRpc('save_daily_idea', { p_token: __user.token, p_date: date, p_title: title, p_content: content });
+      if (!d || !d.ok) { if (msg) msg.textContent = '保存失败：' + ((d && d.msg) || '未知错误'); return; }
+      if (msg) msg.textContent = '已保存';
+      await loadDailyIdeas();
+      renderIdeaDetail(date);
+    }
+    function initIdeasPage(){
+      renderIdeaAdmin();
+      loadDailyIdeas();
+      window.addEventListener('blys:user:change', renderIdeaAdmin);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initIdeasPage);
+    else initIdeasPage();
+  </script>
+</body>
+</html>
