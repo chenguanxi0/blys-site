@@ -22,6 +22,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     .chat-load-failed { padding:28px 14px; }
     .chat-empty-actions { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-top:12px; }
     .chat-empty-actions .btn-small { min-height:34px; padding:7px 12px; border-radius:10px; font-size:13px; }
+    .chat-msg-img-placeholder { border:1px solid #dbe4ef; background:#fff; color:#475569; border-radius:10px; padding:8px 12px; font-size:13px; cursor:pointer; }
+    .chat-msg-img-placeholder::before { content:"图片 "; color:#ef4444; font-weight:700; }
     @media (max-width:560px) {
       html.blys-native-app body.chat-body .chat-tabs-wrapper { top: calc(64px + var(--app-safe-top)); }
       html.blys-native-app body.chat-body .chat-box { top: var(--chat-box-top, calc(116px + var(--app-safe-top))); height: calc(100dvh - var(--chat-box-top, calc(116px + var(--app-safe-top)))); padding-bottom:0; }
@@ -293,9 +295,12 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     }
     function getPreferredChatRoom() {
       if (location.hash === '#private') return 'private';
-      const stored = normalizeChatRoom(chatManualRoom || getStoredChatRoom());
+      const manual = normalizeChatRoom(chatManualRoom);
+      if (manual) return manual;
+      if (__user.loggedIn && __user.isVip) return 'vip';
+      const stored = normalizeChatRoom(getStoredChatRoom());
       if (stored) return stored;
-      return (__user.loggedIn && __user.isVip) ? 'vip' : 'public';
+      return 'public';
     }
     const PUSH_VAPID_PUBLIC_KEY = 'BA2xT4Y1plL6c9JNmBJI8aqp_vjxrnOG1-p-nhazGbm_QGnnuq8A7hbYbBIpZKd3MQ3-jx0EfXZGnKYQQuFHFac';
 
@@ -476,6 +481,10 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       if (currentRoom === 'private') {
         const panel = document.getElementById('chatMembersPanel');
         if (panel) panel.hidden = true;
+        return;
+      }
+      if (shouldShowMembersAdmin(currentRoom)) {
+        scheduleVipMemberStats(currentRoom);
         return;
       }
       try {
@@ -1348,6 +1357,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     function renderChatMessageContent(m) {
       const text = (m.content || '').trim();
       const img = m.image;
+      const hasImage = !!(img || m.has_image || m.image_full);
       let html = '';
       if (m.reply_to_id) {
         const replyName = esc(m.reply_to_nickname || '群友');
@@ -1359,7 +1369,9 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         </div>`;
       }
       if (img) {
-        html += `<img class="chat-msg-img" src="${esc(img)}" alt="图片" loading="lazy" />`;
+        html += `<img class="chat-msg-img" src="${esc(img)}" data-full-src="${esc(m.image_full || img)}" alt="图片" loading="lazy" />`;
+      } else if (hasImage && m.id) {
+        html += `<button class="chat-msg-img-placeholder" type="button" onclick="openChatImageFromMessage('${esc(m.id)}')">查看图片</button>`;
       }
       if (text) {
         html += `<div class="chat-msg-text">${esc(text).replace(/\n/g, '<br>')}</div>`;
@@ -1389,6 +1401,21 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       if(i) i.src = '';
     }
 
+    async function openChatImageFromMessage(messageId){
+      if (!messageId) return;
+      if (!__user || !__user.loggedIn || !__user.token) { openAuthModal(); return; }
+      try {
+        const d = await sbRpc('get_chat_message_image', { p_token: __user.token, p_message_id: messageId }, { timeoutMs: 15000 });
+        if (!d || !d.ok || !d.image) {
+          alert((d && d.msg) || '图片加载失败');
+          return;
+        }
+        openChatImageViewer(d.image);
+      } catch (e) {
+        alert('图片加载失败：' + (e && e.message ? e.message : '网络异常'));
+      }
+    }
+
     // 图片查看器事件绑定（一次绑定，全局生效；通过事件委托处理动态消息）
     function bindChatImageViewer(){
       const v = document.getElementById('chatImageViewer');
@@ -1403,7 +1430,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
           const t = e.target;
           if(t && t.classList && t.classList.contains('chat-msg-img')){
             e.preventDefault();
-            openChatImageViewer(t.src);
+            openChatImageViewer(t.getAttribute('data-full-src') || t.src);
           }
         });
         msgBox.__chatImgBound = true;
@@ -2071,22 +2098,18 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       if (!file.type.startsWith('image/')) { alert('请选择图片文件'); return Promise.resolve(); }
       if (file.size > 8 * 1024 * 1024) { alert('图片最大支持 8MB'); return Promise.resolve(); }
 
-      // 聊天气泡显示缩略图，但点击查看时用这份较高清图片。
-      // 之前 720/0.7 甚至回退到 480/0.6，手机点开会明显发糊。
-      return compressChatImage(file, 1600, 0.88).then(({ base64, name }) => {
-        // 体积太大时逐级降档，仍尽量保留可放大的清晰度
+      // 聊天图片保留可查看清晰度，但不能把整页消息列表拖慢。
+      return compressChatImage(file, 1200, 0.82).then(({ base64, name }) => {
+        // 体积太大时逐级降档，避免会员群最近图片多时首屏卡住
         const roughSize = Math.round(base64.length * 0.75);
-        if (roughSize > 1400 * 1024) {
-          return compressChatImage(file, 1200, 0.82);
-        }
-        if (roughSize > 950 * 1024) {
-          return compressChatImage(file, 1400, 0.84);
+        if (roughSize > 800 * 1024) {
+          return compressChatImage(file, 960, 0.78);
         }
         return { base64, name };
       }).then(({ base64, name }) => {
         const finalSize = Math.round(base64.length * 0.75);
-        if (finalSize > 1600 * 1024) {
-          throw new Error('图片压缩后仍超过 1.6MB，请换一张更小的图片');
+        if (finalSize > 900 * 1024) {
+          throw new Error('图片压缩后仍超过 900KB，请换一张更小的图片');
         }
         pendingChatImage = base64;
         const thumb = document.getElementById('chatImgPreviewThumb');
