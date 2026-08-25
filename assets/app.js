@@ -1053,7 +1053,7 @@ function ensureAuthModal(){
         <p class="muted">用邮箱注册，首次需邮箱验证码（演示模式页面直接显示）。</p>
         <div class="form-row"><label>邮箱</label><input id="regEmail" type="email" placeholder="you@example.com" autocomplete="username" /></div>
         <div class="form-row"><label>密码</label><input id="regPwd" type="password" placeholder="至少 6 位" autocomplete="new-password" /></div>
-        <div class="form-row"><label>昵称</label><input id="regNick" type="text" placeholder="怎么称呼你（选填）" /></div>
+        <div class="form-row"><label>昵称</label><input id="regNick" type="text" placeholder="昵称不能和别人重复" /></div>
         <div class="form-row" id="regCodeRow" style="display:none"><label>验证码</label><input id="regCode" type="text" placeholder="6 位验证码" /></div>
         <div id="regMsg" class="result"></div>
         <button class="btn btn-primary btn-block" id="regSendBtn" onclick="regSend()">获取验证码</button>
@@ -1140,10 +1140,15 @@ async function regSubmit(){
   const code  = (document.getElementById("regCode").value || "").trim();
   const msg = document.getElementById("regMsg");
   if (!code){ msg.textContent = "请填写验证码"; return; }
+  if (nick.length > 20){ msg.textContent = "昵称最多 20 个字"; return; }
   msg.textContent = "注册中…";
   try {
     const d = await sbRpc("register_user", { p_email: email, p_code: code, p_password: pwd, p_nickname: nick });
-    if (!d || !d.ok){ msg.textContent = (d && d.msg) || "注册失败"; return; }
+    const errText = String((d && (d.msg || d.message || d.details || d.hint)) || "");
+    if (!d || !d.ok){
+      msg.textContent = /nickname|昵称|duplicate|unique/i.test(errText) ? "这个昵称已经有人用了，请换一个" : ((d && d.msg) || "注册失败");
+      return;
+    }
     localStorage.setItem(USER_TOKEN_KEY, d.token);
     msg.className = "result"; msg.innerHTML = "✅ 注册成功，已自动登录！";
     await fetchUser();
