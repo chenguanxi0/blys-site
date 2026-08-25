@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082439" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082440" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -226,8 +226,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082439"></script>
-  <script src="assets/mobile-app.js?v=2026082439"></script>
+  <script src="assets/app.js?v=2026082440"></script>
+  <script src="assets/mobile-app.js?v=2026082440"></script>
   <script>
     // 聊天室页面初始化
     let currentRoom = 'public';
@@ -243,7 +243,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    console.log('[chat] build v2026082439 (collapsed pc chat header)');
+    console.log('[chat] build v2026082440 (public and vip announcements)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
     let lastSeenTs = { public: 0, vip: 0, private: 0 };
@@ -273,9 +273,12 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     let inAppNotifOn = false;
     let notifDiagMsg = '';
     let unreadCounts = { public: 0, vip: 0, private: 0 };
-    const DEFAULT_VIP_ANNOUNCEMENT = '会员群文明交流，禁止荐股与广告；重要通知会在这里置顶。';
-    let vipAnnouncementText = DEFAULT_VIP_ANNOUNCEMENT;
-    let vipAnnouncementLoading = false;
+    const CHAT_ANNOUNCEMENT_DEFAULTS = {
+      public: '普通群文明交流，禁止荐股与广告；重要通知会在这里置顶。',
+      vip: '会员群文明交流，禁止荐股与广告；重要通知会在这里置顶。'
+    };
+    let chatAnnouncementTexts = Object.assign({}, CHAT_ANNOUNCEMENT_DEFAULTS);
+    let chatAnnouncementLoading = {};
     const CHAT_LAST_ROOM_KEY = 'blys_chat_last_room';
     let chatManualRoom = null;
     function normalizeChatRoom(room) {
@@ -671,17 +674,18 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     function updateChatAnnouncement(room) {
       const el = document.getElementById('chatAnnouncement');
       if (!el) return;
-      const show = room === 'vip' && __user && __user.loggedIn && __user.isVip;
+      const show = room === 'public' || (room === 'vip' && __user && __user.loggedIn && __user.isVip);
       el.hidden = !show;
       if (!show) el.classList.remove('expanded');
       renderChatAnnouncement();
       requestAnimationFrame(updateChatViewportLayout);
-      if (show) setTimeout(() => loadChatAnnouncement('vip'), 80);
+      if (show) setTimeout(() => loadChatAnnouncement(room), 80);
     }
 
     function renderChatAnnouncement() {
       const textEl = document.getElementById('chatAnnouncementText');
-      if (textEl) textEl.textContent = vipAnnouncementText || DEFAULT_VIP_ANNOUNCEMENT;
+      const room = currentRoom === 'vip' ? 'vip' : 'public';
+      if (textEl) textEl.textContent = chatAnnouncementTexts[room] || CHAT_ANNOUNCEMENT_DEFAULTS[room];
       const edit = document.getElementById('chatAnnouncementEdit');
       if (edit) edit.hidden = !isBlysAdminUser();
       const arrow = document.getElementById('chatAnnouncementArrow');
@@ -691,19 +695,20 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     }
 
     async function loadChatAnnouncement(room) {
-      if (room !== 'vip' || vipAnnouncementLoading) return;
-      vipAnnouncementLoading = true;
+      room = room === 'vip' ? 'vip' : (room === 'public' ? 'public' : '');
+      if (!room || chatAnnouncementLoading[room]) return;
+      chatAnnouncementLoading[room] = true;
       try {
-        const d = await sbRpc('get_chat_announcement', { p_room: 'vip' }, { timeoutMs: 5000 });
+        const d = await sbRpc('get_chat_announcement', { p_room: room }, { timeoutMs: 5000 });
         if (d && d.ok && typeof d.content === 'string' && d.content.trim()) {
-          vipAnnouncementText = d.content.trim();
+          chatAnnouncementTexts[room] = d.content.trim();
           renderChatAnnouncement();
           setTimeout(updateChatViewportLayout, 30);
         }
       } catch(e) {
         console.warn('[chat] load announcement failed', e);
       } finally {
-        vipAnnouncementLoading = false;
+        chatAnnouncementLoading[room] = false;
       }
     }
 
@@ -713,14 +718,16 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         event.stopPropagation();
       }
       if (!isBlysAdminUser()) return;
-      const next = prompt('编辑会员群公告', vipAnnouncementText || DEFAULT_VIP_ANNOUNCEMENT);
+      const room = currentRoom === 'vip' ? 'vip' : 'public';
+      const roomName = room === 'vip' ? '会员群' : '普通群';
+      const next = prompt('编辑' + roomName + '公告', chatAnnouncementTexts[room] || CHAT_ANNOUNCEMENT_DEFAULTS[room]);
       if (next == null) return;
       const content = String(next).trim();
       if (!content) { alert('公告内容不能为空'); return; }
       try {
-        const d = await sbRpc('set_chat_announcement', { p_token: __user.token, p_room: 'vip', p_content: content }, { timeoutMs: 8000 });
+        const d = await sbRpc('set_chat_announcement', { p_token: __user.token, p_room: room, p_content: content }, { timeoutMs: 8000 });
         if (!d || !d.ok) { alert((d && d.msg) || '保存失败'); return; }
-        vipAnnouncementText = content;
+        chatAnnouncementTexts[room] = content;
         renderChatAnnouncement();
         setTimeout(updateChatViewportLayout, 30);
         alert('公告已保存');
@@ -2099,7 +2106,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082439', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=2026082440', { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -2368,7 +2375,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082439', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=2026082440', { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
