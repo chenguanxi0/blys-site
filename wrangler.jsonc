@@ -1,5 +1,4 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
   "name": "blys-site",
   "compatibility_date": "2026-08-20",
   "observability": {
