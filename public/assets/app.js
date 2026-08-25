@@ -823,6 +823,7 @@ function closeVipRenewModal(snooze){
   }
 }
 function maybeShowVipRenewModal(){
+  return;
   if (!__user || !__user.loggedIn) return;
   const state = getVipRenewState();
   if (!state) return;

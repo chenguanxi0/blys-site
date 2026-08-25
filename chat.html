@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082502" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082503" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -55,6 +55,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
           <a href="diary.html">实盘日记</a>
           <a href="index.html#vip">心得分享</a>
           <a href="index.html#vipzone">会员专享</a>
+          <a href="member-discipline.html">会员交易纪律</a>
           <div class="nav-dropdown">
             <button class="nav-dropdown-trigger" type="button">关于<span class="nav-dropdown-chevron" aria-hidden="true"></span></button>
             <div class="nav-dropdown-menu">
@@ -126,10 +127,17 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         </button>
         <button class="chat-tab" data-room="private" onclick="switchChatRoom('private', { manual: true })">私聊<span class="chat-tab-badge" id="badge-private" hidden>0</span></button>
       </div>
-      <a class="vip-discipline-entry" id="vipDisciplineEntry" href="member-discipline.html" hidden>
-        <span>会员交易纪律</span>
-        <em>查看</em>
-      </a>
+      <div class="vip-discipline-entry" id="vipDisciplineEntry" hidden>
+        <a href="member-discipline.html"><span>会员交易纪律，必看！</span><em>查看</em></a>
+        <button type="button" onclick="dismissVipDisciplineEntry(event)" aria-label="关闭会员交易纪律提示">关闭</button>
+      </div>
+      <div class="vip-renew-inline" id="vipRenewInline" hidden>
+        <span id="vipRenewInlineText">会员即将到期</span>
+        <div class="vip-renew-inline-actions">
+          <button type="button" onclick="renewVipFromInline(event)">续费</button>
+          <button type="button" id="vipRenewInlineClose" onclick="dismissVipRenewInline(event)">关闭</button>
+        </div>
+      </div>
       <div class="chat-announcement" id="chatAnnouncement" hidden onclick="toggleChatAnnouncement()">
         <span class="chat-announcement-main">
           <b>群公告</b>
@@ -211,7 +219,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082445"></script>
+  <script src="assets/app.js?v=2026082446"></script>
   <script src="assets/mobile-app.js?v=2026082445"></script>
   <script>
     // 聊天室页面初始化
@@ -342,6 +350,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         setChatLoginLoading(false);
         updateChatAdminMode();
         updateChatInputState();
+        updateVipDisciplineEntry(currentRoom);
+        updateVipRenewInline(currentRoom);
         // 登录、会员激活或退出后，自动切换到身份对应的聊天室
         const preferredRoom = getPreferredChatRoom();
         if (currentRoom !== preferredRoom && !shouldStayOnExpiredVipRoom()) {
@@ -550,6 +560,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       const messagesBox = document.getElementById('chatMessages');
       const inputArea = document.getElementById('chatInputArea');
       updateVipDisciplineEntry(room);
+      updateVipRenewInline(room);
       updateChatAnnouncement(room);
       // 进入 VIP 群前必须刷新真实会员状态，避免本地缓存过期导致非会员看到会员群。
       if (room === 'vip' && !options.skipUserRefresh && typeof fetchUser === 'function' && localStorage.getItem(USER_TOKEN_KEY) && !vipRefreshing) {
@@ -563,6 +574,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
           if (chatBox) chatBox.style.display = 'none';
           if (vipLock) vipLock.style.display = 'flex';
           updateVipDisciplineEntry('');
+          updateVipRenewInline('');
           updateChatAnnouncement('');
           const title = document.getElementById('chatVipLockTitle');
           const text = document.getElementById('chatVipLockText');
@@ -577,6 +589,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
           if (chatBox) chatBox.style.display = 'flex';
           if (vipLock) vipLock.style.display = 'none';
           updateVipDisciplineEntry('');
+          updateVipRenewInline('');
           updateChatAnnouncement('');
           if (messagesBox) messagesBox.innerHTML = '<div class="chat-empty">登录后可以和白鹿原上私聊</div>';
           updateChatInputState();
@@ -586,6 +599,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
           if (chatBox) chatBox.style.display = 'flex';
           if (vipLock) vipLock.style.display = 'none';
           updateVipDisciplineEntry('');
+          updateVipRenewInline('');
           updateChatAnnouncement('');
           if (messagesBox) messagesBox.style.display = 'block';
           if (inputArea) inputArea.style.display = 'block';
@@ -627,8 +641,72 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       if (!el) return;
       const isVipRoom = room === 'vip';
       const canView = __user && __user.loggedIn && (__user.isVip || isBlysAdminUser());
-      el.hidden = !(isVipRoom && canView);
+      const key = getChatLocalUserKey('blys_vip_discipline_dismissed');
+      const dismissed = key && localStorage.getItem(key) === '1';
+      el.hidden = !(isVipRoom && canView) || dismissed;
       requestAnimationFrame(updateChatViewportLayout);
+    }
+
+    function getChatLocalUserKey(prefix) {
+      if (!__user || !__user.loggedIn) return '';
+      return prefix + '_' + (__user.email || __user.nickname || 'user').toLowerCase();
+    }
+
+    function getChatVipDaysLeft() {
+      if (typeof getVipDaysLeft === 'function') return getVipDaysLeft();
+      if (!__user || !__user.vipExpire) return null;
+      const expire = new Date(__user.vipExpire);
+      if (Number.isNaN(expire.getTime())) return null;
+      return Math.max(0, Math.ceil((expire.getTime() - Date.now()) / 86400000));
+    }
+
+    function dismissVipDisciplineEntry(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      const key = getChatLocalUserKey('blys_vip_discipline_dismissed');
+      if (key) localStorage.setItem(key, '1');
+      updateVipDisciplineEntry(currentRoom);
+    }
+
+    function updateVipRenewInline(room) {
+      const el = document.getElementById('vipRenewInline');
+      const text = document.getElementById('vipRenewInlineText');
+      const close = document.getElementById('vipRenewInlineClose');
+      if (!el || !text) return;
+      const daysLeft = getChatVipDaysLeft();
+      const canShow = room === 'vip' && __user && __user.loggedIn && __user.isVip && daysLeft != null && daysLeft > 0 && daysLeft <= 7;
+      const key = getChatLocalUserKey('blys_vip_renew_inline_dismiss_until3');
+      const dismissedUntil3 = key && localStorage.getItem(key) === '1';
+      const mustShow = canShow && daysLeft <= 3;
+      el.hidden = !canShow || (dismissedUntil3 && !mustShow);
+      if (!el.hidden) {
+        text.textContent = '会员还剩 ' + daysLeft + ' 天到期，请及时续费。';
+        if (close) close.hidden = mustShow;
+      }
+      requestAnimationFrame(updateChatViewportLayout);
+    }
+
+    function dismissVipRenewInline(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      const daysLeft = getChatVipDaysLeft();
+      if (daysLeft != null && daysLeft <= 3) return;
+      const key = getChatLocalUserKey('blys_vip_renew_inline_dismiss_until3');
+      if (key) localStorage.setItem(key, '1');
+      updateVipRenewInline(currentRoom);
+    }
+
+    async function renewVipFromInline(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      if (!__user.loggedIn) { openAuthModal(); return; }
+      await openMembershipPrivateChat('会员续费');
     }
 
     function shouldStayOnExpiredVipRoom() {
@@ -907,7 +985,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       return openMembershipPrivateChat();
     }
 
-    async function openMembershipPrivateChat() {
+    async function openMembershipPrivateChat(messageText) {
       if (!__user.loggedIn) { openAuthModal(); return; }
       location.hash = 'private';
       chatManualRoom = 'private';
@@ -915,7 +993,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       await startPrivateChat(__user.email, __user.nickname || __user.email, { silent: true });
       const input = document.getElementById('chatInput');
       if (!input) return;
-      input.value = '开通会员';
+      input.value = messageText || '开通会员';
       input.focus();
       updateChatComposerState();
       await sendPrivateMessage();
