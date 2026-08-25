@@ -179,7 +179,7 @@
       if (!__ideas.length) { box.innerHTML = '<div class="idea-empty">暂无记录</div>'; return; }
       box.innerHTML = __ideas.map(item => {
         const active = item.idea_date === __activeIdeaDate ? ' active' : '';
-        return '<button class="idea-date-item' + active + '" type="button" onclick="renderIdeaDetail(\\'' + item.idea_date + '\\')">' +
+        return '<button class="idea-date-item' + active + '" type="button" onclick="renderIdeaDetail(&quot;' + item.idea_date + '&quot;)">' +
           '<b>' + ideaDateLabel(item.idea_date) + '</b>' +
           '<span>' + ideaEsc(item.title || '每日思路') + '</span>' +
         '</button>';
