@@ -711,7 +711,12 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         event.stopPropagation();
       }
       if (!__user.loggedIn) { openAuthModal(); return; }
-      await openMembershipPrivateChat('会员续费');
+      location.hash = 'private';
+      chatManualRoom = 'private';
+      await switchChatRoom('private', { manual: true, skipUserRefresh: true });
+      await startPrivateChat(__user.email, __user.nickname || __user.email, { silent: true });
+      const input = document.getElementById('chatInput');
+      if (input) input.focus();
     }
 
     function shouldStayOnExpiredVipRoom() {
