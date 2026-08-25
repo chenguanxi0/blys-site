@@ -1393,6 +1393,14 @@ html.blys-native-app body.chat-body .chat-input-area { position:sticky; bottom:0
 .discipline-page {
   max-width:780px; margin:0 auto; padding:24px 16px 52px;
 }
+.discipline-back {
+  display:inline-flex; align-items:center; gap:6px; margin:0 0 12px;
+  padding:8px 12px; border:1px solid var(--line); border-radius:999px;
+  background:#fff; color:var(--brand); text-decoration:none; font-size:13px; font-weight:800;
+  box-shadow:var(--shadow-sm);
+}
+.discipline-back::before { content:'←'; font-weight:900; }
+.discipline-back:hover { border-color:var(--brand); background:var(--brand-light); transform:translateY(-1px); }
 .discipline-hero {
   border-radius:22px; padding:26px 22px; color:#fff; text-align:center;
   background:linear-gradient(135deg,#7c3aed,#8b5cf6 52%,#a78bfa);
