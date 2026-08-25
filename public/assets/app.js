@@ -1014,11 +1014,7 @@ async function renderVipLocks(){
 function lockVipZones(){
   document.querySelectorAll(".vip-zone").forEach(z=>{
     const isLoginGate = z.id === "vip";   // 会员课程：登录即可
-    // 积分兑换区：登录用户即可看到卡片（未解锁卡片带兑换按钮）；VIP 直接全部解锁
-    const isPointsZone = !!z.querySelector("[data-page][data-cost]");
-    const unlocked = isPointsZone
-      ? (isVIP() || __user.loggedIn)
-      : (isLoginGate ? __user.loggedIn : isVIP());
+    const unlocked = isLoginGate ? __user.loggedIn : isVIP();
     z.classList.toggle("unlocked", unlocked);
     z.classList.toggle("is-locked", !unlocked);
   });

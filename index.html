@@ -32,8 +32,13 @@
           <a href="daily.html">每日复盘</a>
           <a href="diary.html">实盘日记</a>
           <a href="#vip">心得分享</a>
-          <a href="#vipzone">会员专享</a>
-          <a href="member-discipline.html">会员交易纪律</a>
+          <div class="nav-dropdown">
+            <button class="nav-dropdown-trigger" type="button">会员专享<span class="nav-dropdown-chevron" aria-hidden="true"></span></button>
+            <div class="nav-dropdown-menu">
+              <a href="#vipzone">会员专区</a>
+              <a href="member-discipline.html">会员交易纪律</a>
+            </div>
+          </div>
           <div class="nav-dropdown">
             <button class="nav-dropdown-trigger" type="button">关于<span class="nav-dropdown-chevron" aria-hidden="true"></span></button>
             <div class="nav-dropdown-menu">
@@ -182,7 +187,7 @@
   <section class="section section-alt vip-zone" id="vipzone">
     <div class="section-head">
       <h2>⭐ 会员专享</h2>
-      <p>盘中提示、每周复盘文档、我的专属战法、实盘陪跑社群。<em>仅会员可见，游客输入激活码解锁。</em></p>
+      <p>盘中提示、每周复盘文档、我的专属战法、实盘陪跑社群。<em>仅会员可见。</em></p>
     </div>
     <div class="vip-body">
       <div class="cards">
@@ -217,8 +222,8 @@
       <div class="vip-mask-inner">
         <div class="vip-lock">🔒</div>
         <h3>会员专享内容</h3>
-        <p>盘中提示 · 每周复盘 · 专属战法 · 实盘陪跑社群，输入激活码即可解锁</p>
-        <button class="btn btn-primary" onclick="openRedeemModal()">登录/兑换解锁</button>
+        <p>盘中提示 · 每周复盘 · 专属战法 · 实盘陪跑社群，开通会员后即可查看</p>
+        <button class="btn btn-primary" onclick="goRenewVip()">私聊开通会员</button>
       </div>
     </div>
   </section>
