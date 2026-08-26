@@ -966,6 +966,7 @@ let SITE_ANNOUNCEMENT = {
   type: "announcement"
 };
 let SITE_CONTENT_NOTICES = [];
+let SITE_CHAT_NOTICES = [];
 function getAnnouncementPreview(text){
   const lines = String(text || "").split(/\r?\n/).map(x => x.trim()).filter(Boolean);
   return lines[0] || "";
@@ -979,6 +980,7 @@ function getAnnouncementRest(text){
 function getSiteNoticeItems(){
   return [
     ...(SITE_ANNOUNCEMENT && String(SITE_ANNOUNCEMENT.text || '').trim() ? [SITE_ANNOUNCEMENT] : []),
+    ...SITE_CHAT_NOTICES,
     ...SITE_CONTENT_NOTICES
   ];
 }
@@ -989,7 +991,7 @@ function renderSiteNoticeItems(){
   const readIds = getSiteNoticeReadIds();
   const groups = [];
   getSiteNoticeItems().forEach(item => {
-    if (item.type !== 'announcement' && readIds.includes(item.id)) return;
+    if (item.type !== 'announcement' && item.type !== 'chat' && readIds.includes(item.id)) return;
     let group = groups.find(g => g.name === item.group);
     if (!group) {
       group = { name: item.group, items: [] };
@@ -1000,7 +1002,7 @@ function renderSiteNoticeItems(){
   return groups.map(group => {
     const body = group.items.length
       ? group.items.map(item => {
-        const unreadCls = readIds.includes(item.id) ? '' : ' unread';
+        const unreadCls = item.type === 'chat' ? ' unread' : (readIds.includes(item.id) ? '' : ' unread');
         if (item.type === 'announcement') {
           const text = item.text || item.summary || '';
           const canExpand = String(text || '').trim().length > 0;
@@ -1008,7 +1010,8 @@ function renderSiteNoticeItems(){
           const full = canExpand ? `<span class="site-announcement-full" hidden>${esc(text)}</span>` : '';
           return `<button class="site-notice-item site-announcement-item${unreadCls}" type="button" aria-expanded="false" onclick="toggleSiteAnnouncement('${esc(item.id)}', event)"><span class="site-announcement-title"><b>${esc(item.title)}</b>${toggle}</span><small class="site-announcement-summary">${esc(getAnnouncementPreview(text))}</small>${full}</button>`;
         }
-        return `<a class="site-notice-item${unreadCls}" href="${esc(item.href)}" onclick="markSiteNoticeItemRead('${esc(item.id)}', event)"><b>${esc(item.title)}</b><small>${esc(item.text)}</small></a>`;
+        const click = item.type === 'chat' ? '' : ` onclick="markSiteNoticeItemRead('${esc(item.id)}', event)"`;
+        return `<a class="site-notice-item${unreadCls}" href="${esc(item.href)}"${click}><b>${esc(item.title)}</b><small>${esc(item.text)}</small></a>`;
       }).join("")
       : '<div class="site-notice-empty">暂无公告</div>';
     return `<div class="site-notice-section"><div class="site-notice-section-title">${esc(group.name)}</div>${body}</div>`;
@@ -1033,7 +1036,10 @@ function setSiteNoticeReadIds(ids){
 }
 function getSiteNoticeUnreadCount(){
   const readIds = getSiteNoticeReadIds();
-  return getSiteNoticeItems().filter(item => !readIds.includes(item.id)).length;
+  return getSiteNoticeItems().reduce((sum, item) => {
+    if (item.type === 'chat') return sum + (Number(item.count) || 1);
+    return sum + (readIds.includes(item.id) ? 0 : 1);
+  }, 0);
 }
 function markSiteNoticeItemRead(id, event){
   const item = getSiteNoticeItems().find(x => x.id === id);
@@ -1091,8 +1097,10 @@ let __siteAnnouncementLoadStarted = false;
 function scheduleSiteAnnouncementLoad(){
   if (__siteAnnouncementLoadStarted) return;
   __siteAnnouncementLoadStarted = true;
+  refreshSiteChatNotices();
   setTimeout(refreshSiteAnnouncementNotice, 80);
   setTimeout(refreshContentUpdateNotices, 120);
+  setInterval(refreshSiteChatNotices, 10000);
 }
 function updateSiteNoticeDropdown(){
   const trigger = document.getElementById("siteNoticeTrigger");
@@ -1123,6 +1131,24 @@ async function refreshSiteAnnouncementNotice(){
 }
 async function refreshContentUpdateNotices(){
   const notices = [];
+  try {
+    const r = await fetch("assets/data.js?t=" + Date.now(), { cache: "no-store" });
+    if (r.ok) {
+      const text = await r.text();
+      const dates = Array.from(new Set(text.match(/20\d{2}-\d{2}-\d{2}/g) || [])).sort();
+      const latestDate = dates[dates.length - 1];
+      if (latestDate) {
+        notices.push({
+          id: "diary-" + latestDate + "-" + String(text.length),
+          group: "内容更新",
+          title: "实盘日记已更新",
+          text: latestDate + " 实盘记录已更新",
+          href: "diary.html",
+          type: "content"
+        });
+      }
+    }
+  } catch(e){}
   try {
     const r = await fetch("assets/reviews/index.json?t=" + Date.now(), { cache: "no-store" });
     if (r.ok) {
@@ -1157,6 +1183,34 @@ async function refreshContentUpdateNotices(){
   SITE_CONTENT_NOTICES = notices;
   updateSiteNoticeDropdown();
 }
+
+function getSiteChatUnreadKey(){
+  const email = (__user && __user.email) ? String(__user.email).toLowerCase() : "guest";
+  return "blys_chat_unread_counts_" + email;
+}
+function refreshSiteChatNotices(){
+  let counts = {};
+  try { counts = JSON.parse(localStorage.getItem(getSiteChatUnreadKey()) || "{}") || {}; } catch(e) { counts = {}; }
+  const rooms = [
+    { room: "private", title: "私聊有未读消息", href: "chat.html#private" },
+    { room: "vip", title: "会员群聊有未读消息", href: "chat.html#vip" },
+    { room: "public", title: "普通群聊有未读消息", href: "chat.html#public" }
+  ];
+  SITE_CHAT_NOTICES = rooms
+    .map(x => Object.assign({}, x, { count: Number(counts[x.room]) || 0 }))
+    .filter(x => x.count > 0)
+    .map(x => ({
+      id: "chat-" + x.room,
+      group: "聊天通知",
+      title: x.title,
+      text: x.count > 99 ? "99+ 条未读聊天记录" : x.count + " 条未读聊天记录",
+      href: x.href,
+      type: "chat",
+      count: x.count
+    }));
+  updateSiteNoticeDropdown();
+}
+window.refreshSiteChatNotices = refreshSiteChatNotices;
 
 // ---- 积分体系（签到 / 评论奖励 / 兑换解锁） ----
 async function refreshPointsUI(){

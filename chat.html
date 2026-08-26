@@ -1043,6 +1043,23 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       updateUnreadBadges();
     }
 
+    function getChatUnreadStorageKey() {
+      const email = (__user && __user.email) ? String(__user.email).toLowerCase() : 'guest';
+      return 'blys_chat_unread_counts_' + email;
+    }
+
+    function syncChatUnreadToSiteNotice() {
+      try {
+        localStorage.setItem(getChatUnreadStorageKey(), JSON.stringify({
+          public: Number(unreadCounts.public) || 0,
+          vip: Number(unreadCounts.vip) || 0,
+          private: Number(unreadCounts.private) || 0,
+          updated_at: Date.now()
+        }));
+      } catch(e) {}
+      if (typeof window.refreshSiteChatNotices === 'function') window.refreshSiteChatNotices();
+    }
+
     function getPrivateUnreadFromList(list) {
       if (!Array.isArray(list)) return 0;
       return list.reduce((sum, c) => {
@@ -2890,6 +2907,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
           el.hidden = true;
         }
       });
+      syncChatUnreadToSiteNotice();
       // 未读变化后同步横幅：未读为 0 则横幅自动隐藏
       showUnreadBanner();
     }
