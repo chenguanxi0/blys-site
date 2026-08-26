@@ -1898,6 +1898,9 @@ html.blys-native-app body.chat-body .chat-notif-float {
   justify-content:space-between;
   gap:10px;
 }
+.site-announcement-title b {
+  margin-bottom:0;
+}
 .site-announcement-title em {
   font-style:normal;
   padding:2px 7px;
@@ -1919,6 +1922,7 @@ html.blys-native-app body.chat-body .chat-notif-float {
   color:#7c2d12;
   font-size:12px;
   line-height:1.6;
+  white-space:pre-wrap;
 }
 .site-notice-empty {
   padding:10px;

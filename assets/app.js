@@ -969,6 +969,12 @@ function getAnnouncementPreview(text){
   const lines = String(text || "").split(/\r?\n/).map(x => x.trim()).filter(Boolean);
   return lines[0] || "";
 }
+function getAnnouncementRest(text){
+  const lines = String(text || "").split(/\r?\n/);
+  const firstIdx = lines.findIndex(x => x.trim());
+  if (firstIdx < 0) return "";
+  return lines.slice(firstIdx + 1).join("\n").trim();
+}
 function getSiteNoticeItems(){
   return [
     SITE_ANNOUNCEMENT,
@@ -1008,7 +1014,10 @@ function renderSiteNoticeItems(){
         const unreadCls = readIds.includes(item.id) ? '' : ' unread';
         if (item.type === 'announcement') {
           const text = item.text || item.summary || '';
-          return `<button class="site-notice-item site-announcement-item${unreadCls}" type="button" aria-expanded="false" onclick="toggleSiteAnnouncement('${esc(item.id)}', event)"><span class="site-announcement-title"><b>${esc(item.title)}</b><em aria-hidden="true">展开</em></span><small class="site-announcement-summary">${esc(getAnnouncementPreview(text))}</small><span class="site-announcement-full" hidden>${esc(text)}</span></button>`;
+          const rest = getAnnouncementRest(text);
+          const toggle = rest ? '<em aria-hidden="true">展开</em>' : '';
+          const full = rest ? `<span class="site-announcement-full" hidden>${esc(rest)}</span>` : '';
+          return `<button class="site-notice-item site-announcement-item${unreadCls}" type="button" aria-expanded="false" onclick="toggleSiteAnnouncement('${esc(item.id)}', event)"><span class="site-announcement-title"><b>${esc(item.title)}</b>${toggle}</span><small class="site-announcement-summary">${esc(getAnnouncementPreview(text))}</small>${full}</button>`;
         }
         return `<a class="site-notice-item${unreadCls}" href="${esc(item.href)}" onclick="markSiteNoticeItemRead('${esc(item.id)}', event)"><b>${esc(item.title)}</b><small>${esc(item.text)}</small></a>`;
       }).join("")
