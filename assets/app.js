@@ -798,7 +798,7 @@ function getVipDaysLeft(){
   return Math.max(0, Math.ceil((expire.getTime() - Date.now()) / 86400000));
 }
 function goRenewVip(){
-  const target = "chat.html#private";
+  const target = "chat.html?membership_entry=home#private";
   if (location.pathname.endsWith("/chat.html") || location.pathname.endsWith("/chat")) {
     try {
       if (typeof switchChatRoom === "function") { switchChatRoom("private"); return; }
@@ -884,6 +884,7 @@ function closeUserMenu(){
 
 document.addEventListener("click", (event)=>{
   if (!event.target.closest(".user-menu")) closeUserMenu();
+  if (!event.target.closest(".site-notice-menu")) closeSiteNoticeMenu();
 });
 
 // 渲染右上角用户状态
@@ -902,10 +903,28 @@ function renderUserStatus(){
     const renewBtn = daysLeft != null && daysLeft <= 7
       ? `<button class="vip-open renew-btn" onclick="goRenewVip()">私聊续费</button>`
       : '';
-    let html = `<button class="vip-open checkin-btn" id="checkinBtn" onclick="doCheckin()" title="每日签到领积分">📅 签到</button>
+    const avatarText = esc((__user.nickname || __user.email || "用").trim().charAt(0).toUpperCase() || "用");
+    const siteNoticeUnreadCount = getSiteNoticeUnreadCount();
+    const hasSiteNoticeUnread = siteNoticeUnreadCount > 0;
+    const noticeUnreadCls = hasSiteNoticeUnread ? ' has-unread' : '';
+    const noticeItemCls = hasSiteNoticeUnread ? ' unread' : '';
+    const noticeItemsHtml = renderSiteNoticeItems(noticeItemCls);
+    let html = `<button class="nav-icon-btn checkin-btn" id="checkinBtn" onclick="doCheckin()" title="每日签到领积分" aria-label="每日签到"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2v4M16 2v4M4 10h16M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="m8 15 2.4 2.4L16 12"/></svg></button>
+    <div class="site-notice-menu">
+      <button class="nav-icon-btn notice-btn${noticeUnreadCls}" id="siteNoticeTrigger" type="button" onclick="toggleSiteNoticeMenu(event)" title="站内通知" aria-label="站内通知">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg><span class="notice-dot" id="siteNoticeDot">${siteNoticeUnreadCount}</span>
+      </button>
+      <div class="site-notice-dropdown" id="siteNoticeDropdown">
+        <div class="site-notice-head">
+          <b>通知</b>
+          <small>站内更新提醒</small>
+        </div>
+        ${noticeItemsHtml}
+      </div>
+    </div>
     <div class="user-menu">
       <button class="user-menu-trigger" id="userMenuTrigger" type="button" onclick="toggleUserMenu(event)" aria-expanded="false" aria-haspopup="true">
-        <span class="user-menu-name">${esc(__user.nickname || __user.email || "用户")}</span><span class="user-menu-chevron" aria-hidden="true"></span>
+        <span class="user-menu-avatar">${avatarText}</span><span class="user-menu-chevron" aria-hidden="true"></span>
       </button>
       <div class="user-menu-dropdown" id="userMenuDropdown">
         <div class="user-menu-status">${tag}</div>\n        ${vipCountdown}\n        <span class="vip-badge points-badge" id="userPointsBadge" title="当前积分，可兑换会员专享内容">🪙 <b id="userPointsNum">0</b> 分</span>
@@ -916,9 +935,171 @@ function renderUserStatus(){
     </div>`;
     el.innerHTML = html;
     refreshPointsUI();
+    scheduleSiteAnnouncementLoad();
   } else {
-    el.innerHTML = `<button class="vip-open" onclick="openAuthModal()">登录/注册</button>`;
+    el.innerHTML = `<button class="nav-icon-btn notice-btn" type="button" title="站内通知" aria-label="站内通知"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg></button><button class="vip-open login-compact" onclick="openAuthModal()">登录</button>`;
+    scheduleSiteAnnouncementLoad();
   }
+}
+
+function toggleSiteNoticeMenu(event){
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  closeUserMenu();
+  const menu = document.getElementById("siteNoticeDropdown");
+  if (!menu) return;
+  menu.classList.toggle("open");
+}
+
+function closeSiteNoticeMenu(){
+  const menu = document.getElementById("siteNoticeDropdown");
+  if (menu) menu.classList.remove("open");
+}
+
+let SITE_ANNOUNCEMENT = {
+  id: "site-announcement-2026-08-26",
+  group: "网站公告",
+  title: "网站公告模块已上线",
+  summary: "以后临时通知、重要说明都会放在这里提醒大家。",
+  text: "以后临时通知、重要说明都会放在这里提醒大家。公告内容较多时会默认折叠，点击后展开查看完整内容。",
+  type: "announcement"
+};
+function getSiteNoticeItems(){
+  return [
+    SITE_ANNOUNCEMENT,
+  {
+    id: "review-2026-08-26",
+    group: "内容更新",
+    title: "今日复盘已更新",
+    text: "收盘复盘、盘面要点和明日观察已发布",
+    href: "daily.html"
+  },
+  {
+    id: "idea-2026-08-26",
+    group: "内容更新",
+    title: "今日思路已更新",
+    text: "开盘前交易思路已发布，仅作个人记录",
+    href: "ideas.html"
+  }
+  ];
+}
+function getSiteNoticeVersion(){
+  return getSiteNoticeItems().map(item => item.id).join("|");
+}
+function renderSiteNoticeItems(){
+  const readIds = getSiteNoticeReadIds();
+  const groups = [];
+  getSiteNoticeItems().forEach(item => {
+    let group = groups.find(g => g.name === item.group);
+    if (!group) {
+      group = { name: item.group, items: [] };
+      groups.push(group);
+    }
+    group.items.push(item);
+  });
+  return groups.map(group => {
+    const body = group.items.length
+      ? group.items.map(item => {
+        const unreadCls = readIds.includes(item.id) ? '' : ' unread';
+        if (item.type === 'announcement') {
+          return `<button class="site-notice-item site-announcement-item${unreadCls}" type="button" onclick="toggleSiteAnnouncement('${esc(item.id)}', event)"><span class="site-announcement-title"><b>${esc(item.title)}</b><em aria-hidden="true">⌄</em></span><small>${esc(item.summary || item.text)}</small><span class="site-announcement-full" hidden>${esc(item.text || item.summary || '')}</span></button>`;
+        }
+        return `<a class="site-notice-item${unreadCls}" href="${esc(item.href)}" onclick="markSiteNoticeItemRead('${esc(item.id)}', event)"><b>${esc(item.title)}</b><small>${esc(item.text)}</small></a>`;
+      }).join("")
+      : '<div class="site-notice-empty">暂无公告</div>';
+    return `<div class="site-notice-section"><div class="site-notice-section-title">${esc(group.name)}</div>${body}</div>`;
+  }).join("");
+}
+function getSiteNoticeKey(){
+  const email = (__user && __user.email) ? String(__user.email).toLowerCase() : "guest";
+  return "blys_site_notice_read_" + email;
+}
+function getSiteNoticeUnread(){
+  return getSiteNoticeUnreadCount() > 0;
+}
+function getSiteNoticeReadIds(){
+  try {
+    const raw = localStorage.getItem(getSiteNoticeKey());
+    const list = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list) ? list : [];
+  } catch(e){ return []; }
+}
+function setSiteNoticeReadIds(ids){
+  try { localStorage.setItem(getSiteNoticeKey(), JSON.stringify(Array.from(new Set(ids)))); } catch(e){}
+}
+function getSiteNoticeUnreadCount(){
+  const readIds = getSiteNoticeReadIds();
+  return getSiteNoticeItems().filter(item => !readIds.includes(item.id)).length;
+}
+function markSiteNoticeItemRead(id, event){
+  const item = getSiteNoticeItems().find(x => x.id === id);
+  if (event && item && item.href === '#') event.preventDefault();
+  const readIds = getSiteNoticeReadIds();
+  if (!readIds.includes(id)) readIds.push(id);
+  setSiteNoticeReadIds(readIds);
+  const count = getSiteNoticeUnreadCount();
+  document.querySelectorAll(".notice-btn").forEach(btn => btn.classList.toggle("has-unread", count > 0));
+  const dot = document.getElementById("siteNoticeDot");
+  if (dot) dot.textContent = count ? String(count) : '';
+}
+function toggleSiteAnnouncement(id, event){
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  markSiteNoticeItemRead(id);
+  const btn = event && event.currentTarget;
+  if (!btn) return;
+  const full = btn.querySelector(".site-announcement-full");
+  if (!full) return;
+  const expanded = btn.classList.toggle("expanded");
+  full.hidden = !expanded;
+}
+function markSiteNoticeRead(){
+  setSiteNoticeReadIds(getSiteNoticeItems().map(item => item.id));
+  document.querySelectorAll(".notice-btn").forEach(btn => btn.classList.remove("has-unread"));
+  const dot = document.getElementById("siteNoticeDot");
+  if (dot) dot.textContent = '';
+  document.querySelectorAll(".site-notice-item.unread").forEach(item => item.classList.remove("unread"));
+}
+/* legacy compatibility */
+function getSiteNoticeUnreadLegacy(){
+  try { return localStorage.getItem(getSiteNoticeKey()) !== getSiteNoticeVersion(); }
+  catch(e){ return true; }
+}
+let __siteAnnouncementLoadStarted = false;
+function scheduleSiteAnnouncementLoad(){
+  if (__siteAnnouncementLoadStarted) return;
+  __siteAnnouncementLoadStarted = true;
+  setTimeout(refreshSiteAnnouncementNotice, 80);
+}
+async function refreshSiteAnnouncementNotice(){
+  try {
+    const d = await sbRpc("get_site_announcement", {});
+    if (!d || !d.ok || !d.item) return;
+    SITE_ANNOUNCEMENT = {
+      id: "site-announcement-" + String(d.item.updated_at || d.item.id || "default"),
+      group: "网站公告",
+      title: d.item.title || "网站公告",
+      summary: d.item.summary || d.item.content || "",
+      text: d.item.content || d.item.summary || "",
+      type: "announcement"
+    };
+    const trigger = document.getElementById("siteNoticeTrigger");
+    const dropdown = document.getElementById("siteNoticeDropdown");
+    if (!trigger || !dropdown) return;
+    const count = getSiteNoticeUnreadCount();
+    trigger.classList.toggle("has-unread", count > 0);
+    const dot = document.getElementById("siteNoticeDot");
+    if (dot) dot.textContent = count ? String(count) : "";
+    const oldSections = dropdown.querySelectorAll(".site-notice-section");
+    oldSections.forEach(el => el.remove());
+    const more = dropdown.querySelector(".site-notice-more");
+    if (more) more.remove();
+    dropdown.insertAdjacentHTML("beforeend", renderSiteNoticeItems());
+  } catch(e){}
 }
 
 // ---- 积分体系（签到 / 评论奖励 / 兑换解锁） ----
@@ -938,10 +1119,12 @@ async function refreshPointsUI(){
     __user.todayChecked = !!d.today_checked;
     if (btn){
       if (__user.todayChecked){
-        btn.textContent = "✅ 已签到";
+        btn.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2v4M16 2v4M4 10h16M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="m8 15 2.4 2.4L16 12"/></svg>`;
+        btn.title = "今日已签到";
         btn.disabled = true;
       } else {
-        btn.textContent = "📅 签到";
+        btn.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2v4M16 2v4M4 10h16M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="m8 15 2.4 2.4L16 12"/></svg>`;
+        btn.title = "每日签到领积分";
         btn.disabled = false;
       }
     }
@@ -973,6 +1156,7 @@ async function redeemContent(page, cost){
     alert(`✅ 兑换成功！已解锁「${page}」`);
     refreshPointsUI();
     renderVipLocks();
+    initTutorialGate();
     emitUserChange();
   } catch(e){ alert("网络错误"); }
 }
@@ -1605,15 +1789,17 @@ function pinNameColumn(root){
 }
 
 // ========== 内容预览 + 登录解锁 ==========
-function injectGateMask(container, title, desc){
+function injectGateMask(container, title, desc, actionHtml){
   container.classList.add("gate-content");
-  if (container.querySelector(".gate-mask")) return; // 已存在
+  const oldMask = container.querySelector(".gate-mask");
+  if (oldMask) oldMask.remove();
   const mask = document.createElement("div");
   mask.className = "gate-mask";
+  const action = actionHtml || `<button class="btn btn-primary" onclick="openAuthModal()">注册 / 登录</button>`;
   mask.innerHTML = `<div class="gate-mask-inner">
     <h4>${title}</h4>
     <p>${desc}</p>
-    <button class="btn btn-primary" onclick="openAuthModal()">注册 / 登录</button>
+    ${action}
   </div>`;
   container.appendChild(mask);
 }
@@ -1643,13 +1829,26 @@ function initTutorialGate(){
   const tut = document.querySelector(".tutorial.gate-content, main.tutorial");
   if (!tut) return;
   const sections = Array.from(tut.querySelectorAll(".tut-section"));
-  if (__user.loggedIn) {
+  const page = tut.dataset.page || "";
+  const cost = Number(tut.dataset.cost || 0);
+  const locks = (typeof __user !== 'undefined' && __user && Array.isArray(__user.locks)) ? __user.locks : [];
+  const hasLock = page && locks.indexOf(page) >= 0;
+  const needsPoints = page && cost > 0;
+  const unlocked = __user.loggedIn && (!needsPoints || isVIP() || hasLock);
+  if (unlocked) {
     removeGateMask(tut);
     return;
   }
   sections.forEach((sec, i)=>{ if (i >= 2) sec.classList.add("gate-hidden"); });
   tut.classList.add("gate-content", "is-gated");
-  injectGateMask(tut, "登录查看完整课程", "你已阅读课程预览部分。登录后即可解锁全部章节、实战案例与评论区互动。");
+  const action = __user.loggedIn && needsPoints
+    ? `<button class="btn btn-primary" onclick='redeemContent(${JSON.stringify(page)}, ${cost})'>${cost}积分解锁</button>`
+    : undefined;
+  const title = __user.loggedIn && needsPoints ? `${cost}积分解锁完整文章` : "登录查看完整课程";
+  const desc = __user.loggedIn && needsPoints
+    ? "你已阅读文章预览部分，解锁后可长期查看完整内容。"
+    : "你已阅读课程预览部分。登录后可使用积分解锁完整内容。";
+  injectGateMask(tut, title, desc, action);
 }
 
 // 从 index.json 取出最新日期（按 date 字符串倒序，取首条非空 date）

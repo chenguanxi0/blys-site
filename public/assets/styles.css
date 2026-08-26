@@ -1731,6 +1731,7 @@ html.blys-native-app body.chat-body .chat-notif-float {
   font-size: 15px;
   white-space: nowrap;
 }
+.brand .brand-name { display: none; }
 .brand-name small { font-size: 11px; }
 .nav-right {
   flex: 1 1 auto;
@@ -1779,18 +1780,189 @@ html.blys-native-app body.chat-body .chat-notif-float {
 .nav-links a.active { background: #fff; color: var(--brand); box-shadow: 0 1px 4px rgba(15,23,42,.08); }
 .nav-links a.active::after { display: none; }
 .vip-status { gap: 6px; }
+.nav-icon-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #fff;
+  color: #334155;
+  font: 800 17px/1 inherit;
+  cursor: pointer;
+  box-shadow: 0 5px 14px rgba(15,23,42,.06);
+  flex: 0 0 auto;
+}
+.nav-icon-btn:hover { border-color:#fecaca; color:#ef4444; background:#fff7f7; }
+.nav-icon-btn svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.checkin-btn {
+  padding: 0;
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  color: #fff;
+  border-color: transparent;
+  font-size: 18px;
+}
+.checkin-btn:hover { color:#fff; background: linear-gradient(135deg, #15803d, #16a34a); }
+.checkin-btn:disabled { background:#94a3b8; color:#fff; cursor:default; }
+.notice-btn { color:#111827; font-size:21px; }
+.notice-btn.has-unread { color:#ef4444; }
+.notice-btn svg { width: 22px; height: 22px; stroke-width: 2; }
+.notice-dot {
+  position:absolute;
+  top:-4px;
+  right:-4px;
+  min-width:17px;
+  height:17px;
+  padding:0 4px;
+  border-radius:999px;
+  background:#ef4444;
+  border:2px solid #fff;
+  color:#fff;
+  font:800 11px/13px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  text-align:center;
+  display:none;
+}
+.notice-btn.has-unread .notice-dot {
+  display:block;
+}
+.site-notice-menu { position:relative; flex:0 0 auto; }
+.site-notice-dropdown {
+  display:none;
+  position:absolute;
+  z-index:130;
+  top:calc(100% + 9px);
+  right:-44px;
+  width:min(320px, calc(100vw - 24px));
+  padding:10px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:#fff;
+  box-shadow:0 18px 42px rgba(15,23,42,.18);
+}
+.site-notice-dropdown.open { display:block; }
+.site-notice-head {
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:12px;
+  padding:4px 4px 9px;
+  border-bottom:1px solid #f1f5f9;
+}
+.site-notice-head b { font-size:15px; color:#111827; }
+.site-notice-head small { color:#94a3b8; font-size:12px; }
+.site-notice-section {
+  padding:7px 0;
+  border-top:1px solid #f1f5f9;
+}
+.site-notice-section:first-of-type { border-top:0; padding-top:2px; }
+.site-notice-section-title {
+  margin:0 0 6px;
+  font-size:12px;
+  font-weight:800;
+  color:#ef4444;
+}
+.site-notice-item {
+  position:relative;
+  display:block;
+  width:100%;
+  margin-top:8px;
+  padding:10px 12px;
+  border-radius:12px;
+  border:0;
+  background:#f8fafc;
+  color:#334155;
+  text-align:left;
+  cursor:pointer;
+}
+.site-notice-item:hover { background:#fff1f2; color:#be123c; }
+.site-notice-item b { display:block; font-size:14px; margin-bottom:4px; }
+.site-notice-item small { display:block; color:#64748b; font-size:12px; line-height:1.45; }
+.site-announcement-item {
+  background:#fff7ed;
+  color:#9a3412;
+}
+.site-announcement-title {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.site-announcement-title em {
+  font-style:normal;
+  font-size:15px;
+  transition:transform .18s ease;
+}
+.site-announcement-item.expanded .site-announcement-title em { transform:rotate(180deg); }
+.site-announcement-full {
+  display:block;
+  margin-top:9px;
+  padding-top:9px;
+  border-top:1px solid #fed7aa;
+  color:#7c2d12;
+  font-size:12px;
+  line-height:1.6;
+}
+.site-notice-empty {
+  padding:10px;
+  border-radius:10px;
+  color:#94a3b8;
+  background:#f8fafc;
+  font-size:12px;
+}
+.site-notice-item.unread::before {
+  content:'';
+  position:absolute;
+  left:6px;
+  top:14px;
+  width:6px;
+  height:6px;
+  border-radius:999px;
+  background:#ef4444;
+}
+.site-notice-item.unread { padding-left:18px; }
+.site-notice-more {
+  display:block;
+  margin-top:8px;
+  padding:9px 10px;
+  border-radius:10px;
+  text-align:center;
+  color:#ef4444;
+  font-weight:700;
+  font-size:13px;
+}
 .user-menu { position: relative; }
 .user-menu-trigger {
-  display:flex; align-items:center; gap:6px; max-width:170px; padding:7px 10px;
+  display:flex; align-items:center; justify-content:center; gap:0; width:36px; height:36px; padding:0;
   border:1px solid #fde68a; border-radius:999px; background:#fffbeb; color:#92400e;
   cursor:pointer; font:600 13px/1.2 inherit; white-space:nowrap;
 }
-.user-menu-name { max-width:128px; overflow:hidden; text-overflow:ellipsis; }
-.user-menu-chevron {
-  width: 7px; height: 7px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
-  transform: rotate(45deg) translateY(-2px); transition: transform .18s ease;
+.user-menu-avatar {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:28px;
+  height:28px;
+  border-radius:999px;
+  background:linear-gradient(135deg,#f97316,#ef4444);
+  color:#fff;
+  font-weight:900;
 }
-.user-menu-trigger[aria-expanded="true"] .user-menu-chevron { transform: rotate(225deg) translate(-1px, -1px); }
+.user-menu-name { display:none; }
+.user-menu-chevron {
+  display:none;
+}
+.user-menu-trigger[aria-expanded="true"] { border-color:#f59e0b; box-shadow:0 0 0 3px rgba(245,158,11,.12); }
 .user-menu-dropdown {
   display:none; position:absolute; z-index:120; top:calc(100% + 8px); right:0; min-width:156px;
   padding:8px; border:1px solid var(--line); border-radius:12px; background:#fff;
@@ -1874,10 +2046,12 @@ html.blys-native-app body.chat-body .chat-notif-float {
 
 @media (max-width: 560px) {
   .nav-inner { padding: 8px 12px; }
-  .brand-name { font-size: 14px; }
+  .brand-name { display:none; }
   .brand-logo { width: 32px; height: 32px; font-size: 16px; }
-  .vip-status { max-width: 190px; }
-  .user-menu-trigger { max-width:118px; padding:6px 8px; font-size:11px; }
+  .vip-status { max-width:none; }
+  .user-menu-trigger { width:34px; height:34px; }
+  .nav-icon-btn { width:34px; height:34px; font-size:13px; }
+  .site-notice-dropdown { right:-46px; }
   .nav-dropdown-trigger { font-size: 13px; }
   .user-menu-name { max-width:82px; }
   .vip-open { padding: 7px 10px; font-size: 12px; }

@@ -41,6 +41,12 @@
     .member-tools input { padding:8px 10px; border:1px solid #d1d5db; border-radius:8px; font-size:13px; }
     .code-result { background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px; font-size:13px; line-height:1.7; margin:12px 0; display:none; }
     .admin-table button.secondary { background:#475569; }
+    .admin-form { display:grid; gap:10px; }
+    .admin-form label { display:flex; flex-direction:column; gap:6px; font-size:13px; color:#64748b; }
+    .admin-form input, .admin-form textarea { width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; font-family:inherit; }
+    .admin-form textarea { min-height:110px; resize:vertical; line-height:1.6; }
+    .admin-form-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .admin-save-msg { color:#64748b; font-size:13px; }
     @media (max-width:720px){ .member-tools { grid-template-columns:1fr 1fr; } }
     .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.4); display:none; align-items:center; justify-content:center; z-index:100; }
     .modal-backdrop.open { display:flex; }
@@ -72,6 +78,20 @@
         <div class="stat-card"><div class="num" id="statUsers">-</div><div class="lbl">注册用户</div></div>
         <div class="stat-card"><div class="num" id="statVip">-</div><div class="lbl">会员数</div></div>
         <div class="stat-card"><div class="num" id="statCmts">-</div><div class="lbl">评论数</div></div>
+      </div>
+
+      <div class="panel">
+        <h2>📣 网站公告</h2>
+        <div class="admin-form">
+          <label>标题<input id="siteAnnouncementTitle" type="text" placeholder="例如：网站公告"></label>
+          <label>摘要<input id="siteAnnouncementSummary" type="text" placeholder="通知栏折叠时显示这一句"></label>
+          <label>完整内容<textarea id="siteAnnouncementContent" placeholder="公告完整内容，可以写长一点"></textarea></label>
+          <div class="admin-form-actions">
+            <button class="btn btn-primary" onclick="saveSiteAnnouncement()">保存公告</button>
+            <button class="btn btn-secondary" onclick="loadSiteAnnouncementAdmin()">刷新</button>
+            <span class="admin-save-msg" id="siteAnnouncementMsg"></span>
+          </div>
+        </div>
       </div>
 
       <div class="panel">
@@ -182,7 +202,7 @@
       loadAll();
     }
 
-    async function loadAll(){ await loadStats(); await loadUsers(); await loadMemberCodes(); await loadComments(); }
+    async function loadAll(){ await loadStats(); await loadSiteAnnouncementAdmin(); await loadUsers(); await loadMemberCodes(); await loadComments(); }
 
     async function loadStats(){
       const d = await sbRpc('admin_stats', { p_admin_token: getTok() });
@@ -191,6 +211,37 @@
         document.getElementById('statVip').textContent = d.vip;
         document.getElementById('statCmts').textContent = d.comments;
       }
+    }
+
+    async function loadSiteAnnouncementAdmin(){
+      const msg = document.getElementById('siteAnnouncementMsg');
+      if(msg) msg.textContent = '加载中...';
+      const d = await sbRpc('get_site_announcement', {});
+      if(!d || !d.ok || !d.item){
+        if(msg) msg.textContent = '加载失败';
+        return;
+      }
+      document.getElementById('siteAnnouncementTitle').value = d.item.title || '';
+      document.getElementById('siteAnnouncementSummary').value = d.item.summary || '';
+      document.getElementById('siteAnnouncementContent').value = d.item.content || '';
+      if(msg) msg.textContent = '已加载';
+    }
+
+    async function saveSiteAnnouncement(){
+      const title = (document.getElementById('siteAnnouncementTitle').value || '').trim();
+      const summary = (document.getElementById('siteAnnouncementSummary').value || '').trim();
+      const content = (document.getElementById('siteAnnouncementContent').value || '').trim();
+      const msg = document.getElementById('siteAnnouncementMsg');
+      if(!title || !summary || !content){ if(msg) msg.textContent = '标题、摘要、内容都要填'; return; }
+      if(msg) msg.textContent = '保存中...';
+      const d = await sbRpc('admin_update_site_announcement', {
+        p_admin_token: getTok(),
+        p_title: title,
+        p_summary: summary,
+        p_content: content
+      });
+      if(!d || !d.ok){ if(msg) msg.textContent = '保存失败：' + ((d&&d.msg)||'未知错误'); return; }
+      if(msg) msg.textContent = '保存成功，通知栏会显示这条公告';
     }
 
     async function loadUsers(){

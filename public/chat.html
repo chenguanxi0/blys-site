@@ -343,6 +343,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       updateChatViewportLayout();
       const preferredRoom = getPreferredChatRoom();
       await switchChatRoom(preferredRoom, { skipUserRefresh: true });
+      await maybeHandleHomeMembershipEntry();
       // 启动轮询
       startChatPoll();
       // 私聊未读独立延迟刷新，不阻塞普通/会员群聊首屏
@@ -1004,7 +1005,19 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       return openMembershipPrivateChat();
     }
 
-    async function openMembershipPrivateChat(messageText) {
+    async function maybeHandleHomeMembershipEntry() {
+      const params = new URLSearchParams(location.search || '');
+      if (params.get('membership_entry') !== 'home') return;
+      const key = 'blys_home_membership_entry_' + ((__user && __user.email) || 'guest') + '_' + new Date().toISOString().slice(0, 10);
+      if (sessionStorage.getItem(key) === '1') return;
+      sessionStorage.setItem(key, '1');
+      params.delete('membership_entry');
+      const cleanUrl = location.pathname + (params.toString() ? '?' + params.toString() : '') + '#private';
+      history.replaceState(null, '', cleanUrl);
+      await openMembershipPrivateChat('开通会员', { fromHomeUnlock: true });
+    }
+
+    async function openMembershipPrivateChat(messageText, options) {
       if (!__user.loggedIn) { openAuthModal(); return; }
       location.hash = 'private';
       chatManualRoom = 'private';
@@ -1015,7 +1028,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       input.value = messageText || '开通会员';
       input.focus();
       updateChatComposerState();
-      await sendPrivateMessage();
+      await sendPrivateMessage(options || {});
     }
 
     async function openPrivateRoom() {
@@ -1928,7 +1941,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       }, 18000);
     }
 
-    async function sendPrivateMessage() {
+    async function sendPrivateMessage(options) {
+      options = options || {};
       if (!__user.loggedIn) { openAuthModal(); return; }
       if (!currentPrivateConversationId) {
         await openPrivateRoom();
@@ -1975,6 +1989,9 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
           const node = box && box.querySelector('[data-message-id="' + tempId + '"]');
           if (node) node.outerHTML = renderChatMessageHtml(Object.assign({}, optimistic, { id: d.id, __pending: false }), 'private');
           lastSeenTs.private = Math.max(lastSeenTs.private || 0, new Date(optimistic.created_at).getTime());
+          if (options.fromHomeUnlock && !__user.isVip && !isBlysAdminUser()) {
+            await maybeSendMembershipAutoReply();
+          }
         } else {
           const box = document.getElementById('chatMessages');
           const node = box && box.querySelector('[data-message-id="' + tempId + '"]');
@@ -1986,6 +2003,22 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         const node = box && box.querySelector('[data-message-id="' + tempId + '"]');
         if (node) node.outerHTML = renderChatMessageHtml(Object.assign({}, optimistic, { __pending: false, __failed: true }), 'private');
         alert('私聊发送失败：' + (e && e.message ? e.message : '网络异常'));
+      }
+    }
+
+    async function maybeSendMembershipAutoReply() {
+      if (!currentPrivateConversationId || !__user || !__user.loggedIn || __user.isVip || isBlysAdminUser()) return;
+      try {
+        const d = await sbRpc('auto_reply_membership_inquiry', {
+          p_token: __user.token,
+          p_conversation_id: currentPrivateConversationId
+        }, { timeoutMs: 8000 });
+        if (d && d.ok && d.message) {
+          appendChatMessage(d.message, 'private', { stickToBottom: true });
+          lastSeenTs.private = Math.max(lastSeenTs.private || 0, new Date(d.message.created_at).getTime());
+        }
+      } catch (e) {
+        console.warn('[chat] membership auto reply skipped', e);
       }
     }
 
