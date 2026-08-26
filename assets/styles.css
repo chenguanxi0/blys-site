@@ -1842,7 +1842,7 @@ html.blys-native-app body.chat-body .chat-notif-float {
   position:absolute;
   z-index:130;
   top:calc(100% + 9px);
-  right:-44px;
+  right:0;
   width:min(320px, calc(100vw - 24px));
   max-width:calc(100vw - 24px);
   padding:10px;
@@ -2073,7 +2073,7 @@ html.blys-native-app body.chat-body .chat-notif-float {
   .vip-status { max-width:none; }
   .user-menu-trigger { width:34px; height:34px; }
   .nav-icon-btn { width:34px; height:34px; font-size:13px; }
-  .site-notice-dropdown { right:-46px; }
+  .site-notice-dropdown { right:0; }
   .nav-dropdown-trigger { font-size: 13px; }
   .user-menu-name { max-width:82px; }
   .vip-open { padding: 7px 10px; font-size: 12px; }

@@ -1138,7 +1138,7 @@ async function refreshContentUpdateNotices(){
       const latest = Array.isArray(list) && list.length ? list[list.length - 1] : null;
       if (latest && latest.date) {
         notices.push({
-          id: "review-" + latest.date,
+          id: "review-" + (latest.notice_id || latest.updated_at || latest.date),
           group: "内容更新",
           title: "今日复盘已更新",
           text: (latest.title || latest.date) + " 复盘已发布",
