@@ -1844,6 +1844,7 @@ html.blys-native-app body.chat-body .chat-notif-float {
   top:calc(100% + 9px);
   right:-44px;
   width:min(320px, calc(100vw - 24px));
+  max-width:calc(100vw - 24px);
   padding:10px;
   border:1px solid var(--line);
   border-radius:14px;
@@ -1884,10 +1885,11 @@ html.blys-native-app body.chat-body .chat-notif-float {
   color:#334155;
   text-align:left;
   cursor:pointer;
+  overflow:hidden;
 }
 .site-notice-item:hover { background:#fff1f2; color:#be123c; }
-.site-notice-item b { display:block; font-size:14px; margin-bottom:4px; }
-.site-notice-item small { display:block; color:#64748b; font-size:12px; line-height:1.45; }
+.site-notice-item b { display:block; min-width:0; font-size:14px; margin-bottom:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.site-notice-item small { display:block; min-width:0; color:#64748b; font-size:12px; line-height:1.45; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .site-announcement-item {
   background:#fff7ed;
   color:#9a3412;
@@ -1899,6 +1901,7 @@ html.blys-native-app body.chat-body .chat-notif-float {
   gap:10px;
 }
 .site-announcement-title b {
+  flex:1 1 auto;
   margin-bottom:0;
 }
 .site-announcement-title em {
@@ -1914,6 +1917,9 @@ html.blys-native-app body.chat-body .chat-notif-float {
 }
 .site-announcement-item.expanded .site-announcement-title em { background:#fed7aa; color:#9a3412; }
 .site-announcement-summary { margin-top:4px; }
+.site-announcement-summary[hidden] {
+  display:none !important;
+}
 .site-announcement-full {
   display:block;
   margin-top:9px;
@@ -1923,6 +1929,11 @@ html.blys-native-app body.chat-body .chat-notif-float {
   font-size:12px;
   line-height:1.6;
   white-space:pre-wrap;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+}
+.site-announcement-full[hidden] {
+  display:none !important;
 }
 .site-notice-empty {
   padding:10px;

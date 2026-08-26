@@ -1014,9 +1014,9 @@ function renderSiteNoticeItems(){
         const unreadCls = readIds.includes(item.id) ? '' : ' unread';
         if (item.type === 'announcement') {
           const text = item.text || item.summary || '';
-          const rest = getAnnouncementRest(text);
-          const toggle = rest ? '<em aria-hidden="true">展开</em>' : '';
-          const full = rest ? `<span class="site-announcement-full" hidden>${esc(rest)}</span>` : '';
+          const canExpand = String(text || '').trim().length > 0;
+          const toggle = canExpand ? '<em aria-hidden="true">展开</em>' : '';
+          const full = canExpand ? `<span class="site-announcement-full" hidden>${esc(text)}</span>` : '';
           return `<button class="site-notice-item site-announcement-item${unreadCls}" type="button" aria-expanded="false" onclick="toggleSiteAnnouncement('${esc(item.id)}', event)"><span class="site-announcement-title"><b>${esc(item.title)}</b>${toggle}</span><small class="site-announcement-summary">${esc(getAnnouncementPreview(text))}</small>${full}</button>`;
         }
         return `<a class="site-notice-item${unreadCls}" href="${esc(item.href)}" onclick="markSiteNoticeItemRead('${esc(item.id)}', event)"><b>${esc(item.title)}</b><small>${esc(item.text)}</small></a>`;
@@ -1072,6 +1072,8 @@ function toggleSiteAnnouncement(id, event){
   const expanded = btn.classList.toggle("expanded");
   btn.setAttribute("aria-expanded", expanded ? "true" : "false");
   full.hidden = !expanded;
+  const summary = btn.querySelector(".site-announcement-summary");
+  if (summary) summary.hidden = expanded;
   const label = btn.querySelector(".site-announcement-title em");
   if (label) label.textContent = expanded ? "收起" : "展开";
 }
