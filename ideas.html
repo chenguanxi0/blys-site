@@ -140,6 +140,22 @@
       const week = ['周日','周一','周二','周三','周四','周五','周六'][d.getDay()];
       return date.slice(5).replace('-', '/') + ' ' + week;
     }
+    function ideaDefaultTitle(date){
+      const d = new Date((date || todayStr()) + 'T00:00:00');
+      if (isNaN(d)) return '盘前思路';
+      return (d.getMonth() + 1) + '月' + d.getDate() + '日盘前思路';
+    }
+    function applyIdeaDefaultTitle(force){
+      const dateInput = document.getElementById('ideaDate');
+      const titleInput = document.getElementById('ideaTitle');
+      if (!dateInput || !titleInput) return;
+      const nextTitle = ideaDefaultTitle(dateInput.value || todayStr());
+      const oldAutoTitle = titleInput.dataset.autoTitle || '';
+      if (force || !titleInput.value.trim() || titleInput.value.trim() === oldAutoTitle) {
+        titleInput.value = nextTitle;
+        titleInput.dataset.autoTitle = nextTitle;
+      }
+    }
     function isIdeaAdmin(){
       let cached = {};
       try { cached = JSON.parse(localStorage.getItem('blys_user_profile_cache') || '{}') || {}; } catch(e) {}
@@ -155,6 +171,7 @@
       if (msg && admin.hidden) msg.textContent = '';
       const date = document.getElementById('ideaDate');
       if (date && !date.value) date.value = todayStr();
+      applyIdeaDefaultTitle(false);
     }
     async function loadDailyIdeas(){
       const listBox = document.getElementById('ideasDateList');
@@ -205,6 +222,7 @@
         if (dateInput) dateInput.value = item.idea_date;
         if (titleInput) titleInput.value = item.title || '';
         if (contentInput) contentInput.value = item.content || '';
+        applyIdeaDefaultTitle(false);
       }
     }
     async function loadDailyIdeaForEdit(){
@@ -217,9 +235,11 @@
         if (d && d.ok && d.item) {
           document.getElementById('ideaTitle').value = d.item.title || '';
           document.getElementById('ideaContent').value = d.item.content || '';
+          applyIdeaDefaultTitle(false);
           if (msg) msg.textContent = '已读取 ' + date;
         } else {
-          document.getElementById('ideaTitle').value = '';
+          document.getElementById('ideaTitle').value = ideaDefaultTitle(date);
+          document.getElementById('ideaTitle').dataset.autoTitle = ideaDefaultTitle(date);
           document.getElementById('ideaContent').value = '';
           if (msg) msg.textContent = date + ' 暂无记录，可直接新建';
         }
@@ -230,7 +250,8 @@
     async function saveDailyIdea(){
       if (!isIdeaAdmin()) { alert('只有管理员可以编辑'); return; }
       const date = document.getElementById('ideaDate').value || todayStr();
-      const title = (document.getElementById('ideaTitle').value || '').trim();
+      applyIdeaDefaultTitle(false);
+      const title = (document.getElementById('ideaTitle').value || '').trim() || ideaDefaultTitle(date);
       const content = (document.getElementById('ideaContent').value || '').trim();
       const msg = document.getElementById('ideaSaveMsg');
       if (!content) { alert('内容不能为空'); return; }
@@ -247,6 +268,10 @@
       setTimeout(renderIdeaAdmin, 500);
       setTimeout(renderIdeaAdmin, 1500);
       loadDailyIdeas();
+      const dateInput = document.getElementById('ideaDate');
+      const titleInput = document.getElementById('ideaTitle');
+      if (dateInput) dateInput.addEventListener('change', loadDailyIdeaForEdit);
+      if (titleInput) titleInput.addEventListener('input', () => { titleInput.dataset.autoTitle = ''; });
       window.addEventListener('blys:user:change', renderIdeaAdmin);
       if (typeof fetchUser === 'function') {
         Promise.race([

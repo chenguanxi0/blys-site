@@ -87,6 +87,7 @@
           <label>完整内容<textarea id="siteAnnouncementContent" placeholder="公告完整内容，可以写长一点；通知栏默认只展示第一行"></textarea></label>
           <div class="admin-form-actions">
             <button class="btn btn-primary" onclick="saveSiteAnnouncement()">保存公告</button>
+            <button class="btn btn-secondary" onclick="clearSiteAnnouncement()">清空公告</button>
             <button class="btn btn-secondary" onclick="loadSiteAnnouncementAdmin()">刷新</button>
             <span class="admin-save-msg" id="siteAnnouncementMsg"></span>
           </div>
@@ -228,8 +229,20 @@
     async function saveSiteAnnouncement(){
       const title = (document.getElementById('siteAnnouncementTitle').value || '').trim();
       const content = (document.getElementById('siteAnnouncementContent').value || '').trim();
+      await submitSiteAnnouncement(title, content);
+    }
+
+    async function clearSiteAnnouncement(){
+      const titleInput = document.getElementById('siteAnnouncementTitle');
+      const contentInput = document.getElementById('siteAnnouncementContent');
+      const title = (titleInput.value || '网站公告').trim() || '网站公告';
+      contentInput.value = '';
+      await submitSiteAnnouncement(title, '');
+    }
+
+    async function submitSiteAnnouncement(title, content){
       const msg = document.getElementById('siteAnnouncementMsg');
-      if(!title || !content){ if(msg) msg.textContent = '标题、内容都要填'; return; }
+      if(!title){ if(msg) msg.textContent = '标题不能为空'; return; }
       if(msg) msg.textContent = '保存中...';
       const d = await sbRpc('admin_update_site_announcement', {
         p_admin_token: getTok(),
@@ -238,7 +251,7 @@
         p_content: content
       });
       if(!d || !d.ok){ if(msg) msg.textContent = '保存失败：' + ((d&&d.msg)||'未知错误'); return; }
-      if(msg) msg.textContent = '保存成功，通知栏会显示这条公告';
+      if(msg) msg.textContent = content ? '保存成功，通知栏会显示这条公告' : '已清空公告，通知栏不再显示';
     }
 
     async function loadUsers(){

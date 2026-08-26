@@ -962,7 +962,7 @@ let SITE_ANNOUNCEMENT = {
   id: "site-announcement-2026-08-26",
   group: "网站公告",
   title: "网站公告模块已上线",
-  text: "以后临时通知、重要说明都会放在这里提醒大家。\n公告内容较多时会默认折叠，点击后展开查看完整内容。",
+  text: "",
   type: "announcement"
 };
 let SITE_CONTENT_NOTICES = [];
@@ -978,7 +978,7 @@ function getAnnouncementRest(text){
 }
 function getSiteNoticeItems(){
   return [
-    SITE_ANNOUNCEMENT,
+    ...(SITE_ANNOUNCEMENT && String(SITE_ANNOUNCEMENT.text || '').trim() ? [SITE_ANNOUNCEMENT] : []),
     ...SITE_CONTENT_NOTICES
   ];
 }

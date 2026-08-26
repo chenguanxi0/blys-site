@@ -2073,7 +2073,13 @@ html.blys-native-app body.chat-body .chat-notif-float {
   .vip-status { max-width:none; }
   .user-menu-trigger { width:34px; height:34px; }
   .nav-icon-btn { width:34px; height:34px; font-size:13px; }
-  .site-notice-dropdown { right:0; }
+  .site-notice-dropdown {
+    position:fixed;
+    top:58px;
+    right:8px;
+    left:auto;
+    width:min(340px, calc(100vw - 16px));
+  }
   .nav-dropdown-trigger { font-size: 13px; }
   .user-menu-name { max-width:82px; }
   .vip-open { padding: 7px 10px; font-size: 12px; }

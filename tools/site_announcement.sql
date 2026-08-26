@@ -81,19 +81,15 @@ BEGIN
     RETURN json_build_object('ok', false, 'msg', '标题不能为空');
   END IF;
 
-  IF NULLIF(trim(COALESCE(p_summary, '')), '') IS NULL THEN
-    RETURN json_build_object('ok', false, 'msg', '摘要不能为空');
-  END IF;
-
   IF NULLIF(trim(COALESCE(p_content, '')), '') IS NULL THEN
-    RETURN json_build_object('ok', false, 'msg', '内容不能为空');
+    p_content := '';
   END IF;
 
   INSERT INTO public.site_announcements (id, title, summary, content, updated_by, updated_at)
   VALUES (
     'main',
     trim(p_title),
-    trim(p_summary),
+    trim(COALESCE(NULLIF(p_summary, ''), p_content)),
     trim(p_content),
     coalesce(v_admin.email, 'admin'),
     now()
