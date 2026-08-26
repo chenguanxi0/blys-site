@@ -1347,6 +1347,24 @@ html.blys-native-app body.chat-body .chat-tabs-wrapper { top: calc(64px + var(--
 .vip-renew-inline-actions button:first-child { background:#ef4444; color:#fff; }
 .vip-renew-inline-actions button:last-child { background:#fee2e2; color:#b91c1c; }
 
+.chat-review-notice {
+  display:none; align-items:center; justify-content:space-between; gap:10px; width:100%;
+  margin:8px 0 0; padding:8px 10px; border:1px solid rgba(59,130,246,.20);
+  border-radius:12px; background:linear-gradient(135deg,#eff6ff,#fff); color:#1d4ed8;
+  box-shadow:0 3px 12px rgba(59,130,246,.08); flex-shrink:0;
+}
+.chat-review-notice:not([hidden]) { display:flex; }
+.chat-review-notice span {
+  min-width:0; font-size:13px; font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.chat-review-notice-actions { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+.chat-review-notice button {
+  border:0; border-radius:999px; padding:4px 9px; font-size:12px; font-weight:800;
+  cursor:pointer; font-family:inherit;
+}
+.chat-review-notice-actions button:first-child { background:#2563eb; color:#fff; }
+.chat-review-notice-actions button:last-child { background:#dbeafe; color:#1d4ed8; }
+
 .chat-announcement {
   display:none; align-items:center; gap:10px; width:100%; margin:8px 0 0;
   padding:9px 12px; border:1px solid rgba(245,158,11,.28); border-radius:12px;
@@ -1474,12 +1492,15 @@ html.blys-native-app body.chat-body .chat-notif-float {
   .discipline-card h2 { font-size:16px; }
   .discipline-card p { font-size:13.5px; }
   .vip-discipline-entry,
-  .vip-renew-inline { margin-top:6px; padding:6px 9px; }
+  .vip-renew-inline,
+  .chat-review-notice { margin-top:6px; padding:6px 9px; }
   .vip-discipline-entry span,
-  .vip-renew-inline span { font-size:12.5px; }
+  .vip-renew-inline span,
+  .chat-review-notice span { font-size:12.5px; }
   .vip-discipline-entry em,
   .vip-discipline-entry button,
-  .vip-renew-inline button { padding:4px 8px; }
+  .vip-renew-inline button,
+  .chat-review-notice button { padding:4px 8px; }
 }
 
 .chat-msg { display:flex; gap:10px; margin-bottom:14px; align-items:flex-start; }

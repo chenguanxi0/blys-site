@@ -145,6 +145,13 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
           <button type="button" id="vipRenewInlineClose" onclick="dismissVipRenewInline(event)">关闭</button>
         </div>
       </div>
+      <div class="chat-review-notice" id="chatReviewNotice" hidden>
+        <span id="chatReviewNoticeText">今日复盘已更新</span>
+        <div class="chat-review-notice-actions">
+          <button type="button" onclick="openLatestReviewNotice(event)">查看</button>
+          <button type="button" onclick="dismissLatestReviewNotice(event)">关闭</button>
+        </div>
+      </div>
       <div class="chat-announcement" id="chatAnnouncement" hidden onclick="toggleChatAnnouncement()">
         <span class="chat-announcement-main">
           <b>群公告</b>
@@ -281,6 +288,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     let chatAnnouncementLoading = {};
     const CHAT_LAST_ROOM_KEY = 'blys_chat_last_room';
     let chatManualRoom = null;
+    let latestReviewNotice = null;
     function normalizeChatRoom(room) {
       return ['public','vip','private'].includes(room) ? room : '';
     }
@@ -341,11 +349,13 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       updateChatAdminMode();
       updateChatInputState();
       updateChatViewportLayout();
+      refreshLatestReviewNotice();
       const preferredRoom = getPreferredChatRoom();
       await switchChatRoom(preferredRoom, { skipUserRefresh: true });
       await maybeHandleHomeMembershipEntry();
       // 启动轮询
       startChatPoll();
+      startLatestReviewNoticePolling();
       // 私聊未读独立延迟刷新，不阻塞普通/会员群聊首屏
       startPrivateUnreadPolling();
       // 发送兜底：防止乐观气泡停在“发送中”但投递未启动
@@ -651,6 +661,83 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       sendHeartbeat();
     }
 
+    function getReviewNoticeDismissKey(id) {
+      return 'blys_review_notice_dismissed_' + String(id || '');
+    }
+
+    function updateLatestReviewNotice() {
+      const el = document.getElementById('chatReviewNotice');
+      const text = document.getElementById('chatReviewNoticeText');
+      if (!el || !text) return;
+      const canShowRoom = currentRoom === 'public' || currentRoom === 'vip';
+      const dismissed = latestReviewNotice && localStorage.getItem(getReviewNoticeDismissKey(latestReviewNotice.id)) === '1';
+      el.hidden = !(canShowRoom && latestReviewNotice && !dismissed);
+      if (!el.hidden) text.textContent = latestReviewNotice.title || '今日复盘已更新';
+      requestAnimationFrame(updateChatViewportLayout);
+    }
+
+    async function refreshLatestReviewNotice() {
+      try {
+        const r = await fetch('assets/reviews/index.json?t=' + Date.now(), { cache: 'no-store' });
+        if (!r.ok) return;
+        const list = await r.json();
+        const latest = Array.isArray(list) && list.length ? list[list.length - 1] : null;
+        if (!latest || !latest.date) return;
+        const id = 'review-' + (latest.notice_id || latest.updated_at || latest.date);
+        latestReviewNotice = {
+          id,
+          date: latest.date,
+          title: '今日复盘已更新',
+          body: (latest.title || latest.date) + ' 复盘已发布',
+          href: 'daily.html?date=' + encodeURIComponent(latest.date)
+        };
+        updateLatestReviewNotice();
+        maybeShowLatestReviewSystemNotice();
+      } catch(e) {
+        console.warn('[chat] load review notice failed', e);
+      }
+    }
+
+    let latestReviewNoticePollTimer = null;
+    function startLatestReviewNoticePolling() {
+      if (latestReviewNoticePollTimer) return;
+      latestReviewNoticePollTimer = setInterval(refreshLatestReviewNotice, 300000);
+    }
+
+    function maybeShowLatestReviewSystemNotice() {
+      if (!latestReviewNotice || !('Notification' in window) || Notification.permission !== 'granted') return;
+      const key = 'blys_review_system_notified_' + latestReviewNotice.id;
+      if (localStorage.getItem(key) === '1') return;
+      localStorage.setItem(key, '1');
+      try {
+        const n = new Notification(latestReviewNotice.title, {
+          body: latestReviewNotice.body,
+          tag: latestReviewNotice.id,
+          renotify: true
+        });
+        n.onclick = () => { window.focus(); location.href = latestReviewNotice.href; };
+      } catch(e) {}
+    }
+
+    function openLatestReviewNotice(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      if (!latestReviewNotice) return;
+      localStorage.setItem(getReviewNoticeDismissKey(latestReviewNotice.id), '1');
+      location.href = latestReviewNotice.href;
+    }
+
+    function dismissLatestReviewNotice(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      if (latestReviewNotice) localStorage.setItem(getReviewNoticeDismissKey(latestReviewNotice.id), '1');
+      updateLatestReviewNotice();
+    }
+
     function updateVipDisciplineEntry(room) {
       const el = document.getElementById('vipDisciplineEntry');
       if (!el) return;
@@ -683,6 +770,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       const key = getChatLocalUserKey('blys_vip_discipline_dismissed');
       if (key) localStorage.setItem(key, '1');
       updateVipDisciplineEntry(currentRoom);
+      updateLatestReviewNotice();
     }
 
     function updateVipRenewInline(room) {
@@ -713,6 +801,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       const key = getChatLocalUserKey('blys_vip_renew_inline_dismiss_until3');
       if (key) localStorage.setItem(key, '1');
       updateVipRenewInline(currentRoom);
+      updateLatestReviewNotice();
     }
 
     async function renewVipFromInline(event) {
