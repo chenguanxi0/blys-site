@@ -250,7 +250,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    const BLYS_CHAT_PUSH_VERSION = '2026082601';
+    const BLYS_CHAT_PUSH_VERSION = '2026082602';
     console.log('[chat] build v' + BLYS_CHAT_PUSH_VERSION + ' (notification recovery)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
@@ -2420,9 +2420,6 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         const regs = await navigator.serviceWorker.getRegistrations();
         for (const reg of regs) {
           try { await clearChatPushSubscription(reg); } catch (e) {}
-        }
-        if (__user && __user.loggedIn && __user.token) {
-          try { await sbRpc('delete_push_subscriptions_for_user', { p_token: __user.token }, { timeoutMs: 8000 }); } catch (e) {}
         }
       } catch (e) {
         console.warn('[chat] cleanup native app web push failed', e);
