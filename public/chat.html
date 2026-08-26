@@ -250,7 +250,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    console.log('[chat] build v2026082445 (notification recovery)');
+    const BLYS_CHAT_PUSH_VERSION = '2026082601';
+    console.log('[chat] build v' + BLYS_CHAT_PUSH_VERSION + ' (notification recovery)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
     let lastSeenTs = { public: 0, vip: 0, private: 0 };
@@ -2362,7 +2363,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         return;
       }
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('sw.js?v=2026082445', { updateViaCache: 'none' }).then(() => {
+        navigator.serviceWorker.register('sw.js?v=' + BLYS_CHAT_PUSH_VERSION, { updateViaCache: 'none' }).then(() => {
           refreshChatPushSubscription();
         }).catch(() => {});
       }
@@ -2442,7 +2443,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       if (Notification.permission !== 'granted') return;
       if (localStorage.getItem('blys_notif') !== 'on') return;
       if (browserAutoResetRunning) return;
-      const key = 'blys_browser_auto_reset_' + __user.token + '_2026082445';
+      const key = 'blys_browser_auto_reset_' + __user.token + '_' + BLYS_CHAT_PUSH_VERSION;
       if (sessionStorage.getItem(key) === 'done') return;
       browserAutoResetRunning = true;
       try {
@@ -2473,7 +2474,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       if (!isNativeNotificationApp()) return;
       if (!__user || !__user.loggedIn || !__user.token) return;
       if (nativeAutoResetRunning) return;
-      const key = 'blys_native_auto_reset_' + __user.token + '_2026082445';
+      const key = 'blys_native_auto_reset_' + __user.token + '_' + BLYS_CHAT_PUSH_VERSION;
       if (sessionStorage.getItem(key) === 'done') return;
       nativeAutoResetRunning = true;
       try {
@@ -2631,7 +2632,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=2026082445', { updateViaCache: 'none' });
+        return await navigator.serviceWorker.register('sw.js?v=' + BLYS_CHAT_PUSH_VERSION, { updateViaCache: 'none' });
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
