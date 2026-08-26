@@ -965,6 +965,7 @@ let SITE_ANNOUNCEMENT = {
   text: "以后临时通知、重要说明都会放在这里提醒大家。\n公告内容较多时会默认折叠，点击后展开查看完整内容。",
   type: "announcement"
 };
+let SITE_CONTENT_NOTICES = [];
 function getAnnouncementPreview(text){
   const lines = String(text || "").split(/\r?\n/).map(x => x.trim()).filter(Boolean);
   return lines[0] || "";
@@ -978,20 +979,7 @@ function getAnnouncementRest(text){
 function getSiteNoticeItems(){
   return [
     SITE_ANNOUNCEMENT,
-  {
-    id: "review-2026-08-26",
-    group: "内容更新",
-    title: "今日复盘已更新",
-    text: "收盘复盘、盘面要点和明日观察已发布",
-    href: "daily.html"
-  },
-  {
-    id: "idea-2026-08-26",
-    group: "内容更新",
-    title: "今日思路已更新",
-    text: "开盘前交易思路已发布，仅作个人记录",
-    href: "ideas.html"
-  }
+    ...SITE_CONTENT_NOTICES
   ];
 }
 function getSiteNoticeVersion(){
@@ -1001,6 +989,7 @@ function renderSiteNoticeItems(){
   const readIds = getSiteNoticeReadIds();
   const groups = [];
   getSiteNoticeItems().forEach(item => {
+    if (item.type !== 'announcement' && readIds.includes(item.id)) return;
     let group = groups.find(g => g.name === item.group);
     if (!group) {
       group = { name: item.group, items: [] };
@@ -1053,10 +1042,27 @@ function markSiteNoticeItemRead(id, event){
   const readIds = getSiteNoticeReadIds();
   if (!readIds.includes(id)) readIds.push(id);
   setSiteNoticeReadIds(readIds);
+  const dropdown = document.getElementById("siteNoticeDropdown");
+  if (item && item.type !== "announcement" && event && event.currentTarget) {
+    const current = event.currentTarget;
+    setTimeout(() => {
+      current.remove();
+      pruneEmptySiteNoticeSections(dropdown);
+    }, 80);
+  }
   const count = getSiteNoticeUnreadCount();
   document.querySelectorAll(".notice-btn").forEach(btn => btn.classList.toggle("has-unread", count > 0));
   const dot = document.getElementById("siteNoticeDot");
   if (dot) dot.textContent = count ? String(count) : '';
+}
+function pruneEmptySiteNoticeSections(dropdown){
+  if (!dropdown) return;
+  dropdown.querySelectorAll(".site-notice-section").forEach(section => {
+    if (!section.querySelector(".site-notice-item")) section.remove();
+  });
+  if (!dropdown.querySelector(".site-notice-section")) {
+    dropdown.insertAdjacentHTML("beforeend", '<div class="site-notice-empty">暂无新通知</div>');
+  }
 }
 function toggleSiteAnnouncement(id, event){
   if (event) {
@@ -1094,6 +1100,20 @@ function scheduleSiteAnnouncementLoad(){
   if (__siteAnnouncementLoadStarted) return;
   __siteAnnouncementLoadStarted = true;
   setTimeout(refreshSiteAnnouncementNotice, 80);
+  setTimeout(refreshContentUpdateNotices, 120);
+}
+function updateSiteNoticeDropdown(){
+  const trigger = document.getElementById("siteNoticeTrigger");
+  const dropdown = document.getElementById("siteNoticeDropdown");
+  if (!trigger || !dropdown) return;
+  const count = getSiteNoticeUnreadCount();
+  trigger.classList.toggle("has-unread", count > 0);
+  const dot = document.getElementById("siteNoticeDot");
+  if (dot) dot.textContent = count ? String(count) : "";
+  dropdown.querySelectorAll(".site-notice-section,.site-notice-empty").forEach(el => el.remove());
+  const more = dropdown.querySelector(".site-notice-more");
+  if (more) more.remove();
+  dropdown.insertAdjacentHTML("beforeend", renderSiteNoticeItems());
 }
 async function refreshSiteAnnouncementNotice(){
   try {
@@ -1106,19 +1126,44 @@ async function refreshSiteAnnouncementNotice(){
       text: d.item.content || d.item.summary || "",
       type: "announcement"
     };
-    const trigger = document.getElementById("siteNoticeTrigger");
-    const dropdown = document.getElementById("siteNoticeDropdown");
-    if (!trigger || !dropdown) return;
-    const count = getSiteNoticeUnreadCount();
-    trigger.classList.toggle("has-unread", count > 0);
-    const dot = document.getElementById("siteNoticeDot");
-    if (dot) dot.textContent = count ? String(count) : "";
-    const oldSections = dropdown.querySelectorAll(".site-notice-section");
-    oldSections.forEach(el => el.remove());
-    const more = dropdown.querySelector(".site-notice-more");
-    if (more) more.remove();
-    dropdown.insertAdjacentHTML("beforeend", renderSiteNoticeItems());
+    updateSiteNoticeDropdown();
   } catch(e){}
+}
+async function refreshContentUpdateNotices(){
+  const notices = [];
+  try {
+    const r = await fetch("assets/reviews/index.json?t=" + Date.now(), { cache: "no-store" });
+    if (r.ok) {
+      const list = await r.json();
+      const latest = Array.isArray(list) && list.length ? list[list.length - 1] : null;
+      if (latest && latest.date) {
+        notices.push({
+          id: "review-" + latest.date,
+          group: "内容更新",
+          title: "今日复盘已更新",
+          text: (latest.title || latest.date) + " 复盘已发布",
+          href: "daily.html?date=" + encodeURIComponent(latest.date),
+          type: "content"
+        });
+      }
+    }
+  } catch(e){}
+  try {
+    const d = await sbRpc("list_daily_ideas", {}, { timeoutMs: 5000 });
+    const latestIdea = d && d.ok && Array.isArray(d.list) && d.list.length ? d.list[0] : null;
+    if (latestIdea && latestIdea.idea_date) {
+      notices.push({
+        id: "idea-" + latestIdea.idea_date + "-" + String(latestIdea.updated_at || ""),
+        group: "内容更新",
+        title: "今日思路已更新",
+        text: (latestIdea.title || latestIdea.idea_date) + " 已发布",
+        href: "ideas.html?date=" + encodeURIComponent(latestIdea.idea_date),
+        type: "content"
+      });
+    }
+  } catch(e){}
+  SITE_CONTENT_NOTICES = notices;
+  updateSiteNoticeDropdown();
 }
 
 // ---- 积分体系（签到 / 评论奖励 / 兑换解锁） ----
