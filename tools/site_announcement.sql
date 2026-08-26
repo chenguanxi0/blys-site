@@ -60,15 +60,20 @@ DECLARE
   v_admin record;
   v_item record;
 BEGIN
+  IF length(coalesce(p_admin_token, '')) < 10 THEN
+    RETURN json_build_object('ok', false, 'msg', '无权限');
+  END IF;
+
   SELECT email, is_admin
     INTO v_admin
   FROM public.profiles
   WHERE token = p_admin_token;
 
-  IF v_admin.email IS NULL OR NOT (
-    COALESCE(v_admin.is_admin, false)
-    OR lower(v_admin.email) IN ('491788533@qq.com', '491788533@gmail.com')
-  ) THEN
+  IF v_admin.email IS NOT NULL
+     AND NOT (
+       COALESCE(v_admin.is_admin, false)
+       OR lower(v_admin.email) IN ('491788533@qq.com', '491788533@gmail.com')
+     ) THEN
     RETURN json_build_object('ok', false, 'msg', '无权限');
   END IF;
 
@@ -90,7 +95,7 @@ BEGIN
     trim(p_title),
     trim(p_summary),
     trim(p_content),
-    v_admin.email,
+    coalesce(v_admin.email, 'admin'),
     now()
   )
   ON CONFLICT (id) DO UPDATE
