@@ -780,6 +780,7 @@ async function fetchUser(){
   }
   syncUserGlobals();
   renderUserStatus();
+  await renderVipLocks();
   lockVipZones();
   initReview();
   initTutorialGate();
@@ -1265,7 +1266,7 @@ async function redeemContent(page, cost){
     }
     alert(`✅ 兑换成功！已解锁「${page}」`);
     refreshPointsUI();
-    renderVipLocks();
+    await renderVipLocks();
     initTutorialGate();
     emitUserChange();
   } catch(e){ alert("网络错误"); }
@@ -1301,6 +1302,11 @@ async function renderVipLocks(){
       b.onclick = () => redeemContent(page, cost);
       card.appendChild(b);
     }
+  });
+  document.querySelectorAll("[data-vip-course]").forEach(c=>{
+    const page = c.dataset.page;
+    const hasLock = page && locks.indexOf(page) >= 0;
+    c.classList.toggle("is-locked", !isVIP() && !hasLock);
   });
 }
 
