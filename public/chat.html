@@ -2152,7 +2152,6 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         console.log('[chat] send_message response', d);
         if (d && d.ok) {
           updateChatPendingState(tempId, '发送成功…');
-          triggerChatPushNotification(task).catch(e => console.warn('[chat] push notify failed', e));
           finalizeChatSend(tempId, d.id || d.message_id || null);
         } else {
           const status = (d && d._status) ? ' [HTTP ' + d._status + ']' : '';

@@ -101,6 +101,21 @@ async function postGetuiPush(token: string, requestBody: Record<string, unknown>
   return { ok: false, status: res.status, text };
 }
 
+async function logDelivery(cid: string, senderToken: string, room: string, ok: boolean, statusCode = 0, error = "") {
+  try {
+    await rpc("log_native_push_delivery", {
+      p_sender_token: senderToken,
+      p_device_token: cid,
+      p_room: room,
+      p_ok: ok,
+      p_status_code: statusCode || null,
+      p_error: error || null,
+    });
+  } catch (_) {
+    // Logging must never block notification delivery.
+  }
+}
+
 async function sendGetuiCid(token: string, cid: string, title: string, body: string, room: string) {
   const transmitBody = {
     request_id: requestId(),
@@ -181,9 +196,11 @@ async function handler(req: Request) {
       const result = await sendGetuiCid(getuiToken, cid, title, messageBody, room);
       if (result.ok) {
         sent++;
+        await logDelivery(cid, token, room, true);
       } else {
         failed++;
         const raw = result.text || "";
+        await logDelivery(cid, token, room, false, result.status || 0, raw);
         if (errors.length < 5) errors.push(`${result.status || 0}:${raw.slice(0, 160)}`);
       }
     }
