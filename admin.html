@@ -84,8 +84,7 @@
         <h2>📣 网站公告</h2>
         <div class="admin-form">
           <label>标题<input id="siteAnnouncementTitle" type="text" placeholder="例如：网站公告"></label>
-          <label>摘要<input id="siteAnnouncementSummary" type="text" placeholder="通知栏折叠时显示这一句"></label>
-          <label>完整内容<textarea id="siteAnnouncementContent" placeholder="公告完整内容，可以写长一点"></textarea></label>
+          <label>完整内容<textarea id="siteAnnouncementContent" placeholder="公告完整内容，可以写长一点；通知栏默认只展示第一行"></textarea></label>
           <div class="admin-form-actions">
             <button class="btn btn-primary" onclick="saveSiteAnnouncement()">保存公告</button>
             <button class="btn btn-secondary" onclick="loadSiteAnnouncementAdmin()">刷新</button>
@@ -222,22 +221,20 @@
         return;
       }
       document.getElementById('siteAnnouncementTitle').value = d.item.title || '';
-      document.getElementById('siteAnnouncementSummary').value = d.item.summary || '';
       document.getElementById('siteAnnouncementContent').value = d.item.content || '';
       if(msg) msg.textContent = '已加载';
     }
 
     async function saveSiteAnnouncement(){
       const title = (document.getElementById('siteAnnouncementTitle').value || '').trim();
-      const summary = (document.getElementById('siteAnnouncementSummary').value || '').trim();
       const content = (document.getElementById('siteAnnouncementContent').value || '').trim();
       const msg = document.getElementById('siteAnnouncementMsg');
-      if(!title || !summary || !content){ if(msg) msg.textContent = '标题、摘要、内容都要填'; return; }
+      if(!title || !content){ if(msg) msg.textContent = '标题、内容都要填'; return; }
       if(msg) msg.textContent = '保存中...';
       const d = await sbRpc('admin_update_site_announcement', {
         p_admin_token: getTok(),
         p_title: title,
-        p_summary: summary,
+        p_summary: content,
         p_content: content
       });
       if(!d || !d.ok){ if(msg) msg.textContent = '保存失败：' + ((d&&d.msg)||'未知错误'); return; }

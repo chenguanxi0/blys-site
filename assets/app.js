@@ -962,10 +962,13 @@ let SITE_ANNOUNCEMENT = {
   id: "site-announcement-2026-08-26",
   group: "网站公告",
   title: "网站公告模块已上线",
-  summary: "以后临时通知、重要说明都会放在这里提醒大家。",
-  text: "以后临时通知、重要说明都会放在这里提醒大家。公告内容较多时会默认折叠，点击后展开查看完整内容。",
+  text: "以后临时通知、重要说明都会放在这里提醒大家。\n公告内容较多时会默认折叠，点击后展开查看完整内容。",
   type: "announcement"
 };
+function getAnnouncementPreview(text){
+  const lines = String(text || "").split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+  return lines[0] || "";
+}
 function getSiteNoticeItems(){
   return [
     SITE_ANNOUNCEMENT,
@@ -1004,7 +1007,8 @@ function renderSiteNoticeItems(){
       ? group.items.map(item => {
         const unreadCls = readIds.includes(item.id) ? '' : ' unread';
         if (item.type === 'announcement') {
-          return `<button class="site-notice-item site-announcement-item${unreadCls}" type="button" onclick="toggleSiteAnnouncement('${esc(item.id)}', event)"><span class="site-announcement-title"><b>${esc(item.title)}</b><em aria-hidden="true">⌄</em></span><small>${esc(item.summary || item.text)}</small><span class="site-announcement-full" hidden>${esc(item.text || item.summary || '')}</span></button>`;
+          const text = item.text || item.summary || '';
+          return `<button class="site-notice-item site-announcement-item${unreadCls}" type="button" aria-expanded="false" onclick="toggleSiteAnnouncement('${esc(item.id)}', event)"><span class="site-announcement-title"><b>${esc(item.title)}</b><em aria-hidden="true">展开</em></span><small class="site-announcement-summary">${esc(getAnnouncementPreview(text))}</small><span class="site-announcement-full" hidden>${esc(text)}</span></button>`;
         }
         return `<a class="site-notice-item${unreadCls}" href="${esc(item.href)}" onclick="markSiteNoticeItemRead('${esc(item.id)}', event)"><b>${esc(item.title)}</b><small>${esc(item.text)}</small></a>`;
       }).join("")
@@ -1036,6 +1040,7 @@ function getSiteNoticeUnreadCount(){
 function markSiteNoticeItemRead(id, event){
   const item = getSiteNoticeItems().find(x => x.id === id);
   if (event && item && item.href === '#') event.preventDefault();
+  if (event && event.currentTarget) event.currentTarget.classList.remove("unread");
   const readIds = getSiteNoticeReadIds();
   if (!readIds.includes(id)) readIds.push(id);
   setSiteNoticeReadIds(readIds);
@@ -1052,10 +1057,14 @@ function toggleSiteAnnouncement(id, event){
   markSiteNoticeItemRead(id);
   const btn = event && event.currentTarget;
   if (!btn) return;
+  btn.classList.remove("unread");
   const full = btn.querySelector(".site-announcement-full");
   if (!full) return;
   const expanded = btn.classList.toggle("expanded");
+  btn.setAttribute("aria-expanded", expanded ? "true" : "false");
   full.hidden = !expanded;
+  const label = btn.querySelector(".site-announcement-title em");
+  if (label) label.textContent = expanded ? "收起" : "展开";
 }
 function markSiteNoticeRead(){
   setSiteNoticeReadIds(getSiteNoticeItems().map(item => item.id));
@@ -1083,7 +1092,6 @@ async function refreshSiteAnnouncementNotice(){
       id: "site-announcement-" + String(d.item.updated_at || d.item.id || "default"),
       group: "网站公告",
       title: d.item.title || "网站公告",
-      summary: d.item.summary || d.item.content || "",
       text: d.item.content || d.item.summary || "",
       type: "announcement"
     };
