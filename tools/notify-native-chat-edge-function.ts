@@ -50,6 +50,12 @@ function cleanText(text: string, max = 80) {
   return (text || "").replace(/\s+/g, " ").trim().slice(0, max);
 }
 
+function profileIsVip(profile: Record<string, unknown>) {
+  if (profile.is_vip === true) return true;
+  const expire = profile.vip_expire ? Date.parse(String(profile.vip_expire)) : 0;
+  return Number.isFinite(expire) && expire > Date.now();
+}
+
 function requireGetuiConfig() {
   if (!GETUI_APPID || !GETUI_APPKEY || !GETUI_MASTERSECRET) {
     throw new Error("getui credentials missing");
@@ -157,7 +163,7 @@ async function handler(req: Request) {
 
     const profile = await rpc("get_profile", { p_token: token });
     if (!profile || !profile.ok) return json({ ok: false, msg: "invalid token" }, 401);
-    if (room === "vip" && !profile.is_vip && !profile.is_admin) return json({ ok: false, msg: "vip only" }, 403);
+    if (room === "vip" && !profileIsVip(profile) && !profile.is_admin) return json({ ok: false, msg: "vip only" }, 403);
 
     const getuiToken = await getGetuiToken();
     const name = cleanText(profile.nickname || (profile.email ? String(profile.email).split("@")[0] : "群友"), 24);
