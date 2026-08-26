@@ -1,5 +1,5 @@
--- 修复管理员账号多设备收不到群聊弹窗的问题。
--- 普通用户仍然不推送给发送者本人；管理员账号允许推送到自己账号绑定的浏览器/App 设备。
+-- 修复管理员账号接收群聊弹窗的问题。
+-- 所有人自己发的消息都不推给自己；管理员作为接收者时按 VIP 目标保留。
 
 CREATE OR REPLACE FUNCTION public.get_chat_push_targets(
   p_token TEXT,
@@ -31,7 +31,7 @@ BEGIN
   SELECT DISTINCT ON (ps.user_token, COALESCE(ps.user_agent, '')) ps.endpoint, ps.subscription
   FROM public.push_subscriptions ps
   JOIN public.profiles p ON p.token = ps.user_token
-  WHERE (v_sender_is_admin OR ps.user_token <> p_token)
+  WHERE ps.user_token <> p_token
     AND (
       p_room <> 'vip'
       OR COALESCE(p.is_admin, false)
@@ -72,7 +72,7 @@ BEGIN
   SELECT DISTINCT ON (npt.user_token, npt.platform) npt.device_token, npt.platform
   FROM public.native_push_tokens npt
   JOIN public.profiles p ON p.token = npt.user_token
-  WHERE (v_sender_is_admin OR npt.user_token <> p_token)
+  WHERE npt.user_token <> p_token
     AND (
       p_room <> 'vip'
       OR COALESCE(p.is_admin, false)

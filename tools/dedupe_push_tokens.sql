@@ -91,7 +91,7 @@ BEGIN
   SELECT DISTINCT ON (ps.user_token, COALESCE(ps.user_agent, '')) ps.endpoint, ps.subscription
   FROM public.push_subscriptions ps
   JOIN public.profiles p ON p.token = ps.user_token
-  WHERE (v_sender_is_admin OR ps.user_token <> p_token)
+  WHERE ps.user_token <> p_token
     AND (
       p_room <> 'vip'
       OR COALESCE(p.is_admin, false)
@@ -176,7 +176,7 @@ BEGIN
   SELECT DISTINCT ON (npt.user_token, npt.platform) npt.device_token, npt.platform
   FROM public.native_push_tokens npt
   JOIN public.profiles p ON p.token = npt.user_token
-  WHERE (v_sender_is_admin OR npt.user_token <> p_token)
+  WHERE npt.user_token <> p_token
     AND (
       p_room <> 'vip'
       OR COALESCE(p.is_admin, false)
