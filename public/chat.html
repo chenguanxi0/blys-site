@@ -1989,7 +1989,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
           const node = box && box.querySelector('[data-message-id="' + tempId + '"]');
           if (node) node.outerHTML = renderChatMessageHtml(Object.assign({}, optimistic, { id: d.id, __pending: false }), 'private');
           lastSeenTs.private = Math.max(lastSeenTs.private || 0, new Date(optimistic.created_at).getTime());
-          if (options.fromHomeUnlock && !__user.isVip && !isBlysAdminUser()) {
+          if (shouldAutoReplyMembershipInquiry(content)) {
             await maybeSendMembershipAutoReply();
           }
         } else {
@@ -2020,6 +2020,12 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       } catch (e) {
         console.warn('[chat] membership auto reply skipped', e);
       }
+    }
+
+    function shouldAutoReplyMembershipInquiry(content) {
+      if (!currentPrivateConversationId || !__user || !__user.loggedIn || __user.isVip || isBlysAdminUser()) return false;
+      const text = String(content || '').trim();
+      return text === '开通会员';
     }
 
     // 实际把消息发到服务器，成功后把本地占位消息替换为真实消息
