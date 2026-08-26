@@ -1042,14 +1042,6 @@ function markSiteNoticeItemRead(id, event){
   const readIds = getSiteNoticeReadIds();
   if (!readIds.includes(id)) readIds.push(id);
   setSiteNoticeReadIds(readIds);
-  const dropdown = document.getElementById("siteNoticeDropdown");
-  if (item && item.type !== "announcement" && event && event.currentTarget) {
-    const current = event.currentTarget;
-    setTimeout(() => {
-      current.remove();
-      pruneEmptySiteNoticeSections(dropdown);
-    }, 80);
-  }
   const count = getSiteNoticeUnreadCount();
   document.querySelectorAll(".notice-btn").forEach(btn => btn.classList.toggle("has-unread", count > 0));
   const dot = document.getElementById("siteNoticeDot");
