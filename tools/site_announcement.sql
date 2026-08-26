@@ -7,6 +7,12 @@ CREATE TABLE IF NOT EXISTS public.site_announcements (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
+ALTER TABLE public.site_announcements
+  ALTER COLUMN title DROP NOT NULL,
+  ALTER COLUMN title SET DEFAULT '',
+  ALTER COLUMN summary SET DEFAULT '',
+  ALTER COLUMN content SET DEFAULT '';
+
 INSERT INTO public.site_announcements (id, title, summary, content, updated_at)
 VALUES (
   'main',
@@ -77,20 +83,16 @@ BEGIN
     RETURN json_build_object('ok', false, 'msg', '无权限');
   END IF;
 
-  IF NULLIF(trim(COALESCE(p_title, '')), '') IS NULL THEN
-    RETURN json_build_object('ok', false, 'msg', '标题不能为空');
-  END IF;
-
-  IF NULLIF(trim(COALESCE(p_content, '')), '') IS NULL THEN
-    p_content := '';
-  END IF;
+  p_title := trim(COALESCE(p_title, ''));
+  p_content := trim(COALESCE(p_content, ''));
+  p_summary := trim(COALESCE(p_summary, p_content, ''));
 
   INSERT INTO public.site_announcements (id, title, summary, content, updated_by, updated_at)
   VALUES (
     'main',
-    trim(p_title),
-    trim(COALESCE(NULLIF(p_summary, ''), p_content)),
-    trim(p_content),
+    p_title,
+    p_summary,
+    p_content,
     coalesce(v_admin.email, 'admin'),
     now()
   )

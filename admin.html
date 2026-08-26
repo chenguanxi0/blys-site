@@ -221,8 +221,9 @@
         if(msg) msg.textContent = '加载失败';
         return;
       }
-      document.getElementById('siteAnnouncementTitle').value = d.item.title || '';
-      document.getElementById('siteAnnouncementContent').value = d.item.content || '';
+      const loadedContent = (d.item.content || '').trim();
+      document.getElementById('siteAnnouncementTitle').value = loadedContent ? (d.item.title || '') : '';
+      document.getElementById('siteAnnouncementContent').value = loadedContent;
       if(msg) msg.textContent = '已加载';
     }
 
@@ -235,14 +236,14 @@
     async function clearSiteAnnouncement(){
       const titleInput = document.getElementById('siteAnnouncementTitle');
       const contentInput = document.getElementById('siteAnnouncementContent');
-      const title = (titleInput.value || '网站公告').trim() || '网站公告';
-      contentInput.value = '';
-      await submitSiteAnnouncement(title, '');
+      if (titleInput) titleInput.value = '';
+      if (contentInput) contentInput.value = '';
+      await submitSiteAnnouncement('', '');
     }
 
     async function submitSiteAnnouncement(title, content){
       const msg = document.getElementById('siteAnnouncementMsg');
-      if(!title){ if(msg) msg.textContent = '标题不能为空'; return; }
+      if(!title && content){ if(msg) msg.textContent = '标题不能为空'; return; }
       if(msg) msg.textContent = '保存中...';
       const d = await sbRpc('admin_update_site_announcement', {
         p_admin_token: getTok(),
@@ -251,6 +252,12 @@
         p_content: content
       });
       if(!d || !d.ok){ if(msg) msg.textContent = '保存失败：' + ((d&&d.msg)||'未知错误'); return; }
+      if (!content) {
+        const titleInput = document.getElementById('siteAnnouncementTitle');
+        const contentInput = document.getElementById('siteAnnouncementContent');
+        if (titleInput) titleInput.value = '';
+        if (contentInput) contentInput.value = '';
+      }
       if(msg) msg.textContent = content ? '保存成功，通知栏会显示这条公告' : '已清空公告，通知栏不再显示';
     }
 
