@@ -1273,6 +1273,11 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       if (!Array.isArray(list) || !list.length) return;
       const maxTs = list.reduce((mx, m) => Math.max(mx, m.created_at ? new Date(m.created_at).getTime() : 0), 0);
       const myEmail = (__user && __user.email) || '';
+      if (currentRoom === room) {
+        clearRoomUnread(room);
+        if (maxTs) lastSeenTs[room] = Math.max(lastSeenTs[room] || 0, maxTs);
+        return;
+      }
       if (lastSeenTs[room]) {
         const fresh = list.filter(m => m.user_email !== myEmail);
         if (fresh.length) {
@@ -3233,6 +3238,12 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       ['public', 'vip', 'vip_chat', 'private'].forEach(room => {
         const el = document.getElementById('badge-' + room);
         if (!el) return;
+        if (room === currentRoom) {
+          unreadCounts[room] = 0;
+          el.removeAttribute('aria-label');
+          el.hidden = true;
+          return;
+        }
         const n = unreadCounts[room] || 0;
         if (n > 0) {
           el.textContent = '';
