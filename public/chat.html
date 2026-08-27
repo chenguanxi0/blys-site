@@ -260,6 +260,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     let privateConversations = [];
     let privateUnreadTimer = null;
     let privateUnreadRefreshing = false;
+    let privateMessagesRefreshing = false;
     // 乐观发送：点击发送即先本地渲染，后台再同步到服务器
     // tempId -> { key, room, message, payload }
     const chatPendingSends = new Map();
@@ -1363,7 +1364,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       if (inputArea) inputArea.style.display = 'block';
       updateChatInputState();
       await loadChatMessages('private', { isFirst: true });
-      try { await sbRpc('mark_private_read', { p_token: __user.token, p_conversation_id: currentPrivateConversationId }); } catch(e) {}
+      sbRpc('mark_private_read', { p_token: __user.token, p_conversation_id: currentPrivateConversationId }).catch(e => console.warn('[chat] mark private read failed', e));
       privateConversations = privateConversations.map(c => String(c.id) === String(currentPrivateConversationId)
         ? Object.assign({}, c, isBlysAdminUser() ? { admin_unread: 0 } : { user_unread: 0 })
         : c);
@@ -1404,7 +1405,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         chatHasMore.private = true;
         await switchChatRoom('private', { skipUserRefresh: true, keepPrivate: true });
         await loadChatMessages('private', { isFirst: true });
-        try { await sbRpc('mark_private_read', { p_token: __user.token, p_conversation_id: currentPrivateConversationId }); } catch(e) {}
+        sbRpc('mark_private_read', { p_token: __user.token, p_conversation_id: currentPrivateConversationId }).catch(e => console.warn('[chat] mark private read failed', e));
       } catch (e) {
         if (!options.silent) {
           const msg = '私聊打开失败：' + (e && e.message ? e.message : '网络异常');
@@ -1593,6 +1594,9 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         currentPrivateTitle = '白鹿原上';
       }
       const isHistory = !!opts.history;
+      const shouldGuardRefresh = !isHistory;
+      if (shouldGuardRefresh && privateMessagesRefreshing) return;
+      if (shouldGuardRefresh) privateMessagesRefreshing = true;
       const loadSeq = isHistory ? chatLoadSeq : ++chatLoadSeq;
       const retry = opts.retry || 0;
       const isFirst = opts.isFirst || box.querySelector('.chat-loading') != null;
@@ -1609,9 +1613,9 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
           rpcParams.p_limit = 30;
           rpcParams.p_before = chatTsToIso(chatOldestTs.private);
         } else if (isFirst) {
-          rpcParams.p_limit = isNativeNotificationApp() ? 10 : 20;
+          rpcParams.p_limit = isNativeNotificationApp() ? 8 : 14;
         } else {
-          rpcParams.p_limit = isNativeNotificationApp() ? 30 : 80;
+          rpcParams.p_limit = isNativeNotificationApp() ? 20 : 40;
           rpcParams.p_after = chatTsToIso(lastSeenTs.private);
         }
         const d = await sbRpc('list_private_messages', rpcParams, { timeoutMs: isFirst ? 18000 : 12000 });
@@ -1638,10 +1642,16 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         if (!isHistory && list.length) {
           const maxTs = list.reduce((mx, m) => Math.max(mx, m.created_at ? new Date(m.created_at).getTime() : 0), 0);
           lastSeenTs.private = Math.max(lastSeenTs.private || 0, maxTs);
+          if (!document.hidden && currentRoom === 'private' && currentPrivateConversationId) {
+            sbRpc('mark_private_read', { p_token: __user.token, p_conversation_id: currentPrivateConversationId }).catch(e => console.warn('[chat] mark private read failed', e));
+            clearRoomUnread('private');
+          }
         }
       } catch (e) {
         if (retry < 2) { retryLater(); return; }
         if (isFirst) box.innerHTML = renderChatLoadFailed('private', e && e.message ? e.message : '私聊加载失败');
+      } finally {
+        if (shouldGuardRefresh) privateMessagesRefreshing = false;
       }
     }
 
@@ -2513,8 +2523,12 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     function startChatPoll() {
       if (chatPollTimer) clearInterval(chatPollTimer);
       chatPollTimer = setInterval(() => {
-        // 私聊不自动轮询，避免列表/内容自己刷新；需要时切换会话或下拉历史再加载
-        if (currentRoom === 'private') return;
+        if (currentRoom === 'private') {
+          if (chatHistLoading) return;
+          if (currentPrivateConversationId) loadChatMessages('private');
+          else if (isBlysAdminUser()) loadPrivateConversations({ silent: true });
+          return;
+        }
         // VIP 预览不轮询真实会员消息，只刷新展示人数。
         if (isVipPreviewMode(currentRoom)) {
           updateChatLiveStats();
@@ -2551,7 +2565,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         clearRoomUnread(currentRoom);
         // 回到页面：展示未读横幅
         showUnreadBanner();
-        if (currentRoom !== 'private') loadChatMessages(currentRoom);
+        loadChatMessages(currentRoom);
       });
     }
 
@@ -2569,7 +2583,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         refreshNativeNotifDiag();
         clearRoomUnread(currentRoom);
         showUnreadBanner();
-        if (currentRoom !== 'private') loadChatMessages(currentRoom);
+        loadChatMessages(currentRoom);
       });
       window.addEventListener('blys:user:change', () => {
         cleanupNativeAppWebPushSubscription();
