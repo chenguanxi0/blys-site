@@ -79,7 +79,10 @@
       </div>
 
       <div class="panel">
-        <h2>月度会员数量统计</h2>
+        <div class="admin-form-actions" style="justify-content:space-between;margin-bottom:14px;">
+          <h2 style="margin:0;">月度会员数量统计</h2>
+          <button class="btn btn-secondary" id="monthlyMemberStatsToggle" onclick="toggleMonthlyMemberStats()">展开</button>
+        </div>
         <div class="table-wrap" id="monthlyMemberStats">加载中...</div>
       </div>
 
@@ -137,6 +140,7 @@
     const SB_ANON = "sb_publishable_rGCr3ILVWQpvpURhctuYQg_K_jC-WHV";
     const ADMIN_TOKEN_KEY = "blys_admin_token";
     const MONTHLY_MEMBER_STATS_KEY = "blys_admin_monthly_member_stats_v1";
+    let monthlyMemberStatsExpanded = false;
 
     async function sbRpc(fn, params){
       const r = await fetch(SB_URL + "/rest/v1/rpc/" + fn, {
@@ -233,7 +237,9 @@
       const box = document.getElementById('monthlyMemberStats');
       if(!box) return;
       const data = getMonthlyMemberStats();
-      const months = recentMonthKeys(12);
+      const months = recentMonthKeys(monthlyMemberStatsExpanded ? 12 : 3);
+      const toggle = document.getElementById('monthlyMemberStatsToggle');
+      if(toggle) toggle.textContent = monthlyMemberStatsExpanded ? '收起' : '展开';
       let totalCount = 0;
       let totalAmount = 0;
       const rows = months.map(month => {
@@ -247,6 +253,10 @@
         rows +
         `<tr class="monthly-stat-total"><td>汇总</td><td>${totalCount}</td><td>${fmtMoney(totalAmount)}</td></tr>` +
         '</table>';
+    }
+    function toggleMonthlyMemberStats(){
+      monthlyMemberStatsExpanded = !monthlyMemberStatsExpanded;
+      renderMonthlyMemberStats();
     }
     function updateMonthlyMemberStat(input){
       const month = input && input.dataset ? input.dataset.month : '';
