@@ -250,7 +250,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    const BLYS_CHAT_PUSH_VERSION = '2026082602';
+    const BLYS_CHAT_PUSH_VERSION = '2026082702';
     console.log('[chat] build v' + BLYS_CHAT_PUSH_VERSION + ' (notification recovery)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
@@ -290,6 +290,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     const CHAT_LAST_ROOM_KEY = 'blys_chat_last_room';
     let chatManualRoom = null;
     let latestReviewNotice = null;
+    let latestContentNotices = [];
     function normalizeChatRoom(room) {
       return ['public','vip','private'].includes(room) ? room : '';
     }
@@ -663,7 +664,17 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     }
 
     function getReviewNoticeDismissKey(id) {
-      return 'blys_review_notice_dismissed_' + String(id || '');
+      return 'blys_content_notice_dismissed_' + String(id || '');
+    }
+
+    function isContentNoticeDismissed(item) {
+      if (!item || !item.id) return false;
+      if (localStorage.getItem(getReviewNoticeDismissKey(item.id)) === '1') return true;
+      return item.kind === 'review' && localStorage.getItem('blys_review_notice_dismissed_' + item.id) === '1';
+    }
+
+    function getVisibleLatestContentNotice() {
+      return latestContentNotices.find(item => !isContentNoticeDismissed(item)) || null;
     }
 
     function updateLatestReviewNotice() {
@@ -671,32 +682,54 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       const text = document.getElementById('chatReviewNoticeText');
       if (!el || !text) return;
       const canShowRoom = currentRoom === 'public' || currentRoom === 'vip';
-      const dismissed = latestReviewNotice && localStorage.getItem(getReviewNoticeDismissKey(latestReviewNotice.id)) === '1';
-      el.hidden = !(canShowRoom && latestReviewNotice && !dismissed);
-      if (!el.hidden) text.textContent = latestReviewNotice.title || '今日复盘已更新';
+      latestReviewNotice = getVisibleLatestContentNotice();
+      el.hidden = !(canShowRoom && latestReviewNotice);
+      if (!el.hidden) text.textContent = latestReviewNotice.title || '内容已更新';
       requestAnimationFrame(updateChatViewportLayout);
     }
 
     async function refreshLatestReviewNotice() {
+      const notices = [];
       try {
         const r = await fetch('assets/reviews/index.json?t=' + Date.now(), { cache: 'no-store' });
-        if (!r.ok) return;
-        const list = await r.json();
-        const latest = Array.isArray(list) && list.length ? list[list.length - 1] : null;
-        if (!latest || !latest.date) return;
-        const id = 'review-' + (latest.notice_id || latest.updated_at || latest.date);
-        latestReviewNotice = {
-          id,
-          date: latest.date,
-          title: '今日复盘已更新',
-          body: (latest.title || latest.date) + ' 复盘已发布',
-          href: 'daily.html?date=' + encodeURIComponent(latest.date)
-        };
-        updateLatestReviewNotice();
-        maybeShowLatestReviewSystemNotice();
+        if (r.ok) {
+          const list = await r.json();
+          const latest = Array.isArray(list) && list.length ? list[list.length - 1] : null;
+          if (latest && latest.date) {
+            notices.push({
+              id: 'review-' + (latest.notice_id || latest.updated_at || latest.date),
+              kind: 'review',
+              date: latest.date,
+              updatedAt: latest.updated_at || latest.date,
+              title: '今日复盘已更新',
+              body: (latest.title || latest.date) + ' 复盘已发布',
+              href: 'daily.html?date=' + encodeURIComponent(latest.date)
+            });
+          }
+        }
       } catch(e) {
         console.warn('[chat] load review notice failed', e);
       }
+      try {
+        const d = await sbRpc('list_daily_ideas', {}, { timeoutMs: 5000 });
+        const latestIdea = d && d.ok && Array.isArray(d.list) && d.list.length ? d.list[0] : null;
+        if (latestIdea && latestIdea.idea_date) {
+          notices.push({
+            id: 'idea-' + latestIdea.idea_date + '-' + String(latestIdea.updated_at || ''),
+            kind: 'idea',
+            date: latestIdea.idea_date,
+            updatedAt: latestIdea.updated_at || latestIdea.idea_date,
+            title: '今日思路已更新',
+            body: (latestIdea.title || latestIdea.idea_date) + ' 已发布',
+            href: 'ideas.html?date=' + encodeURIComponent(latestIdea.idea_date)
+          });
+        }
+      } catch(e) {
+        console.warn('[chat] load idea notice failed', e);
+      }
+      latestContentNotices = notices.sort((a, b) => String(b.updatedAt || b.date || '').localeCompare(String(a.updatedAt || a.date || '')));
+      updateLatestReviewNotice();
+      maybeShowLatestReviewSystemNotice();
     }
 
     let latestReviewNoticePollTimer = null;

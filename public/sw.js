@@ -1,8 +1,8 @@
-const CACHE_NAME = 'blys-v25';
+const CACHE_NAME = 'blys-v26';
 const ASSETS = [
   '/',
   '/index.html',
-  '/chat.html?v=2026082601',
+  '/chat.html?v=2026082702',
   '/daily.html',
   '/diary.html?v=2026082102',
   '/changelog.html',
