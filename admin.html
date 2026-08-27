@@ -47,7 +47,11 @@
     .admin-form textarea { min-height:110px; resize:vertical; line-height:1.6; }
     .admin-form-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
     .admin-save-msg { color:#64748b; font-size:13px; }
-    @media (max-width:720px){ .member-tools { grid-template-columns:1fr 1fr; } }
+    .vote-summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:14px; }
+    .vote-summary-card { border:1px solid #e5e7eb; border-radius:8px; padding:12px; background:#f8fafc; }
+    .vote-summary-card strong { display:block; font-size:20px; color:var(--brand); margin-bottom:4px; }
+    .vote-summary-card span { color:#64748b; font-size:12px; line-height:1.4; }
+    @media (max-width:720px){ .member-tools { grid-template-columns:1fr 1fr; } .vote-summary { grid-template-columns:1fr 1fr; } }
     .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.4); display:none; align-items:center; justify-content:center; z-index:100; }
     .modal-backdrop.open { display:flex; }
     .modal-box { background:#fff; border-radius:12px; padding:24px; width:90%; max-width:360px; box-shadow:0 8px 30px rgba(0,0,0,.15); }
@@ -92,6 +96,16 @@
             <span class="admin-save-msg" id="siteAnnouncementMsg"></span>
           </div>
         </div>
+      </div>
+
+      <div class="panel">
+        <h2>弹窗投票结果</h2>
+        <div class="admin-form-actions">
+          <button class="btn btn-secondary" onclick="loadPopupReminderVoteResults()">刷新投票结果</button>
+          <span class="admin-save-msg" id="popupVoteMsg"></span>
+        </div>
+        <div id="popupVoteSummary" class="vote-summary" style="margin-top:14px;"></div>
+        <div class="table-wrap" id="popupVoteList">加载中...</div>
       </div>
 
       <div class="panel">
@@ -202,7 +216,7 @@
       loadAll();
     }
 
-    async function loadAll(){ await loadStats(); await loadSiteAnnouncementAdmin(); await loadUsers(); await loadMemberCodes(); await loadComments(); }
+    async function loadAll(){ await loadStats(); await loadSiteAnnouncementAdmin(); await loadPopupReminderVoteResults(); await loadUsers(); await loadMemberCodes(); await loadComments(); }
 
     async function loadStats(){
       const d = await sbRpc('admin_stats', { p_admin_token: getTok() });
@@ -259,6 +273,49 @@
         if (contentInput) contentInput.value = '';
       }
       if(msg) msg.textContent = content ? '保存成功，通知栏会显示这条公告' : '已清空公告，通知栏不再显示';
+    }
+
+    function voteChoiceLabel(choice){
+      const labels = {
+        operation_only: '只在有操作的时候弹窗通知',
+        all_messages: '所有消息都通知',
+        market_operation_after_all: '交易时间只有操作的时候弹窗通知，非交易时间所有消息都弹窗',
+        other: '其他建议'
+      };
+      return labels[choice] || choice || '-';
+    }
+
+    async function loadPopupReminderVoteResults(){
+      const msg = document.getElementById('popupVoteMsg');
+      const summaryBox = document.getElementById('popupVoteSummary');
+      const listBox = document.getElementById('popupVoteList');
+      if(msg) msg.textContent = '加载中...';
+      const d = await sbRpc('admin_popup_reminder_vote_results', { p_admin_token: getTok() });
+      if(!d || !d.ok){
+        if(msg) msg.textContent = '加载失败：' + ((d&&d.msg)||'请先执行投票数据库脚本');
+        if(summaryBox) summaryBox.innerHTML = '';
+        if(listBox) listBox.innerHTML = '<p>暂无数据</p>';
+        return;
+      }
+      const summary = Array.isArray(d.summary) ? d.summary : [];
+      const list = Array.isArray(d.list) ? d.list : [];
+      const total = Number(d.total || 0);
+      summaryBox.innerHTML = [
+        '<div class="vote-summary-card"><strong>' + total + '</strong><span>总投票人数</span></div>',
+        ...summary.map(function (item) {
+          return '<div class="vote-summary-card"><strong>' + Number(item.count || 0) + '</strong><span>' + esc(voteChoiceLabel(item.choice)) + '</span></div>';
+        })
+      ].join('');
+      if(!list.length){
+        listBox.innerHTML = '<p>暂无投票</p>';
+      } else {
+        listBox.innerHTML = '<table class="admin-table"><tr><th>昵称</th><th>邮箱</th><th>选择</th><th>其他建议</th><th>时间</th></tr>' +
+          list.map(function (v) {
+            return '<tr><td>' + esc(v.nickname || '匿名') + '</td><td class="email">' + esc(v.email || '-') + '</td><td class="wrap">' + esc(voteChoiceLabel(v.choice)) + '</td><td class="wrap">' + esc(v.other || '') + '</td><td>' + fmt(v.updated_at || v.created_at) + '</td></tr>';
+          }).join('') +
+          '</table>';
+      }
+      if(msg) msg.textContent = '已刷新';
     }
 
     async function loadUsers(){

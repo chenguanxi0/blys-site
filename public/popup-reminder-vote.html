@@ -154,7 +154,18 @@
         } catch(e) {}
       }
       document.addEventListener('change', refreshOtherBox);
-      form.addEventListener('submit', function (event) {
+      async function submitVoteToServer(data) {
+        const user = window.__user || {};
+        if (!user.loggedIn || !user.token || typeof sbRpc !== 'function') {
+          return { ok: false, msg: '请先登录会员账号再投票。' };
+        }
+        return await sbRpc('submit_popup_reminder_vote', {
+          p_token: user.token,
+          p_choice: data.choice,
+          p_other: data.other
+        }, { timeoutMs: 8000 });
+      }
+      form.addEventListener('submit', async function (event) {
         event.preventDefault();
         const selected = form.querySelector('input[name="vote"]:checked');
         if (!selected) return;
@@ -170,6 +181,14 @@
           other: selected.value === '其他建议' ? other : '',
           votedAt: new Date().toISOString()
         };
+        message.textContent = '提交中...';
+        const serverResult = await submitVoteToServer(data).catch(function (err) {
+          return { ok: false, msg: err && err.message };
+        });
+        if (!serverResult || !serverResult.ok) {
+          message.textContent = '提交失败：' + ((serverResult && serverResult.msg) || '请稍后重试');
+          return;
+        }
         localStorage.setItem(getUserVoteKey('blys_popup_reminder_vote_v1'), '1');
         localStorage.setItem(getUserVoteKey('blys_popup_reminder_vote_data_v1'), JSON.stringify(data));
         localStorage.setItem('blys_popup_reminder_vote_v1', '1');

@@ -312,7 +312,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       return !!(__user && __user.loggedIn && (__user.isVip || isBlysAdminUser()));
     }
     function shouldHidePublicRoomForUser() {
-      return !!(__user && __user.loggedIn && __user.isVip);
+      return !!(__user && __user.loggedIn && __user.isVip && !isBlysAdminUser());
     }
     function updateChatRoomAvailability() {
       const hidePublic = shouldHidePublicRoomForUser();
