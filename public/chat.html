@@ -126,9 +126,13 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
           <span class="chat-tab-live-stats" id="publicTabLiveStats">总人数 -- · 在线 --</span>
         </button>
         <button class="chat-tab" data-room="vip" onclick="switchChatRoom('vip', { manual: true })">
-          <span>会员群聊<span class="chat-tab-badge" id="badge-vip" hidden>0</span></span>
+          <span>会员通知群<span class="chat-tab-badge" id="badge-vip" hidden>0</span></span>
           <span class="chat-tab-live-stats" id="vipTabLiveStats">会员总人数 -- · 在线 --</span>
           <span class="chat-tab-admin-stats" id="vipTabMemberStats" hidden onclick="toggleChatMembersAdmin(event)">总人数 -- · 在线 --</span>
+        </button>
+        <button class="chat-tab" data-room="vip_chat" onclick="switchChatRoom('vip_chat', { manual: true })">
+          <span>会员聊天群<span class="chat-tab-badge" id="badge-vip_chat" hidden>0</span></span>
+          <span class="chat-tab-admin-stats" id="vipChatTabMemberStats" hidden onclick="toggleChatMembersAdmin(event, 'vip_chat')">总人数 -- · 在线 --</span>
         </button>
         <button class="chat-tab" data-room="private" onclick="switchChatRoom('private', { manual: true })">私聊<span class="chat-tab-badge" id="badge-private" hidden>0</span></button>
       </div>
@@ -153,7 +157,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       <div class="chat-announcement" id="chatAnnouncement" hidden onclick="toggleChatAnnouncement()">
         <span class="chat-announcement-main">
           <b>群公告</b>
-          <em id="chatAnnouncementText">会员群文明交流，禁止荐股与广告；重要通知会在这里置顶。</em>
+          <em id="chatAnnouncementText">会员通知群仅管理员发布操作与重要提醒。</em>
         </span>
         <button class="chat-announcement-edit" id="chatAnnouncementEdit" type="button" hidden onclick="editChatAnnouncement(event)">编辑</button>
         <button class="chat-announcement-arrow" id="chatAnnouncementArrow" type="button" onclick="toggleChatAnnouncement(event)">展开</button>
@@ -211,7 +215,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       <div class="chat-vip-lock-inner">
         <div class="vip-lock">🔒</div>
         <h3>会员专属群聊</h3>
-        <p>只有激活会员才能进入会员群聊频道</p>
+        <p>只有激活会员才能进入会员频道</p>
         <button class="btn btn-primary" onclick="openMembershipPrivateChat()">开通会员</button>
       </div>
     </div>
@@ -242,7 +246,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     let chatSendWatchdogTimer = null;
     let chatMembersTimer = null;
     let chatMembersPanelOpen = false;
-    let chatMembersStatsCache = null;
+    let chatMembersStatsCache = {};
     let chatMembersStatsTimer = null;
     let chatSuppressHistoryUntil = 0;
     let pendingChatImage = null;
@@ -252,9 +256,9 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     console.log('[chat] build v' + BLYS_CHAT_PUSH_VERSION + ' (notification recovery)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
-    let lastSeenTs = { public: 0, vip: 0, private: 0 };
-    let chatOldestTs = { public: 0, vip: 0, private: 0 };
-    let chatHasMore = { public: true, vip: true, private: true };
+    let lastSeenTs = { public: 0, vip: 0, vip_chat: 0, private: 0 };
+    let chatOldestTs = { public: 0, vip: 0, vip_chat: 0, private: 0 };
+    let chatHasMore = { public: true, vip: true, vip_chat: true, private: true };
     let currentPrivateConversationId = '';
     let currentPrivateTitle = '';
     let privateConversations = [];
@@ -279,10 +283,10 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     let notifEnabled = false;
     let inAppNotifOn = false;
     let notifDiagMsg = '';
-    let unreadCounts = { public: 0, vip: 0, private: 0 };
+    let unreadCounts = { public: 0, vip: 0, vip_chat: 0, private: 0 };
     const CHAT_ANNOUNCEMENT_DEFAULTS = {
       public: '普通群文明交流，禁止荐股与广告；重要通知会在这里置顶。',
-      vip: '会员群文明交流，禁止荐股与广告；重要通知会在这里置顶。'
+      vip: '会员通知群仅管理员发布操作与重要提醒。'
     };
     let chatAnnouncementTexts = Object.assign({}, CHAT_ANNOUNCEMENT_DEFAULTS);
     let chatAnnouncementLoading = {};
@@ -292,7 +296,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     let latestContentNotices = [];
     let chatLiveStatsTimer = null;
     function normalizeChatRoom(room) {
-      return ['public','vip','private'].includes(room) ? room : '';
+      return ['public','vip','vip_chat','private'].includes(room) ? room : '';
     }
     function getStoredChatRoom() {
       try { return normalizeChatRoom(sessionStorage.getItem(CHAT_LAST_ROOM_KEY) || localStorage.getItem(CHAT_LAST_ROOM_KEY)); } catch(e) { return ''; }
@@ -303,18 +307,40 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       chatManualRoom = room;
       try { sessionStorage.setItem(CHAT_LAST_ROOM_KEY, room); localStorage.setItem(CHAT_LAST_ROOM_KEY, room); } catch(e) {}
     }
+    function syncChatRoomHash(room, manual) {
+      if (!manual || room === 'private') return;
+      const hash = room === 'vip_chat' ? '#vip_chat' : (room === 'vip' ? '#vip' : '');
+      const next = location.pathname + location.search + hash;
+      if (location.pathname + location.search + location.hash !== next) {
+        history.replaceState(null, '', next);
+      }
+    }
     function canViewVipChat() {
       return !!(__user && __user.loggedIn && (__user.isVip || isBlysAdminUser()));
+    }
+    function canSendChatRoom(room) {
+      if (!__user || !__user.loggedIn) return false;
+      if (room === 'private') return true;
+      if (room === 'vip') return isBlysAdminUser();
+      if (room === 'vip_chat') return !!(__user.isVip || isBlysAdminUser());
+      return true;
     }
     function shouldHidePublicRoomForUser() {
       return !!(__user && __user.loggedIn && __user.isVip && !isBlysAdminUser());
     }
     function updateChatRoomAvailability() {
       const hidePublic = shouldHidePublicRoomForUser();
+      const hideVipChat = !canViewVipChat();
       document.body.classList.toggle('chat-public-hidden', hidePublic);
+      document.body.classList.toggle('chat-vip-chat-hidden', hideVipChat);
       if (hidePublic) {
         unreadCounts.public = 0;
         const badge = document.getElementById('badge-public');
+        if (badge) badge.hidden = true;
+      }
+      if (hideVipChat) {
+        unreadCounts.vip_chat = 0;
+        const badge = document.getElementById('badge-vip_chat');
         if (badge) badge.hidden = true;
       }
       requestAnimationFrame(updateChatViewportLayout);
@@ -371,16 +397,16 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       const action = __user && __user.loggedIn ? 'openMembershipPrivateChat()' : 'openAuthModal()';
       return '<div class="chat-vip-preview-panel">' +
         '<div class="chat-vip-preview-card">' +
-        '<h3>会员群聊正在进行</h3>' +
+        '<h3>会员通知群正在更新</h3>' +
         '<div class="chat-vip-preview-stats" id="vipPreviewLiveStats">会员总人数 -- · 在线 --</div>' +
-        '<p>开通会员后可以看清完整聊天内容，并参与会员群讨论。</p>' +
+        '<p>开通会员后可以看清完整通知内容，并进入会员聊天群交流。</p>' +
         '<button class="btn btn-primary" type="button" onclick="' + action + '">' + cta + '</button>' +
         '</div>' +
         '</div>';
     }
     function renderVipPreviewFallback() {
       const names = ['短线同学', '趋势观察', '白鹿原上', '复盘搭子', '仓位纪律'];
-      const texts = ['今天这条主线还是要看承接，别追太急。', '我这边先把仓位降一点，等尾盘再确认。', '会员群今天重点聊节奏和纪律，先看风险再看机会。', '刚刚那笔换手挺关键，下午再观察一次。', '明天计划我想先等开盘半小时。'];
+      const texts = ['今天这条主线还是要看承接，别追太急。', '我这边先把仓位降一点，等尾盘再确认。', '会员通知群今天重点聊节奏和纪律，先看风险再看机会。', '刚刚那笔换手挺关键，下午再观察一次。', '明天计划我想先等开盘半小时。'];
       return texts.map((text, idx) => {
         const side = idx % 3 === 2 ? 'me' : 'other';
         return '<div class="chat-msg chat-msg-' + side + ' chat-vip-preview-fake-msg">' +
@@ -400,13 +426,14 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     }
     function getPreferredChatRoom() {
       if (location.hash === '#vip') return 'vip';
+      if (location.hash === '#vip_chat' && canViewVipChat()) return 'vip_chat';
       if (location.hash === '#private') return 'private';
-      if (shouldHidePublicRoomForUser()) return 'vip';
       const manual = normalizeChatRoom(chatManualRoom);
-      if (manual && !(manual === 'public' && shouldHidePublicRoomForUser())) return manual;
-      if (__user.loggedIn && __user.isVip) return 'vip';
+      if (manual && !(manual === 'public' && shouldHidePublicRoomForUser()) && !(manual === 'vip_chat' && !canViewVipChat())) return manual;
       const stored = normalizeChatRoom(getStoredChatRoom());
-      if (stored && !(stored === 'public' && shouldHidePublicRoomForUser())) return stored;
+      if (stored && !(stored === 'public' && shouldHidePublicRoomForUser()) && !(stored === 'vip_chat' && !canViewVipChat())) return stored;
+      if (__user.loggedIn && __user.isVip) return 'vip';
+      if (shouldHidePublicRoomForUser()) return 'vip';
       return 'public';
     }
     const PUSH_VAPID_PUBLIC_KEY = 'BA2xT4Y1plL6c9JNmBJI8aqp_vjxrnOG1-p-nhazGbm_QGnnuq8A7hbYbBIpZKd3MQ3-jx0EfXZGnKYQQuFHFac';
@@ -677,8 +704,10 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       if (!chatManualRoom) chatManualRoom = getStoredChatRoom();
       const vipLockEl = document.getElementById('chatVipLock');
       if (room === 'public' && shouldHidePublicRoomForUser()) room = 'vip';
-      if (room === 'vip') rememberChatRoom('vip');
+      if (room === 'vip_chat' && !canViewVipChat()) room = getPreferredChatRoom();
+      if (room === 'vip' || room === 'vip_chat') rememberChatRoom(room);
       else if (options.manual) rememberChatRoom(room);
+      syncChatRoomHash(room, !!options.manual);
       if (room === 'public' && !options.manual && shouldStayOnExpiredVipRoom()) return;
       if (room === 'public' && !options.manual && vipLockEl && vipLockEl.style.display === 'flex') return;
       currentRoom = room;
@@ -695,9 +724,13 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       updateVipRenewInline(room);
       updateChatAnnouncement(room);
       // 进入 VIP 群前必须刷新真实会员状态，避免本地缓存过期导致非会员看到会员群。
-      if (room === 'vip' && !options.skipUserRefresh && typeof fetchUser === 'function' && localStorage.getItem(USER_TOKEN_KEY) && !vipRefreshing) {
+      if ((room === 'vip' || room === 'vip_chat') && !options.skipUserRefresh && typeof fetchUser === 'function' && localStorage.getItem(USER_TOKEN_KEY) && !vipRefreshing) {
         vipRefreshing = true;
         await fetchUser().catch(e => console.warn('[chat] refresh VIP user failed', e)).finally(() => { vipRefreshing = false; });
+      }
+      if (room === 'vip_chat' && !canViewVipChat()) {
+        switchChatRoom(getPreferredChatRoom(), { skipUserRefresh: true });
+        return;
       }
 
       document.body.classList.toggle('chat-vip-preview-mode', isVipPreviewMode(room));
@@ -765,10 +798,10 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       // 切到该频道即视为已读，清掉其未读角标
       clearRoomUnread(room);
       const banner = document.getElementById('chatUnreadBanner');
-      if (banner && unreadCounts.public + unreadCounts.vip + unreadCounts.private === 0) banner.hidden = true;
+      if (banner && unreadCounts.public + unreadCounts.vip + unreadCounts.vip_chat + unreadCounts.private === 0) banner.hidden = true;
       loadChatMessages(room);
       // 成员/人数统计不影响聊天首屏，VIP 群尤其在 App 里延后加载
-      const memberDelay = room === 'vip'
+      const memberDelay = (room === 'vip' || room === 'vip_chat')
         ? (document.documentElement.classList.contains('blys-native-app') ? 6000 : 3000)
         : 800;
       setTimeout(() => { if (room === currentRoom) refreshChatMembers(); }, memberDelay);
@@ -799,7 +832,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       const el = document.getElementById('chatReviewNotice');
       const text = document.getElementById('chatReviewNoticeText');
       if (!el || !text) return;
-      const canShowRoom = currentRoom === 'public' || currentRoom === 'vip';
+      const canShowRoom = currentRoom === 'public' || currentRoom === 'vip' || currentRoom === 'vip_chat';
       latestReviewNotice = getVisibleLatestContentNotice();
       el.hidden = !(canShowRoom && latestReviewNotice);
       if (!el.hidden) text.textContent = latestReviewNotice.title || '内容已更新';
@@ -931,7 +964,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       const close = document.getElementById('vipRenewInlineClose');
       if (!el || !text) return;
       const daysLeft = getChatVipDaysLeft();
-      const canShow = room === 'vip' && __user && __user.loggedIn && __user.isVip && daysLeft != null && daysLeft > 0 && daysLeft <= 7;
+      const canShow = (room === 'vip' || room === 'vip_chat') && __user && __user.loggedIn && __user.isVip && daysLeft != null && daysLeft > 0 && daysLeft <= 7;
       const key = getChatLocalUserKey('blys_vip_renew_inline_dismiss_until3');
       const dismissedUntil3 = key && localStorage.getItem(key) === '1';
       const mustShow = canShow && daysLeft <= 3;
@@ -972,13 +1005,13 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
 
     function shouldStayOnExpiredVipRoom() {
       const lock = document.getElementById('chatVipLock');
-      return (currentRoom === 'vip' || chatManualRoom === 'vip' || (lock && lock.style.display === 'flex')) && __user && __user.loggedIn && !__user.isVip;
+      return (currentRoom === 'vip' || currentRoom === 'vip_chat' || chatManualRoom === 'vip' || chatManualRoom === 'vip_chat' || (lock && lock.style.display === 'flex')) && __user && __user.loggedIn && !__user.isVip;
     }
 
     function updateChatAnnouncement(room) {
       const el = document.getElementById('chatAnnouncement');
       if (!el) return;
-      const show = room === 'public' || (room === 'vip' && __user && __user.loggedIn && __user.isVip);
+      const show = room === 'public' || room === 'vip';
       el.hidden = !show;
       if (!show) el.classList.remove('expanded');
       renderChatAnnouncement();
@@ -1023,7 +1056,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       }
       if (!isBlysAdminUser()) return;
       const room = currentRoom === 'vip' ? 'vip' : 'public';
-      const roomName = room === 'vip' ? '会员群' : '普通群';
+      const roomName = room === 'vip' ? '会员通知群' : '普通群';
       const next = prompt('编辑' + roomName + '公告', chatAnnouncementTexts[room] || CHAT_ANNOUNCEMENT_DEFAULTS[room]);
       if (next == null) return;
       const content = String(next).trim();
@@ -1067,18 +1100,25 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       if (!on) {
         chatMembersPanelOpen = false;
         const stats = document.getElementById('vipTabMemberStats');
+        const chatStats = document.getElementById('vipChatTabMemberStats');
         const panel = document.getElementById('chatMembersAdmin');
         if (stats) { stats.hidden = true; stats.textContent = ''; }
+        if (chatStats) { chatStats.hidden = true; chatStats.textContent = ''; }
         if (panel) { panel.hidden = true; panel.innerHTML = ''; }
       }
     }
 
     function shouldShowMembersAdmin(room) {
-      return document.body.classList.contains('chat-admin-mode') && room === 'vip';
+      return document.body.classList.contains('chat-admin-mode') && (room === 'vip' || room === 'vip_chat');
     }
 
-    function updateVipTabMemberStats(data) {
-      const el = document.getElementById('vipTabMemberStats');
+    function getMemberStatsEl(room) {
+      return document.getElementById(room === 'vip_chat' ? 'vipChatTabMemberStats' : 'vipTabMemberStats');
+    }
+
+    function updateVipTabMemberStats(data, room) {
+      room = room === 'vip_chat' ? 'vip_chat' : 'vip';
+      const el = getMemberStatsEl(room);
       const isAdmin = isBlysAdminUser();
       if (!el) return;
       if (!isAdmin) {
@@ -1094,36 +1134,38 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       el.textContent = '总人数 ' + (Number(data.total) || 0) + ' · 在线 ' + (Number(data.online) || 0);
     }
 
-    function toggleChatMembersAdmin(event) {
+    function toggleChatMembersAdmin(event, room) {
       if (event) {
         event.preventDefault();
         event.stopPropagation();
       }
-      if (!shouldShowMembersAdmin('vip')) return;
+      room = room === 'vip_chat' ? 'vip_chat' : currentRoom;
+      if (!shouldShowMembersAdmin(room)) return;
       chatMembersPanelOpen = !chatMembersPanelOpen;
       const el = document.getElementById('chatMembersAdmin');
       if (el) el.hidden = !chatMembersPanelOpen;
-      if (chatMembersPanelOpen) loadChatMembersAdmin('vip', { forcePanel: true });
-      else scheduleVipMemberStats('vip');
+      if (chatMembersPanelOpen) loadChatMembersAdmin(room, { forcePanel: true });
+      else scheduleVipMemberStats(room);
     }
 
     function scheduleVipMemberStats(room) {
       clearTimeout(chatMembersStatsTimer);
       if (!shouldShowMembersAdmin(room)) {
-        updateVipTabMemberStats(null);
+        updateVipTabMemberStats(null, room);
         return;
       }
-      updateVipTabMemberStats(chatMembersStatsCache);
-      chatMembersStatsTimer = setTimeout(() => loadVipMemberCounts(), 1500);
+      updateVipTabMemberStats(chatMembersStatsCache[room], room);
+      chatMembersStatsTimer = setTimeout(() => loadVipMemberCounts(room), 1500);
     }
 
-    async function loadVipMemberCounts() {
-      if (!shouldShowMembersAdmin('vip')) return;
+    async function loadVipMemberCounts(room) {
+      room = room === 'vip_chat' ? 'vip_chat' : 'vip';
+      if (!shouldShowMembersAdmin(room)) return;
       try {
-        const d = await sbRpc('chat_room_member_counts', { p_room: 'vip' }, { timeoutMs: 5000 });
+        const d = await sbRpc('chat_room_member_counts', { p_room: room }, { timeoutMs: 5000 });
         if (d && d.ok) {
-          chatMembersStatsCache = Object.assign({}, chatMembersStatsCache || {}, d);
-          updateVipTabMemberStats(chatMembersStatsCache);
+          chatMembersStatsCache[room] = Object.assign({}, chatMembersStatsCache[room] || {}, d);
+          updateVipTabMemberStats(chatMembersStatsCache[room], room);
         }
       } catch (e) {}
     }
@@ -1132,7 +1174,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       const el = document.getElementById('chatMembersAdmin');
       if (!el) return;
       if (!shouldShowMembersAdmin(room)) {
-        updateVipTabMemberStats(null);
+        updateVipTabMemberStats(null, room);
         el.hidden = true;
         el.innerHTML = '';
         return;
@@ -1145,8 +1187,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
           el.innerHTML = '<div class="chat-members-loading">成员统计加载失败</div>';
           return;
         }
-        chatMembersStatsCache = d;
-        updateVipTabMemberStats(d);
+        chatMembersStatsCache[room] = d;
+        updateVipTabMemberStats(d, room);
         const list = Array.isArray(d.list) ? d.list : [];
         const chips = list.map(m => {
           const email = esc(m.email || '');
@@ -1417,8 +1459,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     }
 
     function renderChatLoadFailed(room, message) {
-      const isVip = room === 'vip';
-      const switchBtn = isVip ? '<button class="btn btn-secondary btn-small" type="button" onclick="switchChatRoom(\'public\')">切到注册群聊</button>' : '';
+      const isMemberRoom = room === 'vip' || room === 'vip_chat';
+      const switchBtn = isMemberRoom && !shouldHidePublicRoomForUser() ? '<button class="btn btn-secondary btn-small" type="button" onclick="switchChatRoom(\'public\')">切到注册群聊</button>' : '';
       return '<div class="chat-empty chat-load-failed">' +
         '<div>消息加载失败：' + esc(message || '请求超时') + '</div>' +
         '<div class="chat-empty-actions">' +
@@ -1444,12 +1486,19 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       if (isVipPreviewMode(currentRoom)) {
         mask.style.display = 'flex';
         wrap.style.display = 'none';
-        if (text) text.textContent = __user && __user.loggedIn ? '开通会员后即可参与会员群聊' : '登录或开通会员后即可参与会员群聊';
+        if (text) text.textContent = __user && __user.loggedIn ? '开通会员后即可查看会员通知群' : '登录或开通会员后即可查看会员通知群';
         if (btn) {
           btn.textContent = __user && __user.loggedIn ? '私聊开通会员' : '注册 / 登录';
           btn.style.display = '';
           btn.onclick = __user && __user.loggedIn ? openMembershipPrivateChat : openAuthModal;
         }
+        return;
+      }
+      if (__user && __user.loggedIn && currentRoom === 'vip' && !isBlysAdminUser()) {
+        mask.style.display = 'flex';
+        wrap.style.display = 'none';
+        if (text) text.textContent = '会员通知群只有管理员可以发布消息';
+        if (btn) btn.style.display = 'none';
         return;
       }
       if (btn) {
@@ -1497,14 +1546,14 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         const isNativeApp = isNativeNotificationApp();
         const shouldStickToBottom = isFirst || (!isHistory && isChatNearBottom(box, 100) && Date.now() > chatUserReadingHistoryUntil);
         const rpcParams = { p_room: room };
-        if (room === 'vip' && !previewMode && __user && __user.loggedIn && __user.token) rpcParams.p_token = __user.token;
+        if ((room === 'vip' || room === 'vip_chat') && !previewMode && __user && __user.loggedIn && __user.token) rpcParams.p_token = __user.token;
         if (isHistory) {
-          rpcParams.p_limit = room === 'vip' ? 8 : 12;
+          rpcParams.p_limit = (room === 'vip' || room === 'vip_chat') ? 8 : 12;
           rpcParams.p_before = chatTsToIso(chatOldestTs[room]);
         } else if (isFirst) {
-          rpcParams.p_limit = room === 'vip' ? (isNativeApp ? 8 : 14) : (isNativeApp ? 10 : 20);
+          rpcParams.p_limit = (room === 'vip' || room === 'vip_chat') ? (isNativeApp ? 8 : 14) : (isNativeApp ? 10 : 20);
         } else {
-          rpcParams.p_limit = room === 'vip' ? 20 : (isNativeApp ? 30 : 80);
+          rpcParams.p_limit = (room === 'vip' || room === 'vip_chat') ? 20 : (isNativeApp ? 30 : 80);
           rpcParams.p_after = chatTsToIso(lastSeenTs[room]);
         }
         const d = await sbRpc('list_messages', rpcParams, { timeoutMs: isFirst ? 18000 : 12000 });
@@ -1539,7 +1588,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
           // 首屏：按时间升序渲染，底部一定是最新消息
           renderChatMessages(sortMessagesAsc(list), room, true);
           if (previewMode) applyVipPreviewOverlay(room);
-          setTimeout(() => hydrateChatImagePlaceholders(room === 'vip' ? 4 : 6), 120);
+          setTimeout(() => hydrateChatImagePlaceholders((room === 'vip' || room === 'vip_chat') ? 4 : 6), 120);
           if (list.length) {
             const minTs = list.reduce((mn, m) => Math.min(mn, m.created_at ? new Date(m.created_at).getTime() : 0), Infinity);
             chatOldestTs[room] = minTs;
@@ -2171,8 +2220,10 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
 
     async function sendChatMessage() {
       if (!__user.loggedIn) { openAuthModal(); return; }
-      if (currentRoom === 'vip' && !__user.isVip) { openMembershipPrivateChat(); return; }
       if (currentRoom === 'private') { sendPrivateMessage(); return; }
+      if (currentRoom === 'vip' && !isBlysAdminUser()) { alert('会员通知群只有管理员可以发布消息'); return; }
+      if (currentRoom === 'vip_chat' && !canViewVipChat()) { openMembershipPrivateChat(); return; }
+      if (!canSendChatRoom(currentRoom)) { alert('当前频道暂时不能发言'); return; }
 
       const input = document.getElementById('chatInput');
       const content = (input.value || '').trim();
@@ -2540,7 +2591,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         }
         if (chatHistLoading) return;
         loadChatMessages(currentRoom);
-        if (shouldShowMembersAdmin(currentRoom) && chatMembersPanelOpen) loadChatMembersAdmin('vip');
+        if (shouldShowMembersAdmin(currentRoom) && chatMembersPanelOpen) loadChatMembersAdmin(currentRoom);
       }, 5000);
     }
 
@@ -3052,7 +3103,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       }
       if (btn) btn.disabled = false;
       updateNotifBtn();
-      unreadCounts = { public: 0, vip: 0, private: 0 };
+      unreadCounts = { public: 0, vip: 0, vip_chat: 0, private: 0 };
       updateUnreadBadges();
       if (!notifEnabled) {
         const bname = getBrowserName();
@@ -3063,14 +3114,14 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     function dismissUnreadBanner() {
       const banner = document.getElementById('chatUnreadBanner');
       if (banner) banner.hidden = true;
-      unreadCounts = { public: 0, vip: 0, private: 0 };
+      unreadCounts = { public: 0, vip: 0, vip_chat: 0, private: 0 };
       updateUnreadBadges();
       const box = document.getElementById('chatMessages');
       if (box) box.scrollTop = box.scrollHeight;
     }
 
     function showUnreadBanner() {
-      const total = (Number(unreadCounts.public) || 0) + (Number(unreadCounts.vip) || 0) + (Number(unreadCounts.private) || 0);
+      const total = (Number(unreadCounts.public) || 0) + (Number(unreadCounts.vip) || 0) + (Number(unreadCounts.vip_chat) || 0) + (Number(unreadCounts.private) || 0);
       const banner = document.getElementById('chatUnreadBanner');
       if (!banner) return;
       if (inAppNotifOn && total > 0) {
@@ -3082,7 +3133,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     }
 
     function updateUnreadBadges() {
-      ['public', 'vip', 'private'].forEach(room => {
+      ['public', 'vip', 'vip_chat', 'private'].forEach(room => {
         const el = document.getElementById('badge-' + room);
         if (!el) return;
         const n = unreadCounts[room] || 0;
@@ -3098,7 +3149,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     }
 
     async function notifyNewMessage(room, name, preview, count) {
-      const title = room === 'private' ? '✉️ 私聊 · 白鹿原上' : (room === 'vip' ? '⭐ 会员群聊 · 白鹿原上' : '🌐 注册群聊 · 白鹿原上');
+      const title = room === 'private' ? '✉️ 私聊 · 白鹿原上' : (room === 'vip' ? '⭐ 会员通知群 · 白鹿原上' : (room === 'vip_chat' ? '💬 会员聊天群 · 白鹿原上' : '🌐 注册群聊 · 白鹿原上'));
       const body = (count > 1 ? `[${count}条新消息] ` : '') + name + '：' + preview;
       try {
         if ('serviceWorker' in navigator) {

@@ -78,6 +78,17 @@ function profileIsVip(profile: Record<string, unknown>) {
   return Number.isFinite(expire) && expire > Date.now();
 }
 
+function normalizeRoom(value: unknown) {
+  const room = String(value || "");
+  return room === "vip" || room === "vip_chat" ? room : "public";
+}
+
+function roomTitle(room: string) {
+  if (room === "vip") return "会员通知群有新消息";
+  if (room === "vip_chat") return "会员聊天群有新消息";
+  return "注册用户群聊有新消息";
+}
+
 async function handler(req: Request) {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return json({ ok: false, msg: "method not allowed" }, 405);
@@ -89,7 +100,7 @@ async function handler(req: Request) {
 
     const body = await req.json();
     const token = String(body.token || "");
-    const room = body.room === "vip" ? "vip" : "public";
+    const room = normalizeRoom(body.room);
     const content = cleanText(String(body.content || ""));
     const hasImage = !!body.image;
 
@@ -97,11 +108,12 @@ async function handler(req: Request) {
 
     const profile = await rpc("get_profile", { p_token: token });
     if (!profile || !profile.ok) return json({ ok: false, msg: "invalid token" }, 401);
-    if (room === "vip" && !profileIsVip(profile) && !profile.is_admin) return json({ ok: false, msg: "vip only" }, 403);
+    if (room === "vip" && !profile.is_admin) return json({ ok: false, msg: "admin only" }, 403);
+    if (room === "vip_chat" && !profileIsVip(profile) && !profile.is_admin) return json({ ok: false, msg: "vip only" }, 403);
 
     const name = cleanText(profile.nickname || (profile.email ? String(profile.email).split("@")[0] : "群友"), 24);
     const preview = content || (hasImage ? "[图片]" : "新消息");
-    const title = room === "vip" ? "会员群聊有新消息" : "注册用户群聊有新消息";
+    const title = roomTitle(room);
     const payload = JSON.stringify({
       title,
       body: `${name}：${preview}`,

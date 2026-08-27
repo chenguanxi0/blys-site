@@ -247,11 +247,11 @@
         const amount = monthlyAmount(count);
         totalCount += count;
         totalAmount += amount;
-        return `<tr><td>${month}</td><td><input class="monthly-stat-input" type="number" min="0" step="1" value="${count || ''}" data-month="${month}" oninput="updateMonthlyMemberStat(this)"></td><td>${fmtMoney(amount)}</td></tr>`;
+        return `<tr><td>${month}</td><td><input class="monthly-stat-input" type="number" min="0" step="1" value="${count || ''}" data-month="${month}" oninput="updateMonthlyMemberStat(this)"></td><td data-month-amount="${month}">${fmtMoney(amount)}</td></tr>`;
       }).join('');
       box.innerHTML = '<table class="admin-table"><tr><th>月份</th><th>会员数量</th><th>金额</th></tr>' +
         rows +
-        `<tr class="monthly-stat-total"><td>汇总</td><td>${totalCount}</td><td>${fmtMoney(totalAmount)}</td></tr>` +
+        `<tr class="monthly-stat-total"><td>汇总</td><td id="monthlyStatTotalCount">${totalCount}</td><td id="monthlyStatTotalAmount">${fmtMoney(totalAmount)}</td></tr>` +
         '</table>';
     }
     function toggleMonthlyMemberStats(){
@@ -266,12 +266,14 @@
       if(count) data[month] = count;
       else delete data[month];
       saveMonthlyMemberStats(data);
-      renderMonthlyMemberStats();
-      const next = document.querySelector('.monthly-stat-input[data-month="' + month + '"]');
-      if(next) {
-        next.focus();
-        try { next.setSelectionRange(next.value.length, next.value.length); } catch(e) {}
-      }
+      const amountEl = document.querySelector('[data-month-amount="' + month + '"]');
+      if(amountEl) amountEl.textContent = fmtMoney(monthlyAmount(count));
+      const visibleInputs = Array.from(document.querySelectorAll('.monthly-stat-input'));
+      const totalCount = visibleInputs.reduce((sum, item) => sum + Math.max(0, Math.floor(Number(item.value) || 0)), 0);
+      const totalCountEl = document.getElementById('monthlyStatTotalCount');
+      const totalAmountEl = document.getElementById('monthlyStatTotalAmount');
+      if(totalCountEl) totalCountEl.textContent = String(totalCount);
+      if(totalAmountEl) totalAmountEl.textContent = fmtMoney(monthlyAmount(totalCount));
     }
 
     async function loadSiteAnnouncementAdmin(){
