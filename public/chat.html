@@ -233,7 +233,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082446"></script>
+  <script src="assets/app.js?v=2026082704"></script>
   <script src="assets/mobile-app.js?v=2026082445"></script>
   <script>
     // 聊天室页面初始化
@@ -250,7 +250,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    const BLYS_CHAT_PUSH_VERSION = '2026082702';
+    const BLYS_CHAT_PUSH_VERSION = '2026082704';
     console.log('[chat] build v' + BLYS_CHAT_PUSH_VERSION + ' (notification recovery)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
@@ -735,7 +735,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     let latestReviewNoticePollTimer = null;
     function startLatestReviewNoticePolling() {
       if (latestReviewNoticePollTimer) return;
-      latestReviewNoticePollTimer = setInterval(refreshLatestReviewNotice, 300000);
+      latestReviewNoticePollTimer = setInterval(refreshLatestReviewNotice, 60000);
     }
 
     function maybeShowLatestReviewSystemNotice() {
@@ -1075,23 +1075,6 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       if (!room || !(room in unreadCounts)) return;
       unreadCounts[room] = 0;
       updateUnreadBadges();
-    }
-
-    function getChatUnreadStorageKey() {
-      const email = (__user && __user.email) ? String(__user.email).toLowerCase() : 'guest';
-      return 'blys_chat_unread_counts_' + email;
-    }
-
-    function syncChatUnreadToSiteNotice() {
-      try {
-        localStorage.setItem(getChatUnreadStorageKey(), JSON.stringify({
-          public: Number(unreadCounts.public) || 0,
-          vip: Number(unreadCounts.vip) || 0,
-          private: Number(unreadCounts.private) || 0,
-          updated_at: Date.now()
-        }));
-      } catch(e) {}
-      if (typeof window.refreshSiteChatNotices === 'function') window.refreshSiteChatNotices();
     }
 
     function getPrivateUnreadFromList(list) {
@@ -2937,7 +2920,6 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
           el.hidden = true;
         }
       });
-      syncChatUnreadToSiteNotice();
       // 未读变化后同步横幅：未读为 0 则横幅自动隐藏
       showUnreadBanner();
     }

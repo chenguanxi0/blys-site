@@ -967,7 +967,6 @@ let SITE_ANNOUNCEMENT = {
   type: "announcement"
 };
 let SITE_CONTENT_NOTICES = [];
-let SITE_CHAT_NOTICES = [];
 function getAnnouncementPreview(text){
   const lines = String(text || "").split(/\r?\n/).map(x => x.trim()).filter(Boolean);
   return lines[0] || "";
@@ -981,7 +980,6 @@ function getAnnouncementRest(text){
 function getSiteNoticeItems(){
   return [
     ...(SITE_ANNOUNCEMENT && String(SITE_ANNOUNCEMENT.text || '').trim() ? [SITE_ANNOUNCEMENT] : []),
-    ...SITE_CHAT_NOTICES,
     ...SITE_CONTENT_NOTICES
   ];
 }
@@ -1098,10 +1096,9 @@ let __siteAnnouncementLoadStarted = false;
 function scheduleSiteAnnouncementLoad(){
   if (__siteAnnouncementLoadStarted) return;
   __siteAnnouncementLoadStarted = true;
-  refreshSiteChatNotices();
   setTimeout(refreshSiteAnnouncementNotice, 80);
   setTimeout(refreshContentUpdateNotices, 120);
-  setInterval(refreshSiteChatNotices, 10000);
+  setInterval(refreshContentUpdateNotices, 60000);
 }
 function updateSiteNoticeDropdown(){
   const trigger = document.getElementById("siteNoticeTrigger");
@@ -1184,34 +1181,6 @@ async function refreshContentUpdateNotices(){
   SITE_CONTENT_NOTICES = notices;
   updateSiteNoticeDropdown();
 }
-
-function getSiteChatUnreadKey(){
-  const email = (__user && __user.email) ? String(__user.email).toLowerCase() : "guest";
-  return "blys_chat_unread_counts_" + email;
-}
-function refreshSiteChatNotices(){
-  let counts = {};
-  try { counts = JSON.parse(localStorage.getItem(getSiteChatUnreadKey()) || "{}") || {}; } catch(e) { counts = {}; }
-  const rooms = [
-    { room: "private", title: "私聊有未读消息", href: "chat.html#private" },
-    { room: "vip", title: "会员群聊有未读消息", href: "chat.html#vip" },
-    { room: "public", title: "普通群聊有未读消息", href: "chat.html#public" }
-  ];
-  SITE_CHAT_NOTICES = rooms
-    .map(x => Object.assign({}, x, { count: Number(counts[x.room]) || 0 }))
-    .filter(x => x.count > 0)
-    .map(x => ({
-      id: "chat-" + x.room,
-      group: "聊天通知",
-      title: x.title,
-      text: x.count > 99 ? "99+ 条未读聊天记录" : x.count + " 条未读聊天记录",
-      href: x.href,
-      type: "chat",
-      count: x.count
-    }));
-  updateSiteNoticeDropdown();
-}
-window.refreshSiteChatNotices = refreshSiteChatNotices;
 
 // ---- 积分体系（签到 / 评论奖励 / 兑换解锁） ----
 async function refreshPointsUI(){
