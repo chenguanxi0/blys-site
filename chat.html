@@ -1655,7 +1655,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       }
     }
 
-    function renderChatMessageContent(m) {
+    function renderChatMessageContent(m, room) {
       const text = (m.content || '').trim();
       const img = m.image;
       const hasImage = !!(img || m.has_image || m.image_full);
@@ -1672,7 +1672,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       if (img) {
         html += `<img class="chat-msg-img" src="${esc(img)}" data-full-src="${esc(m.image_full || img)}" alt="图片" loading="lazy" />`;
       } else if (hasImage && m.id) {
-        html += `<button class="chat-msg-img-placeholder" type="button" data-message-id="${esc(m.id)}" onclick="openChatImageFromMessage('${esc(m.id)}')">加载图片中</button>`;
+        html += `<button class="chat-msg-img-placeholder" type="button" data-message-id="${esc(m.id)}" data-room="${esc(room || currentRoom)}" onclick="openChatImageFromMessage('${esc(m.id)}', '${esc(room || currentRoom)}')">加载图片中</button>`;
       }
       if (text) {
         html += `<div class="chat-msg-text">${esc(text).replace(/\n/g, '<br>')}</div>`;
@@ -1702,11 +1702,13 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       if(i) i.src = '';
     }
 
-    async function openChatImageFromMessage(messageId){
+    async function openChatImageFromMessage(messageId, room){
       if (!messageId) return;
       if (!__user || !__user.loggedIn || !__user.token) { openAuthModal(); return; }
+      room = normalizeChatRoom(room || currentRoom);
       try {
-        const d = await sbRpc('get_chat_message_image', { p_token: __user.token, p_message_id: messageId }, { timeoutMs: 15000 });
+        const fn = room === 'private' ? 'get_private_message_image' : 'get_chat_message_image';
+        const d = await sbRpc(fn, { p_token: __user.token, p_message_id: messageId }, { timeoutMs: 15000 });
         if (!d || !d.ok || !d.image) {
           alert((d && d.msg) || '图片加载失败');
           return;
@@ -1723,10 +1725,12 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       const nodes = Array.from(box.querySelectorAll('.chat-msg-img-placeholder:not([data-loading]):not([data-loaded])')).slice(0, limit || 6);
       for (const node of nodes) {
         const messageId = node.getAttribute('data-message-id');
+        const room = normalizeChatRoom(node.getAttribute('data-room') || currentRoom);
         if (!messageId) continue;
         node.setAttribute('data-loading', '1');
         try {
-          const d = await sbRpc('get_chat_message_image', { p_token: __user.token, p_message_id: messageId }, { timeoutMs: 15000 });
+          const fn = room === 'private' ? 'get_private_message_image' : 'get_chat_message_image';
+          const d = await sbRpc(fn, { p_token: __user.token, p_message_id: messageId }, { timeoutMs: 15000 });
           if (d && d.ok && d.image) {
             const img = document.createElement('img');
             img.className = 'chat-msg-img';
@@ -1830,7 +1834,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
             <span class="chat-msg-name">${name}</span>${ownerBadge}
             ${timeHtml}
           </div>
-          ${recalled ? '<div class="chat-recalled">消息已撤回</div>' : renderChatMessageContent(m)}
+          ${recalled ? '<div class="chat-recalled">消息已撤回</div>' : renderChatMessageContent(m, room)}
         </div>
       </div>`;
     }
