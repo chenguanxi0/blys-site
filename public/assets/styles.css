@@ -1274,7 +1274,19 @@ body.chat-body .footer { display:none; }
   body.chat-body .chat-tabs-wrapper { padding-top:0; }
 }
 html.blys-native-app body.chat-body .chat-tabs-wrapper { top: calc(64px + var(--app-safe-top)); }
-.chat-notif-diag { display:none; }
+.chat-notif-diag {
+  display:block;
+  max-width:1180px;
+  margin:8px auto 0;
+  padding:8px 12px;
+  border:1px solid #dbe4ef;
+  border-radius:8px;
+  background:#f8fafc;
+  color:#475569;
+  font-size:12px;
+  line-height:1.5;
+}
+.chat-notif-diag[hidden] { display:none; }
 .nav-dropdown-action {
   width:100%; border:0; background:transparent; padding:10px 12px; text-align:left;
   color:var(--muted); font:inherit; cursor:pointer; white-space:nowrap;

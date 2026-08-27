@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082710" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082711" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -2930,6 +2930,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       const el = document.getElementById('chatNotifDiag');
       if (!el) return;
       el.textContent = notifDiagMsg;
+      el.hidden = !notifDiagMsg;
       el.style.whiteSpace = isNativeNotificationApp() ? 'pre-line' : 'normal';
     }
 
@@ -2949,7 +2950,9 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         p_subscription: subscription.toJSON(),
         p_user_agent: navigator.userAgent || ''
       }, { timeoutMs: 10000 });
-      return !!(d && d.ok);
+      if (d && d.ok) return true;
+      const reason = d && (d.msg || d.message || d.details || d.hint || d._raw || d._status);
+      throw new Error('订阅保存失败' + (reason ? '：' + reason : ''));
     }
 
     async function clearChatPushSubscription(reg) {
@@ -3031,6 +3034,15 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         await rebuildChatServiceWorker();
         return subscribeChatPush('after-reset');
       }
+    }
+
+    async function repairAndSubscribeChatPush() {
+      setNotifDiag('正在重建浏览器提醒组件...');
+      await rebuildChatServiceWorker();
+      setNotifDiag('正在向浏览器申请推送订阅...');
+      const sub = await subscribeChatPush('after-reset');
+      setNotifDiag('系统弹窗提醒已开启');
+      return sub;
     }
 
     async function unsubscribeChatPush() {
@@ -3207,7 +3219,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       }
       setNotifDiag('正在开启浏览器提醒...');
       try {
-        await withTimeout(subscribeChatPush(), 45000, 'subscribe push');
+        await withTimeout(repairAndSubscribeChatPush(), 45000, 'subscribe push');
         notifEnabled = true;
         localStorage.setItem('blys_notif', 'on');
         setNotifDiag('系统弹窗提醒已开启');
@@ -3222,12 +3234,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       unreadCounts = { public: 0, vip: 0, vip_chat: 0, private: 0 };
       updateUnreadBadges();
       if (!notifEnabled) {
-        const fallbackAlertKey = 'blys_notif_fallback_alert_seen_' + ((__user && (__user.token || __user.email)) || 'guest');
-        if (localStorage.getItem(fallbackAlertKey) !== '1') {
-          const bname = getBrowserName();
-          localStorage.setItem(fallbackAlertKey, '1');
-          alert('已开启「页内提醒」。' + bname + '暂时无法开启系统弹窗，但你切走再回来时，会看到频道红点提醒。\n\n苹果手机：请用 Safari 把网站添加到主屏幕，然后一定要从桌面图标进入聊天室，再点击开启提醒。\n\n安卓手机：请使用群里的 App 开启 App 提醒。');
-        }
+        localStorage.setItem('blys_notif_fallback_alert_seen_' + ((__user && (__user.email || __user.token)) || 'guest'), '1');
       }
     }
 
