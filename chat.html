@@ -285,6 +285,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     let inAppNotifOn = false;
     let notifDiagMsg = '';
     let unreadCounts = { public: 0, vip: 0, vip_chat: 0, private: 0 };
+    let roomReadClearedAt = { public: 0, vip: 0, vip_chat: 0, private: 0 };
     const CHAT_ANNOUNCEMENT_DEFAULTS = {
       public: '普通群文明交流，禁止荐股与广告；重要通知会在这里置顶。',
       vip: '会员通知群仅管理员发布操作与重要提醒。'
@@ -559,7 +560,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
           const isNativeApp = document.documentElement.classList.contains('blys-native-app');
           if (isNativeApp) return;
           const topThreshold = 180;
-          if (histBox.scrollTop <= topThreshold && chatHasMore[currentRoom] && !chatHistLoading && currentRoom !== 'private') {
+          if (histBox.scrollTop <= topThreshold && chatHasMore[currentRoom] && !chatHistLoading) {
             loadOlderChatMessages();
           }
         });
@@ -570,7 +571,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         const maybeLoadByTouch = (e) => {
           if (!histBox.__touchActive) return;
           if (Date.now() < chatSuppressHistoryUntil) return;
-          if (currentRoom === 'private' || chatHistLoading || !chatHasMore[currentRoom]) return;
+          if (chatHistLoading || !chatHasMore[currentRoom]) return;
           const y = e && e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientY
             : (e && e.touches && e.touches[0] ? e.touches[0].clientY : histBox.__touchStartY);
           const pullingOlder = y && histBox.__touchStartY && (y - histBox.__touchStartY > 12);
@@ -1246,6 +1247,9 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
 
     function clearRoomUnread(room) {
       if (!room || !(room in unreadCounts)) return;
+      const nowTs = Date.now();
+      roomReadClearedAt[room] = Math.max(roomReadClearedAt[room] || 0, nowTs);
+      lastSeenTs[room] = Math.max(lastSeenTs[room] || 0, nowTs);
       unreadCounts[room] = 0;
       updateUnreadBadges();
     }
@@ -1262,8 +1266,9 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       if (!room || !__user || !__user.loggedIn || isVipPreviewMode(room)) return;
       const rpcParams = { p_room: room };
       if ((room === 'vip' || room === 'vip_chat') && __user.token) rpcParams.p_token = __user.token;
-      if (lastSeenTs[room]) {
-        rpcParams.p_after = chatTsToIso(lastSeenTs[room]);
+      const unreadAfterTs = Math.max(lastSeenTs[room] || 0, roomReadClearedAt[room] || 0);
+      if (unreadAfterTs) {
+        rpcParams.p_after = chatTsToIso(unreadAfterTs);
         rpcParams.p_limit = 20;
       } else {
         rpcParams.p_limit = 1;
@@ -1278,8 +1283,11 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         if (maxTs) lastSeenTs[room] = Math.max(lastSeenTs[room] || 0, maxTs);
         return;
       }
-      if (lastSeenTs[room]) {
-        const fresh = list.filter(m => m.user_email !== myEmail);
+      if (unreadAfterTs) {
+        const fresh = list.filter(m => {
+          const ts = m.created_at ? new Date(m.created_at).getTime() : 0;
+          return m.user_email !== myEmail && ts > unreadAfterTs;
+        });
         if (fresh.length) {
           unreadCounts[room] = (unreadCounts[room] || 0) + fresh.length;
           updateUnreadBadges();
@@ -3214,8 +3222,12 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       unreadCounts = { public: 0, vip: 0, vip_chat: 0, private: 0 };
       updateUnreadBadges();
       if (!notifEnabled) {
-        const bname = getBrowserName();
-        alert('已开启「页内提醒」。' + bname + '暂时无法开启系统弹窗，但你切走再回来时，会看到频道红点提醒。\n\n苹果手机：请用 Safari 把网站添加到主屏幕，然后一定要从桌面图标进入聊天室，再点击开启提醒。\n\n安卓手机：请使用群里的 App 开启 App 提醒。');
+        const fallbackAlertKey = 'blys_notif_fallback_alert_seen_' + ((__user && (__user.token || __user.email)) || 'guest');
+        if (localStorage.getItem(fallbackAlertKey) !== '1') {
+          const bname = getBrowserName();
+          localStorage.setItem(fallbackAlertKey, '1');
+          alert('已开启「页内提醒」。' + bname + '暂时无法开启系统弹窗，但你切走再回来时，会看到频道红点提醒。\n\n苹果手机：请用 Safari 把网站添加到主屏幕，然后一定要从桌面图标进入聊天室，再点击开启提醒。\n\n安卓手机：请使用群里的 App 开启 App 提醒。');
+        }
       }
     }
 
