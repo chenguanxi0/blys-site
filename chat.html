@@ -288,6 +288,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     let notifEnabled = false;
     let inAppNotifOn = false;
     let notifDiagMsg = '';
+    let chatPushRetryTimer = null;
+    let chatPushRetryAttempts = 0;
     let unreadCounts = { public: 0, vip: 0, vip_chat: 0, private: 0 };
     let roomReadClearedAt = { public: 0, vip: 0, vip_chat: 0, private: 0 };
     const CHAT_ANNOUNCEMENT_DEFAULTS = {
@@ -1299,6 +1301,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         if (fresh.length) {
           unreadCounts[room] = (unreadCounts[room] || 0) + fresh.length;
           updateUnreadBadges();
+          maybeShowClientFallbackNotification(room, fresh);
         }
       }
       if (maxTs) lastSeenTs[room] = Math.max(lastSeenTs[room] || 0, maxTs);
@@ -1732,6 +1735,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
             } else if (inAppNotifOn) {
               unreadCounts[room] = (unreadCounts[room] || 0) + fresh.length;
               updateUnreadBadges();
+              maybeShowClientFallbackNotification(room, fresh);
             }
           }
         }
@@ -3006,6 +3010,62 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       throw new Error('订阅保存失败' + (reason ? '：' + reason : ''));
     }
 
+    function chatWithTimeout(promise, ms, label) {
+      return Promise.race([
+        promise,
+        new Promise((_, rej) => setTimeout(() => rej(new Error(label + ' timeout')), ms))
+      ]);
+    }
+
+    function isChatPushTimeoutError(err) {
+      const msg = err && err.message ? String(err.message) : String(err || '');
+      return msg.includes('subscribe push timeout');
+    }
+
+    async function recoverExistingChatPushSubscription() {
+      if (!supportsSystemPush() || !__user.loggedIn || !__user.token) return null;
+      const reg = await chatWithTimeout(navigator.serviceWorker.ready, 12000, 'SW ready');
+      const sub = await chatWithTimeout(reg.pushManager.getSubscription(), 12000, 'get subscription');
+      if (!sub) return null;
+      const saved = await saveChatPushSubscription(sub);
+      if (!saved) return null;
+      return sub;
+    }
+
+    function markChatPushEnabled(message) {
+      notifEnabled = true;
+      localStorage.setItem('blys_notif', 'on');
+      setNotifDiag(message || '系统弹窗提醒已开启');
+      updateNotifBtn();
+    }
+
+    function scheduleChatPushBackgroundRetry() {
+      if (chatPushRetryTimer || !supportsSystemPush() || !__user.loggedIn || !__user.token) return;
+      chatPushRetryAttempts = 0;
+      const run = async () => {
+        chatPushRetryTimer = null;
+        if (notifEnabled || localStorage.getItem('blys_notif_inapp') !== 'on') return;
+        chatPushRetryAttempts += 1;
+        try {
+          setNotifDiag('浏览器推送订阅超时，后台第 ' + chatPushRetryAttempts + ' 次重试中...');
+          let sub = await recoverExistingChatPushSubscription();
+          if (!sub) sub = await chatWithTimeout(subscribeChatPush(), 60000, 'subscribe push');
+          if (sub) {
+            markChatPushEnabled('系统弹窗提醒已开启');
+            return;
+          }
+        } catch (e) {
+          console.warn('[chat] background push retry failed', e);
+        }
+        if (chatPushRetryAttempts < 6 && !notifEnabled && localStorage.getItem('blys_notif_inapp') === 'on') {
+          chatPushRetryTimer = setTimeout(run, 30000);
+        } else if (!notifEnabled) {
+          setNotifDiag('Chrome 推送订阅仍超时；页内提醒已开启。页面开着时会继续用浏览器本地弹窗补偿。');
+        }
+      };
+      chatPushRetryTimer = setTimeout(run, 5000);
+    }
+
     async function clearChatPushSubscription(reg) {
       try {
         const sub = await reg.pushManager.getSubscription();
@@ -3200,10 +3260,6 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
 
     async function toggleChatNotification() {
       const btn = document.getElementById('chatNotifBtn');
-      const withTimeout = (promise, ms, label) => Promise.race([
-        promise,
-        new Promise((_, rej) => setTimeout(() => rej(new Error(label + ' timeout')), ms))
-      ]);
       if (isNativeNotificationApp()) {
         if (!__user.loggedIn) {
           openAuthModal();
@@ -3216,7 +3272,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
               btn.disabled = true;
             }
             setNotifDiag('正在关闭 App 提醒...');
-            await withTimeout(window.BLYS_APP.disableNotifications(), 8000, 'disable notifications');
+            await chatWithTimeout(window.BLYS_APP.disableNotifications(), 8000, 'disable notifications');
             notifEnabled = false;
             localStorage.setItem('blys_native_push_switch', 'off');
           } else {
@@ -3226,7 +3282,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
             }
             setNotifDiag('正在开启 App 提醒，请稍等...');
             await cleanupNativeAppWebPushSubscription();
-            await withTimeout(window.BLYS_APP.enableNotifications(), 12000, 'enable notifications');
+            await chatWithTimeout(window.BLYS_APP.enableNotifications(), 12000, 'enable notifications');
             notifEnabled = true;
             localStorage.setItem('blys_native_push_switch', 'on');
           }
@@ -3251,7 +3307,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         notifEnabled = false;
         localStorage.setItem('blys_notif', 'off');
         setNotifDiag('');
-        try { await withTimeout(unsubscribeChatPush(), 20000, 'unsubscribe push'); } catch(e) { console.warn('[chat] unsubscribe timeout', e); }
+        try { await chatWithTimeout(unsubscribeChatPush(), 20000, 'unsubscribe push'); } catch(e) { console.warn('[chat] unsubscribe timeout', e); }
         updateNotifBtn();
         if (btn) btn.disabled = false;
         return;
@@ -3270,15 +3326,21 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       }
       setNotifDiag('正在开启浏览器提醒...');
       try {
-        await withTimeout(repairAndSubscribeChatPush(), 45000, 'subscribe push');
-        notifEnabled = true;
-        localStorage.setItem('blys_notif', 'on');
-        setNotifDiag('系统弹窗提醒已开启');
+        await chatWithTimeout(repairAndSubscribeChatPush(), 45000, 'subscribe push');
+        markChatPushEnabled('系统弹窗提醒已开启');
       } catch (e) {
         console.warn('[chat] system push unavailable', e);
         notifEnabled = false;
         localStorage.setItem('blys_notif', 'off');
-        setNotifDiag(getNotifErrorText(e));
+        const recovered = isChatPushTimeoutError(e) ? await recoverExistingChatPushSubscription().catch(() => null) : null;
+        if (recovered) {
+          markChatPushEnabled('系统弹窗提醒已开启');
+        } else if (isChatPushTimeoutError(e)) {
+          setNotifDiag('Chrome 推送订阅超时，已开启页内提醒；后台会自动重试。');
+          scheduleChatPushBackgroundRetry();
+        } else {
+          setNotifDiag(getNotifErrorText(e));
+        }
       }
       if (btn) btn.disabled = false;
       updateNotifBtn();
@@ -3326,6 +3388,25 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       });
       // 不再展示顶部未读横幅，只保留频道红点。
       showUnreadBanner();
+    }
+
+    function shouldShowClientPopupForRoom(room) {
+      if (isBlysAdminUser()) return true;
+      if (room === 'public') return !!(__user && __user.loggedIn && !__user.isVip);
+      if (room === 'vip') return !!(__user && __user.loggedIn && __user.isVip);
+      return false;
+    }
+
+    function maybeShowClientFallbackNotification(room, messages) {
+      if (!Array.isArray(messages) || !messages.length) return;
+      if (!inAppNotifOn || notifEnabled) return;
+      if (!document.hidden && currentRoom === room) return;
+      if (!shouldShowClientPopupForRoom(room)) return;
+      if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+      const latest = messages[messages.length - 1] || {};
+      const name = latest.user_nickname || (latest.user_email ? String(latest.user_email).split('@')[0] : '群友');
+      const preview = latest.content || (latest.image ? '[图片]' : '新消息');
+      notifyNewMessage(room, name, preview, messages.length);
     }
 
     async function notifyNewMessage(room, name, preview, count) {
