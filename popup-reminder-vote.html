@@ -1,0 +1,185 @@
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>弹窗提醒内容 · 投票</title>
+  <meta name="description" content="会员群弹窗提醒内容投票。" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082705" />
+  <link rel="apple-touch-icon" href="assets/favicon.png" />
+</head>
+<body>
+  <div class="risk-bar">
+    ⚠️ 风险提示：本站所有内容仅为个人复盘与经验分享，不构成任何投资建议，市场有风险，投资需谨慎。
+  </div>
+
+  <header class="nav">
+    <div class="nav-inner">
+      <a class="brand" href="index.html">
+        <span class="brand-logo">白</span>
+        <span class="brand-name">白鹿原上-交易笔记 <small>· blys.site</small></span>
+      </a>
+      <div class="nav-right">
+        <nav class="nav-links" id="navLinks">
+          <a href="chat.html">聊天室</a>
+          <a href="ideas.html">每日思路</a>
+          <a href="daily.html">每日复盘</a>
+          <a href="diary.html">实盘日记</a>
+          <a href="index.html#vip">心得分享</a>
+          <a href="member-discipline.html" class="member-discipline-nav-link" hidden>会员交易纪律</a>
+          <div class="nav-dropdown">
+            <button class="nav-dropdown-trigger" type="button">关于<span class="nav-dropdown-chevron" aria-hidden="true"></span></button>
+            <div class="nav-dropdown-menu">
+              <a href="index.html#about">关于我</a>
+              <a href="notification-guide.html">弹窗教程</a>
+              <a href="changelog.html">更新日志</a>
+              <a href="admin.html" class="admin-nav-link" hidden>后台</a>
+            </div>
+          </div>
+        </nav>
+        <div class="vip-status" id="vipStatus"></div>
+        <div class="online-counter" id="onlineCounter" title="当前在线访客">
+          <span class="online-dot"></span>
+          <span id="onlineNum">--</span> 在线
+        </div>
+        <button class="nav-toggle" id="navToggle" aria-label="菜单">☰</button>
+      </div>
+    </div>
+  </header>
+  <script>
+    (function () {
+      var toggle = document.getElementById('navToggle');
+      var links = document.getElementById('navLinks');
+      if (!toggle || !links) return;
+      var dropdowns = document.querySelectorAll('.nav-dropdown');
+      dropdowns.forEach(function (dropdown) {
+        var trigger = dropdown.querySelector('.nav-dropdown-trigger');
+        if (!trigger) return;
+        trigger.addEventListener('click', function (event) {
+          event.preventDefault(); event.stopPropagation();
+          dropdowns.forEach(function (item) { if (item !== dropdown) item.classList.remove('open'); });
+          dropdown.classList.toggle('open');
+        });
+      });
+      document.addEventListener('click', function () {
+        dropdowns.forEach(function (item) { item.classList.remove('open'); });
+      });
+      toggle.dataset.navReady = '1';
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.addEventListener('click', function (event) {
+        event.preventDefault();
+        var open = links.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', String(open));
+      });
+      links.addEventListener('click', function (event) {
+        if (event.target.closest('a')) {
+          links.classList.remove('open');
+          toggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+      document.addEventListener('click', function (event) {
+        if (!event.target.closest('.nav-inner')) {
+          links.classList.remove('open');
+          toggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+    }());
+  </script>
+
+  <main class="section vote-page">
+    <div class="vote-panel">
+      <h1>弹窗提醒内容</h1>
+      <p>请选择你希望会员群弹窗提醒覆盖的范围，提交后即可回到会员群关闭置顶。</p>
+
+      <form id="popupReminderVoteForm">
+        <div class="vote-options">
+          <label class="vote-option">
+            <input type="radio" name="vote" value="只在有操作的时候弹窗通知" required />
+            <strong>1. 只在有操作的时候弹窗通知</strong>
+          </label>
+          <label class="vote-option">
+            <input type="radio" name="vote" value="所有消息都通知" required />
+            <strong>2. 所有消息都通知</strong>
+          </label>
+          <label class="vote-option">
+            <input type="radio" name="vote" value="交易时间只有操作的时候弹窗通知，非交易时间所有消息都弹窗" required />
+            <strong>3. 交易时间只有操作的时候弹窗通知，非交易时间所有消息都弹窗</strong>
+          </label>
+          <label class="vote-option">
+            <input type="radio" name="vote" value="其他建议" required />
+            <strong>4. 其他建议</strong>
+          </label>
+        </div>
+        <div class="vote-other" id="voteOtherBox">
+          <textarea id="voteOtherText" maxlength="500" placeholder="写下你的其他建议"></textarea>
+        </div>
+        <div class="vote-actions">
+          <button class="btn btn-primary" type="submit">提交投票</button>
+          <a class="btn btn-ghost" href="chat.html#vip">返回会员群</a>
+          <span class="vote-message" id="voteMessage"></span>
+        </div>
+        <div class="vote-result" id="voteResult" hidden></div>
+      </form>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
+  </footer>
+
+  <script src="assets/app.js?v=2026082705"></script>
+  <script>
+    (function () {
+      const form = document.getElementById('popupReminderVoteForm');
+      const otherBox = document.getElementById('voteOtherBox');
+      const otherText = document.getElementById('voteOtherText');
+      const message = document.getElementById('voteMessage');
+      const result = document.getElementById('voteResult');
+      function getUserVoteKey(prefix) {
+        const user = window.__user || {};
+        const id = (user.email || user.nickname || '').trim().toLowerCase();
+        return id ? prefix + '_' + id : prefix;
+      }
+      function refreshOtherBox() {
+        const selected = form.querySelector('input[name="vote"]:checked');
+        otherBox.style.display = selected && selected.value === '其他建议' ? 'block' : 'none';
+      }
+      function showSavedVote() {
+        const raw = localStorage.getItem(getUserVoteKey('blys_popup_reminder_vote_data_v1')) || localStorage.getItem('blys_popup_reminder_vote_data_v1');
+        if (!raw) return;
+        try {
+          const data = JSON.parse(raw);
+          if (!data || !data.choice) return;
+          result.hidden = false;
+          result.textContent = '已投票：' + data.choice + (data.other ? '；建议：' + data.other : '');
+        } catch(e) {}
+      }
+      document.addEventListener('change', refreshOtherBox);
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        const selected = form.querySelector('input[name="vote"]:checked');
+        if (!selected) return;
+        const other = (otherText.value || '').trim();
+        if (selected.value === '其他建议' && !other) {
+          message.textContent = '请填写你的其他建议。';
+          otherText.focus();
+          return;
+        }
+        const data = {
+          title: '弹窗提醒内容',
+          choice: selected.value,
+          other: selected.value === '其他建议' ? other : '',
+          votedAt: new Date().toISOString()
+        };
+        localStorage.setItem(getUserVoteKey('blys_popup_reminder_vote_v1'), '1');
+        localStorage.setItem(getUserVoteKey('blys_popup_reminder_vote_data_v1'), JSON.stringify(data));
+        localStorage.setItem('blys_popup_reminder_vote_v1', '1');
+        localStorage.setItem('blys_popup_reminder_vote_data_v1', JSON.stringify(data));
+        message.textContent = '投票已提交，正在返回会员群...';
+        setTimeout(function () { location.href = 'chat.html#vip'; }, 700);
+      });
+      window.addEventListener('blys:user:change', showSavedVote);
+      setTimeout(showSavedVote, 600);
+    }());
+  </script>
+</body>
+</html>

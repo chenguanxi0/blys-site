@@ -8,7 +8,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082443" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082705" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 36 36'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23e23b3b'/%3E%3Cstop offset='100%25' stop-color='%23f87171'/%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='18' cy='18' r='17' fill='url(%23g)'/%3E%3Ctext x='18' y='23' text-anchor='middle' fill='white' font-family='-apple-system,PingFang SC,Microsoft YaHei,sans-serif' font-size='18' font-weight='700'%3E白%3C/text%3E%3C/svg%3E" />
   <link rel="apple-touch-icon" href="assets/favicon.png" />
 </head>
@@ -32,13 +32,7 @@
           <a href="daily.html">每日复盘</a>
           <a href="diary.html">实盘日记</a>
           <a href="#vip">心得分享</a>
-          <div class="nav-dropdown">
-            <button class="nav-dropdown-trigger" type="button">会员专享<span class="nav-dropdown-chevron" aria-hidden="true"></span></button>
-            <div class="nav-dropdown-menu">
-              <a href="#vipzone">会员专区</a>
-              <a href="member-discipline.html">会员交易纪律</a>
-            </div>
-          </div>
+          <a href="member-discipline.html" class="member-discipline-nav-link" hidden>会员交易纪律</a>
           <div class="nav-dropdown">
             <button class="nav-dropdown-trigger" type="button">关于<span class="nav-dropdown-chevron" aria-hidden="true"></span></button>
             <div class="nav-dropdown-menu">
@@ -183,51 +177,6 @@
     </div>
   </section>
 
-  <!-- 会员专享（默认对游客锁定，仅会员可见） -->
-  <section class="section section-alt vip-zone" id="vipzone">
-    <div class="section-head">
-      <h2>⭐ 会员专享</h2>
-      <p>盘中提示、每周复盘文档、我的专属战法、实盘陪跑社群。<em>仅会员可见。</em></p>
-    </div>
-    <div class="vip-body">
-      <div class="cards">
-        <div class="card vip-card" data-page="盘中提示" data-cost="30">
-          <span class="badge pay">盘中</span>
-          <h3>盘中实时提示</h3>
-          <p>交易时段我的关键操作与风控提醒（示例内容，待补充真实素材）。</p>
-          <div class="result">示例：09:35 加仓某某，止损位上移；14:00 减仓至 5 成…</div>
-        </div>
-        <div class="card vip-card" data-page="每周复盘文档" data-cost="50">
-          <span class="badge pay">周报</span>
-          <h3>每周复盘文档</h3>
-          <p>每周日完整复盘 PDF/长文：本周盈亏、做得好与做得差的地方。</p>
-          <div class="result">示例：本周 +3.2%，主线在半导体；下周关注…（待补充）</div>
-        </div>
-        <div class="card vip-card" data-page="我的专属战法" data-cost="80">
-          <span class="badge pay">战法</span>
-          <h3>我的专属战法</h3>
-          <p>选股框架、买点卖点、仓位管理的具体打法，会员可反复看。</p>
-          <div class="result">示例：量价突破 + 板块共振 战法详解（待补充）</div>
-        </div>
-        <div class="card vip-card" data-vip-course data-page="实盘陪跑社群" data-cost="120">
-          <span class="badge pay">社群</span>
-          <h3>实盘陪跑社群</h3>
-          <p>每周直播复盘 + 私密社群，看我实时怎么操作与纠错。</p>
-          <button class="btn btn-primary btn-block" onclick="vipGate('实盘陪跑社群')">会员加入</button>
-          <p class="muted" style="font-size:12px;margin-top:8px">也可用 120 积分兑换解锁</p>
-        </div>
-      </div>
-    </div>
-    <div class="vip-mask">
-      <div class="vip-mask-inner">
-        <div class="vip-lock">🔒</div>
-        <h3>会员专享内容</h3>
-        <p>盘中提示 · 每周复盘 · 专属战法 · 实盘陪跑社群，开通会员后即可查看</p>
-        <button class="btn btn-primary" onclick="goRenewVip()">私聊开通会员</button>
-      </div>
-    </div>
-  </section>
-
   <!-- 更新日志 -->
   <section class="section" id="changelog">
     <div class="section-head">
@@ -281,7 +230,7 @@
     </div>
   </section>
 
-  <!-- 会员专享（默认对游客锁定，仅会员可见） -->
+  <!-- 关于我 -->
   <section class="section section-alt" id="about">
     <div class="section-head">
       <h2>👋 关于我</h2>
@@ -303,7 +252,7 @@
 
   <script src="assets/data.js?v=20260819"></script>
   <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
-  <script src="assets/app.js?v=2026082704"></script>
+  <script src="assets/app.js?v=2026082705"></script>
   <script src="assets/mobile-app.js?v=2026082426"></script>
 
   <!-- 登录 / 注册 / 找回密码 弹窗 -->

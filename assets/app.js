@@ -757,7 +757,7 @@ function syncUserGlobals(){
 
 async function fetchUser(){
   const token = localStorage.getItem(USER_TOKEN_KEY);
-  if (!token){ __user = { loggedIn: false }; syncUserGlobals(); renderUserStatus(); lockVipZones(); initReview(); initTutorialGate(); emitUserChange(); return; }
+  if (!token){ __user = { loggedIn: false }; syncUserGlobals(); renderUserStatus(); updateMemberDisciplineNav(); lockVipZones(); initReview(); initTutorialGate(); emitUserChange(); return; }
   try {
     const d = await sbRpc("get_profile", { p_token: token });
     if (d && d.ok){
@@ -780,6 +780,7 @@ async function fetchUser(){
   }
   syncUserGlobals();
   renderUserStatus();
+  updateMemberDisciplineNav();
   await renderVipLocks();
   lockVipZones();
   initReview();
@@ -792,6 +793,11 @@ function emitUserChange(){
 }
 
 function isVIP(){ return __user.loggedIn && __user.isVip; }
+function updateMemberDisciplineNav(){
+  document.querySelectorAll(".member-discipline-nav-link").forEach(link => {
+    link.hidden = !isVIP();
+  });
+}
 function getVipDaysLeft(){
   if (!__user || !__user.vipExpire) return null;
   const expire = new Date(__user.vipExpire);
@@ -1539,7 +1545,9 @@ async function submitComment(article){
   base = Math.max(3, base);
 
   function show(n){
+    window.BLYS_SITE_ONLINE_COUNT = n;
     if (numEl) numEl.textContent = n;
+    try { window.dispatchEvent(new CustomEvent("blys:online-count", { detail: { count: n } })); } catch(e){}
   }
   show(base);
   // 每 12~20 秒微调 ±1~3，模拟真实波动
