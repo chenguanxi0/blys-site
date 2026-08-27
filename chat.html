@@ -143,13 +143,6 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
           <button type="button" id="vipRenewInlineClose" onclick="dismissVipRenewInline(event)">关闭</button>
         </div>
       </div>
-      <div class="chat-vote-notice" id="chatPopupVoteNotice" hidden>
-        <span>弹窗提醒内容投票</span>
-        <div class="chat-vote-notice-actions">
-          <button type="button" onclick="openPopupReminderVote(event)">投票</button>
-          <button type="button" onclick="dismissPopupReminderVote(event)">关闭</button>
-        </div>
-      </div>
       <div class="chat-review-notice" id="chatReviewNotice" hidden>
         <span id="chatReviewNoticeText">今日复盘已更新</span>
         <div class="chat-review-notice-actions">
@@ -484,7 +477,6 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         applyVipPreviewOverlay(currentRoom);
         updateVipDisciplineEntry(currentRoom);
         updateVipRenewInline(currentRoom);
-        updatePopupReminderVoteNotice(currentRoom);
         // 登录、会员激活或退出后，自动切换到身份对应的聊天室
         const preferredRoom = getPreferredChatRoom();
         if (currentRoom !== preferredRoom && !shouldStayOnExpiredVipRoom()) {
@@ -700,7 +692,6 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       const inputArea = document.getElementById('chatInputArea');
       updateVipDisciplineEntry(room);
       updateVipRenewInline(room);
-      updatePopupReminderVoteNotice(room);
       updateChatAnnouncement(room);
       // 进入 VIP 群前必须刷新真实会员状态，避免本地缓存过期导致非会员看到会员群。
       if (room === 'vip' && !options.skipUserRefresh && typeof fetchUser === 'function' && localStorage.getItem(USER_TOKEN_KEY) && !vipRefreshing) {
@@ -721,7 +712,6 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
           if (inputArea) inputArea.style.display = 'block';
           updateVipDisciplineEntry('');
           updateVipRenewInline('');
-          updatePopupReminderVoteNotice('');
           updateChatAnnouncement('');
           updateChatInputState();
           updateChatLiveStats();
@@ -742,7 +732,6 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
           if (vipLock) vipLock.style.display = 'none';
           updateVipDisciplineEntry('');
           updateVipRenewInline('');
-          updatePopupReminderVoteNotice('');
           updateChatAnnouncement('');
           if (messagesBox) messagesBox.innerHTML = '<div class="chat-empty">登录后可以和白鹿原上私聊</div>';
           updateChatInputState();
@@ -753,7 +742,6 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
           if (vipLock) vipLock.style.display = 'none';
           updateVipDisciplineEntry('');
           updateVipRenewInline('');
-          updatePopupReminderVoteNotice('');
           updateChatAnnouncement('');
           if (messagesBox) messagesBox.style.display = 'block';
           if (inputArea) inputArea.style.display = 'block';
@@ -910,51 +898,6 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       const dismissed = key && localStorage.getItem(key) === '1';
       el.hidden = !(isVipRoom && canView) || dismissed;
       requestAnimationFrame(updateChatViewportLayout);
-    }
-
-    function getPopupReminderVoteKey() {
-      const userKey = getChatLocalUserKey('blys_popup_reminder_vote_v1');
-      return userKey || 'blys_popup_reminder_vote_v1_guest';
-    }
-
-    function getPopupReminderVoteDismissKey() {
-      const userKey = getChatLocalUserKey('blys_popup_reminder_vote_dismissed_v1');
-      return userKey || 'blys_popup_reminder_vote_dismissed_v1_guest';
-    }
-
-    function hasPopupReminderVote() {
-      return localStorage.getItem(getPopupReminderVoteKey()) === '1' || localStorage.getItem('blys_popup_reminder_vote_v1') === '1';
-    }
-
-    function updatePopupReminderVoteNotice(room) {
-      const el = document.getElementById('chatPopupVoteNotice');
-      if (!el) return;
-      const canShow = room === 'vip' && canViewVipChat();
-      const dismissed = localStorage.getItem(getPopupReminderVoteDismissKey()) === '1';
-      el.hidden = !(canShow && !dismissed);
-      requestAnimationFrame(updateChatViewportLayout);
-    }
-
-    function openPopupReminderVote(event) {
-      if (event) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-      location.href = 'popup-reminder-vote.html';
-    }
-
-    function dismissPopupReminderVote(event) {
-      if (event) {
-        event.preventDefault();
-        event.stopPropagation();
-      }
-      if (!hasPopupReminderVote()) {
-        alert('请先完成投票，投票后就可以关闭这条置顶。');
-        location.href = 'popup-reminder-vote.html';
-        return;
-      }
-      localStorage.setItem(getPopupReminderVoteDismissKey(), '1');
-      updatePopupReminderVoteNotice(currentRoom);
     }
 
     function getChatLocalUserKey(prefix) {
