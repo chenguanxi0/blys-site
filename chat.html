@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082706" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082707" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -127,6 +127,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         </button>
         <button class="chat-tab" data-room="vip" onclick="switchChatRoom('vip', { manual: true })">
           <span>会员群聊<span class="chat-tab-badge" id="badge-vip" hidden>0</span></span>
+          <span class="chat-tab-live-stats" id="vipTabLiveStats">会员总人数 -- · 在线 --</span>
           <span class="chat-tab-admin-stats" id="vipTabMemberStats" hidden onclick="toggleChatMembersAdmin(event)">总人数 -- · 在线 --</span>
         </button>
         <button class="chat-tab" data-room="private" onclick="switchChatRoom('private', { manual: true })">私聊<span class="chat-tab-badge" id="badge-private" hidden>0</span></button>
@@ -354,12 +355,17 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       return { total, online };
     }
     function updateChatLiveStats() {
-      [['public', 'publicTabLiveStats']].forEach(([room, id]) => {
+      [['public', 'publicTabLiveStats'], ['vip', 'vipTabLiveStats']].forEach(([room, id]) => {
         const el = document.getElementById(id);
         if (!el) return;
         const data = getChatLiveStats(room);
-        el.textContent = '总人数 ' + data.total + ' · 在线 ' + data.online;
+        el.textContent = (room === 'vip' ? '会员总人数 ' : '总人数 ') + data.total + ' · 在线 ' + data.online;
       });
+      const vipPreviewStats = document.getElementById('vipPreviewLiveStats');
+      if (vipPreviewStats) {
+        const data = getChatLiveStats('vip');
+        vipPreviewStats.textContent = '会员总人数 ' + data.total + ' · 在线 ' + data.online;
+      }
     }
     function startChatLiveStats() {
       updateChatLiveStats();
@@ -372,6 +378,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       return '<div class="chat-vip-preview-panel">' +
         '<div class="chat-vip-preview-card">' +
         '<h3>会员群聊正在进行</h3>' +
+        '<div class="chat-vip-preview-stats" id="vipPreviewLiveStats">会员总人数 -- · 在线 --</div>' +
         '<p>开通会员后可以看清完整聊天内容，并参与会员群讨论。</p>' +
         '<button class="btn btn-primary" type="button" onclick="' + action + '">' + cta + '</button>' +
         '</div>' +
@@ -395,6 +402,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       document.body.classList.toggle('chat-vip-preview-mode', isVipPreviewMode(room));
       if (!box || !isVipPreviewMode(room)) return;
       if (!box.querySelector('.chat-vip-preview-panel')) box.insertAdjacentHTML('beforeend', renderVipPreviewOverlay());
+      updateChatLiveStats();
     }
     function getPreferredChatRoom() {
       if (location.hash === '#vip') return 'vip';

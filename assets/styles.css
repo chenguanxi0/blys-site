@@ -1300,6 +1300,7 @@ html.blys-native-app body.chat-body .chat-tabs-wrapper { top: calc(64px + var(--
   line-height:1.15; white-space:nowrap;
 }
 .chat-tab.active .chat-tab-live-stats { color:#be123c; }
+body.chat-admin-mode #vipTabLiveStats { display:none; }
 .chat-tab-badge {
   position:absolute; top:6px; right:10px; min-width:18px; height:18px; padding:0 5px;
   background:#ef4444; color:#fff; border-radius:9px; font-size:11px; line-height:18px;
@@ -1719,6 +1720,12 @@ html.blys-native-app body.chat-body .chat-notif-float {
   text-align:center;
 }
 .chat-vip-preview-card h3 { margin:0 0 6px; font-size:17px; color:#991b1b; }
+.chat-vip-preview-stats {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-height:28px; margin:0 0 10px; padding:5px 12px;
+  border:1px solid #fecdd3; border-radius:999px;
+  background:#fff7f7; color:#e23b3b; font-size:13px; font-weight:700;
+}
 .chat-vip-preview-card p { margin:0 0 14px; color:#64748b; font-size:13px; line-height:1.55; }
 .chat-vip-preview-fake-msg .chat-msg-text { min-width:180px; }
 
