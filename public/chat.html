@@ -127,7 +127,6 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         </button>
         <button class="chat-tab" data-room="vip" onclick="switchChatRoom('vip', { manual: true })">
           <span>会员群聊<span class="chat-tab-badge" id="badge-vip" hidden>0</span></span>
-          <span class="chat-tab-live-stats" id="vipTabLiveStats">总人数 -- · 在线 --</span>
           <span class="chat-tab-admin-stats" id="vipTabMemberStats" hidden onclick="toggleChatMembersAdmin(event)">总人数 -- · 在线 --</span>
         </button>
         <button class="chat-tab" data-room="private" onclick="switchChatRoom('private', { manual: true })">私聊<span class="chat-tab-badge" id="badge-private" hidden>0</span></button>
@@ -355,7 +354,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       return { total, online };
     }
     function updateChatLiveStats() {
-      [['public', 'publicTabLiveStats'], ['vip', 'vipTabLiveStats']].forEach(([room, id]) => {
+      [['public', 'publicTabLiveStats']].forEach(([room, id]) => {
         const el = document.getElementById(id);
         if (!el) return;
         const data = getChatLiveStats(room);
