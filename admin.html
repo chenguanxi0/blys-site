@@ -38,6 +38,8 @@
     .cmt-bar input { flex:1; min-width:150px; }
     .admin-table button.secondary { background:#475569; }
     .admin-table button.renew { background:#16a34a; margin-left:6px; }
+    .monthly-stat-input { width:88px; padding:6px 8px; border:1px solid #d1d5db; border-radius:6px; font-size:13px; }
+    .monthly-stat-total td { background:#f8fafc; font-weight:800; }
     .admin-form { display:grid; gap:10px; }
     .admin-form label { display:flex; flex-direction:column; gap:6px; font-size:13px; color:#64748b; }
     .admin-form input, .admin-form textarea { width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; font-family:inherit; }
@@ -74,6 +76,11 @@
         <div class="stat-card"><div class="num" id="statUsers">-</div><div class="lbl">注册用户</div></div>
         <div class="stat-card"><div class="num" id="statVip">-</div><div class="lbl">会员数</div></div>
         <div class="stat-card"><div class="num" id="statCmts">-</div><div class="lbl">评论数</div></div>
+      </div>
+
+      <div class="panel">
+        <h2>月度会员数量统计</h2>
+        <div class="table-wrap" id="monthlyMemberStats">加载中...</div>
       </div>
 
       <div class="panel">
@@ -129,6 +136,7 @@
     const SB_URL = "https://ojioiglffglyuellvcex.supabase.co";
     const SB_ANON = "sb_publishable_rGCr3ILVWQpvpURhctuYQg_K_jC-WHV";
     const ADMIN_TOKEN_KEY = "blys_admin_token";
+    const MONTHLY_MEMBER_STATS_KEY = "blys_admin_monthly_member_stats_v1";
 
     async function sbRpc(fn, params){
       const r = await fetch(SB_URL + "/rest/v1/rpc/" + fn, {
@@ -185,7 +193,7 @@
       loadAll();
     }
 
-    async function loadAll(){ await loadStats(); await loadSiteAnnouncementAdmin(); await loadUsers(); await loadComments(); }
+    async function loadAll(){ renderMonthlyMemberStats(); await loadStats(); await loadSiteAnnouncementAdmin(); await loadUsers(); await loadComments(); }
 
     async function loadStats(){
       const d = await sbRpc('admin_stats', { p_admin_token: getTok() });
@@ -193,6 +201,66 @@
         document.getElementById('statUsers').textContent = d.users;
         document.getElementById('statVip').textContent = d.vip;
         document.getElementById('statCmts').textContent = d.comments;
+      }
+    }
+
+    function getMonthlyMemberStats(){
+      try { return JSON.parse(localStorage.getItem(MONTHLY_MEMBER_STATS_KEY) || '{}') || {}; }
+      catch(e){ return {}; }
+    }
+    function saveMonthlyMemberStats(data){
+      localStorage.setItem(MONTHLY_MEMBER_STATS_KEY, JSON.stringify(data || {}));
+    }
+    function recentMonthKeys(count){
+      const out = [];
+      const d = new Date();
+      d.setDate(1);
+      for(let i = 0; i < count; i++){
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        out.push(y + '-' + m);
+        d.setMonth(d.getMonth() - 1);
+      }
+      return out;
+    }
+    function monthlyAmount(n){
+      return Math.max(0, Number(n) || 0) * 500;
+    }
+    function fmtMoney(n){
+      return '¥' + Number(n || 0).toLocaleString('zh-CN');
+    }
+    function renderMonthlyMemberStats(){
+      const box = document.getElementById('monthlyMemberStats');
+      if(!box) return;
+      const data = getMonthlyMemberStats();
+      const months = recentMonthKeys(12);
+      let totalCount = 0;
+      let totalAmount = 0;
+      const rows = months.map(month => {
+        const count = Math.max(0, Number(data[month]) || 0);
+        const amount = monthlyAmount(count);
+        totalCount += count;
+        totalAmount += amount;
+        return `<tr><td>${month}</td><td><input class="monthly-stat-input" type="number" min="0" step="1" value="${count || ''}" data-month="${month}" oninput="updateMonthlyMemberStat(this)"></td><td>${fmtMoney(amount)}</td></tr>`;
+      }).join('');
+      box.innerHTML = '<table class="admin-table"><tr><th>月份</th><th>会员数量</th><th>金额</th></tr>' +
+        rows +
+        `<tr class="monthly-stat-total"><td>汇总</td><td>${totalCount}</td><td>${fmtMoney(totalAmount)}</td></tr>` +
+        '</table>';
+    }
+    function updateMonthlyMemberStat(input){
+      const month = input && input.dataset ? input.dataset.month : '';
+      if(!month) return;
+      const data = getMonthlyMemberStats();
+      const count = Math.max(0, Math.floor(Number(input.value) || 0));
+      if(count) data[month] = count;
+      else delete data[month];
+      saveMonthlyMemberStats(data);
+      renderMonthlyMemberStats();
+      const next = document.querySelector('.monthly-stat-input[data-month="' + month + '"]');
+      if(next) {
+        next.focus();
+        try { next.setSelectionRange(next.value.length, next.value.length); } catch(e) {}
       }
     }
 
