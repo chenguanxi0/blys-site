@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082705" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082706" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -312,6 +312,19 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     function canViewVipChat() {
       return !!(__user && __user.loggedIn && (__user.isVip || isBlysAdminUser()));
     }
+    function shouldHidePublicRoomForUser() {
+      return !!(__user && __user.loggedIn && __user.isVip);
+    }
+    function updateChatRoomAvailability() {
+      const hidePublic = shouldHidePublicRoomForUser();
+      document.body.classList.toggle('chat-public-hidden', hidePublic);
+      if (hidePublic) {
+        unreadCounts.public = 0;
+        const badge = document.getElementById('badge-public');
+        if (badge) badge.hidden = true;
+      }
+      requestAnimationFrame(updateChatViewportLayout);
+    }
     function isVipPreviewMode(room) {
       return room === 'vip' && !canViewVipChat();
     }
@@ -387,11 +400,12 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     function getPreferredChatRoom() {
       if (location.hash === '#vip') return 'vip';
       if (location.hash === '#private') return 'private';
+      if (shouldHidePublicRoomForUser()) return 'vip';
       const manual = normalizeChatRoom(chatManualRoom);
-      if (manual) return manual;
+      if (manual && !(manual === 'public' && shouldHidePublicRoomForUser())) return manual;
       if (__user.loggedIn && __user.isVip) return 'vip';
       const stored = normalizeChatRoom(getStoredChatRoom());
-      if (stored) return stored;
+      if (stored && !(stored === 'public' && shouldHidePublicRoomForUser())) return stored;
       return 'public';
     }
     const PUSH_VAPID_PUBLIC_KEY = 'BA2xT4Y1plL6c9JNmBJI8aqp_vjxrnOG1-p-nhazGbm_QGnnuq8A7hbYbBIpZKd3MQ3-jx0EfXZGnKYQQuFHFac';
@@ -432,6 +446,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       console.log('[chat] fetchUser done');
       updateChatAdminMode();
       updateChatInputState();
+      updateChatRoomAvailability();
       startChatLiveStats();
       window.addEventListener('blys:online-count', updateChatLiveStats);
       updateChatViewportLayout();
@@ -457,6 +472,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         setChatLoginLoading(false);
         updateChatAdminMode();
         updateChatInputState();
+        updateChatRoomAvailability();
         updateChatLiveStats();
         applyVipPreviewOverlay(currentRoom);
         updateVipDisciplineEntry(currentRoom);
@@ -660,11 +676,13 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       options = options || {};
       if (!chatManualRoom) chatManualRoom = getStoredChatRoom();
       const vipLockEl = document.getElementById('chatVipLock');
+      if (room === 'public' && shouldHidePublicRoomForUser()) room = 'vip';
       if (room === 'vip') rememberChatRoom('vip');
       else if (options.manual) rememberChatRoom(room);
       if (room === 'public' && !options.manual && shouldStayOnExpiredVipRoom()) return;
       if (room === 'public' && !options.manual && vipLockEl && vipLockEl.style.display === 'flex') return;
       currentRoom = room;
+      updateChatRoomAvailability();
       // 更新标签样式（用 getAttribute 避免个别浏览器 dataset 兼容性问题导致中断）
       document.querySelectorAll('.chat-tab').forEach(t => t.classList.toggle('active', t.getAttribute('data-room') === room));
       clearRoomUnread(room);

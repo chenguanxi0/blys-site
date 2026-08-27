@@ -1281,6 +1281,7 @@ html.blys-native-app body.chat-body .chat-tabs-wrapper { top: calc(64px + var(--
 }
 .nav-dropdown-action:hover { color:var(--brand); background:#fff5f5; }
 .chat-tabs { display:flex; gap:10px; margin:0; min-height:54px; align-items:stretch; }
+.chat-public-hidden .chat-tab[data-room="public"] { display:none; }
 .chat-tab {
   flex:1; min-height:54px; padding:10px 10px; border:1px solid var(--line); border-radius:12px;
   background:#fff; cursor:pointer; text-align:center; transition: all var(--transition);
