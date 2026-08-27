@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082711" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082712" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -262,6 +262,10 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     let currentPrivateConversationId = '';
     let currentPrivateTitle = '';
     let privateConversations = [];
+    const PRIVATE_CONVERSATION_PAGE_SIZE = 10;
+    let privateConversationOffset = 0;
+    let privateConversationsHasMore = true;
+    let privateConversationsLoading = false;
     let privateUnreadTimer = null;
     let privateUnreadRefreshing = false;
     let privateMessagesRefreshing = false;
@@ -557,6 +561,10 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
           if (histBox.querySelector('.chat-loading')) return;
           const nearBottom = isChatNearBottom(histBox, 100);
           chatUserReadingHistoryUntil = nearBottom ? 0 : Date.now() + 15000;
+          if (currentRoom === 'private' && isBlysAdminUser() && !currentPrivateConversationId) {
+            if (nearBottom) loadMorePrivateConversations();
+            return;
+          }
           const isNativeApp = document.documentElement.classList.contains('blys-native-app');
           if (isNativeApp) return;
           const topThreshold = 180;
@@ -1333,7 +1341,10 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         unreadCounts.private = getPrivateUnreadFromList(d.list);
         updateUnreadBadges();
         if (currentRoom === 'private' && isBlysAdminUser() && !currentPrivateConversationId) {
-          privateConversations = d.list || [];
+          const fresh = d.list || [];
+          const known = new Map(privateConversations.map(c => [String(c.id), c]));
+          fresh.forEach(c => known.set(String(c.id), c));
+          privateConversations = privateConversations.length ? Array.from(known.values()) : fresh;
           renderPrivateConversationList();
         }
       } catch (e) {
@@ -1398,8 +1409,10 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       if (isBlysAdminUser()) {
         currentPrivateConversationId = '';
         currentPrivateTitle = '';
+        privateConversationOffset = 0;
+        privateConversationsHasMore = true;
         if (inputArea) inputArea.style.display = 'none';
-        await loadPrivateConversations();
+        await loadPrivateConversations({ reset: true });
       } else {
         if (inputArea) inputArea.style.display = 'block';
         await startPrivateChat(__user.email, __user.nickname || __user.email, { silent: false });
@@ -1409,20 +1422,43 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     async function loadPrivateConversations(options) {
       options = options || {};
       const box = document.getElementById('chatMessages');
-      if (box && !options.silent) box.innerHTML = '<div class="chat-loading">加载私聊列表中…</div>';
+      const append = !!options.append;
+      const limit = (!append && options.silent && privateConversationOffset > PRIVATE_CONVERSATION_PAGE_SIZE)
+        ? privateConversationOffset
+        : PRIVATE_CONVERSATION_PAGE_SIZE;
+      const offset = append ? privateConversationOffset : 0;
+      if (privateConversationsLoading) return;
+      if (append && !privateConversationsHasMore) return;
+      privateConversationsLoading = true;
+      if (box && !options.silent && !append) box.innerHTML = '<div class="chat-loading">加载私聊列表中…</div>';
       try {
-        const d = await sbRpc('list_private_conversations', { p_token: __user.token, p_limit: 10, p_offset: 0 }, { timeoutMs: 12000 });
+        const d = await sbRpc('list_private_conversations', { p_token: __user.token, p_limit: limit, p_offset: offset }, { timeoutMs: 12000 });
         if (!d || !d.ok || !Array.isArray(d.list)) {
-          if (box) box.innerHTML = renderPrivateEmpty('私聊列表加载失败');
+          if (box && !append) box.innerHTML = renderPrivateEmpty('私聊列表加载失败');
           return;
         }
-        privateConversations = sortPrivateConversations(d.list || []);
+        const list = d.list || [];
+        if (append) {
+          const seen = new Set(privateConversations.map(c => String(c.id)));
+          privateConversations = privateConversations.concat(list.filter(c => !seen.has(String(c.id))));
+        } else {
+          privateConversations = sortPrivateConversations(list);
+        }
+        privateConversationOffset = append ? privateConversationOffset + list.length : list.length;
+        privateConversationsHasMore = list.length >= limit;
         unreadCounts.private = getPrivateUnreadFromList(privateConversations);
         updateUnreadBadges();
-        renderPrivateConversationList();
+        renderPrivateConversationList({ keepScroll: append || options.silent });
       } catch (e) {
-        if (box) box.innerHTML = renderPrivateEmpty(e && e.message ? e.message : '私聊列表加载失败');
+        if (box && !append) box.innerHTML = renderPrivateEmpty(e && e.message ? e.message : '私聊列表加载失败');
+      } finally {
+        privateConversationsLoading = false;
       }
+    }
+
+    function loadMorePrivateConversations() {
+      if (currentRoom !== 'private' || currentPrivateConversationId || !isBlysAdminUser()) return;
+      return loadPrivateConversations({ append: true, silent: true });
     }
 
     function renderPrivateEmpty(text) {
@@ -1442,9 +1478,11 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       });
     }
 
-    function renderPrivateConversationList() {
+    function renderPrivateConversationList(options) {
+      options = options || {};
       const box = document.getElementById('chatMessages');
       if (!box) return;
+      const prevScrollTop = box.scrollTop;
       privateConversations = sortPrivateConversations(privateConversations);
       if (!privateConversations.length) {
         box.innerHTML = renderPrivateEmpty('暂无私聊会话');
@@ -1461,9 +1499,17 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
           '<span class="private-thread-main"><b>' + esc(title) + '</b><small>' + esc(last) + '</small></span>' +
           '<span class="private-thread-side">' + (unread ? '<em>' + unread + '</em>' : '') + '<small>' + esc(time) + '</small></span>' +
         '</button>';
-      }).join('') + '</div>';
-      box.scrollTop = 0;
-      requestAnimationFrame(() => { box.scrollTop = 0; });
+      }).join('') +
+      (privateConversationsHasMore
+        ? '<button class="private-list-more" type="button" onclick="loadMorePrivateConversations()">加载更多私聊</button>'
+        : '<div class="private-list-end">没有更多私聊了</div>') +
+      '</div>';
+      if (options.keepScroll) {
+        box.scrollTop = prevScrollTop;
+      } else {
+        box.scrollTop = 0;
+        requestAnimationFrame(() => { box.scrollTop = 0; });
+      }
     }
 
     async function openPrivateConversation(conversationId) {
