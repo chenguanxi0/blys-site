@@ -20,7 +20,7 @@ BEGIN
 END $$;
 
 CREATE INDEX IF NOT EXISTS idx_comments_article_parent_created
-  ON public.comments(article, parent_id, created_at);
+  ON public.comments(article_id, parent_id, created_at);
 
 CREATE EXTENSION IF NOT EXISTS pg_net WITH SCHEMA extensions;
 
@@ -57,23 +57,24 @@ BEGIN
   END IF;
 
   IF p_parent_id IS NOT NULL THEN
-    SELECT id, article INTO v_parent
+    SELECT id, article_id INTO v_parent
       FROM public.comments
      WHERE id = p_parent_id
-       AND article = p_article;
+       AND article_id = p_article;
 
     IF v_parent IS NULL THEN
       RETURN json_build_object('ok', false, 'msg', '回复的评论不存在');
     END IF;
   END IF;
 
-  INSERT INTO public.comments (article, email, nickname, content, parent_id)
+  INSERT INTO public.comments (article_id, user_id, nickname, content, parent_id, status)
   VALUES (
     trim(p_article),
-    v_user.email,
+    p_token,
     coalesce(v_user.nickname, split_part(v_user.email, '@', 1)),
     trim(p_content),
-    p_parent_id
+    p_parent_id,
+    'approved'
   );
 
   SELECT count(*) INTO v_today_rewards
@@ -116,18 +117,21 @@ AS $$
   FROM (
     SELECT
       c.id,
-      c.article,
-      c.email,
+      c.article_id AS article,
+      u.email,
       c.nickname,
       c.content,
       c.created_at,
       c.parent_id,
       p.nickname AS parent_nickname,
-      p.email AS parent_email,
+      pu.email AS parent_email,
       left(p.content, 120) AS parent_content
     FROM public.comments c
+    LEFT JOIN public.profiles u ON u.token = c.user_id
     LEFT JOIN public.comments p ON p.id = c.parent_id
-    WHERE c.article = p_article
+    LEFT JOIN public.profiles pu ON pu.token = p.user_id
+    WHERE c.article_id = p_article
+      AND coalesce(c.status, 'approved') = 'approved'
     ORDER BY c.created_at ASC
   ) x;
 $$;
@@ -183,8 +187,8 @@ AS $$
     'ok', c.id IS NOT NULL,
     'comment', CASE WHEN c.id IS NULL THEN NULL ELSE jsonb_build_object(
       'id', c.id,
-      'article', c.article,
-      'email', c.email,
+      'article', c.article_id,
+      'email', u.email,
       'nickname', c.nickname,
       'content', c.content,
       'created_at', c.created_at,
@@ -192,7 +196,8 @@ AS $$
     ) END
   )
   FROM (SELECT 1) one
-  LEFT JOIN public.comments c ON c.id = p_comment_id;
+  LEFT JOIN public.comments c ON c.id = p_comment_id
+  LEFT JOIN public.profiles u ON u.token = c.user_id;
 $$;
 
 CREATE OR REPLACE FUNCTION public.log_comment_push_delivery(
@@ -211,9 +216,10 @@ DECLARE
   v_sender_email text;
   v_target_email text;
 BEGIN
-  SELECT email INTO v_sender_email
-  FROM public.comments
-  WHERE id = p_comment_id;
+  SELECT p.email INTO v_sender_email
+  FROM public.comments c
+  LEFT JOIN public.profiles p ON p.token = c.user_id
+  WHERE c.id = p_comment_id;
 
   IF p_channel = 'web' THEN
     SELECT p.email INTO v_target_email
@@ -245,7 +251,12 @@ AS $$
 DECLARE
   v_headers jsonb;
 BEGIN
-  IF lower(coalesce(NEW.email, '')) IN ('491788533@qq.com', '491788533@gmail.com') THEN
+  IF EXISTS (
+    SELECT 1
+      FROM public.profiles p
+     WHERE p.token = NEW.user_id
+       AND lower(coalesce(p.email, '')) IN ('491788533@qq.com', '491788533@gmail.com')
+  ) THEN
     RETURN NEW;
   END IF;
 
