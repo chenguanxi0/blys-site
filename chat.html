@@ -2925,12 +2925,17 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       return '系统弹窗开启失败，已退回页内提醒' + (name ? '（' + name + '）' : '') + raw;
     }
 
+    function shouldShowNotifDiag() {
+      const email = __user && __user.email ? String(__user.email).trim().toLowerCase() : '';
+      return email === '809134100@qq.com';
+    }
+
     function setNotifDiag(msg) {
       notifDiagMsg = msg || '';
       const el = document.getElementById('chatNotifDiag');
       if (!el) return;
       el.textContent = notifDiagMsg;
-      el.hidden = !notifDiagMsg;
+      el.hidden = !notifDiagMsg || !shouldShowNotifDiag();
       el.style.whiteSpace = isNativeNotificationApp() ? 'pre-line' : 'normal';
     }
 
