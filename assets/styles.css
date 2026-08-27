@@ -1303,9 +1303,10 @@ html.blys-native-app body.chat-body .chat-tabs-wrapper { top: calc(64px + var(--
 .chat-tab.active .chat-tab-live-stats { color:#be123c; }
 body.chat-admin-mode #vipTabLiveStats { display:none; }
 .chat-tab-badge {
-  position:absolute; top:6px; right:10px; min-width:18px; height:18px; padding:0 5px;
-  background:#ef4444; color:#fff; border-radius:9px; font-size:11px; line-height:18px;
+  position:absolute; top:8px; right:10px; width:9px; min-width:9px; height:9px; padding:0;
+  background:#ef4444; color:transparent; border-radius:999px; font-size:0; line-height:0;
   text-align:center; font-weight:700; box-shadow:0 0 0 2px #fff;
+  overflow:hidden;
 }
 .chat-tab { position:relative; }
 

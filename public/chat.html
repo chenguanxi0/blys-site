@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082709" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082710" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -3210,7 +3210,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       updateUnreadBadges();
       if (!notifEnabled) {
         const bname = getBrowserName();
-        alert('已开启「页内提醒」。' + bname + '暂时无法开启系统弹窗，但你切走再回来时，会看到未读横幅和频道红点提醒。\n\n苹果手机：请用 Safari 把网站添加到主屏幕，然后一定要从桌面图标进入聊天室，再点击开启提醒。\n\n安卓手机：请使用群里的 App 开启 App 提醒。');
+        alert('已开启「页内提醒」。' + bname + '暂时无法开启系统弹窗，但你切走再回来时，会看到频道红点提醒。\n\n苹果手机：请用 Safari 把网站添加到主屏幕，然后一定要从桌面图标进入聊天室，再点击开启提醒。\n\n安卓手机：请使用群里的 App 开启 App 提醒。');
       }
     }
 
@@ -3224,15 +3224,9 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     }
 
     function showUnreadBanner() {
-      const total = (Number(unreadCounts.public) || 0) + (Number(unreadCounts.vip) || 0) + (Number(unreadCounts.vip_chat) || 0) + (Number(unreadCounts.private) || 0);
       const banner = document.getElementById('chatUnreadBanner');
       if (!banner) return;
-      if (total > 0) {
-        document.getElementById('chatUnreadCount').textContent = total;
-        banner.hidden = false;
-      } else {
-        banner.hidden = true;
-      }
+      banner.hidden = true;
     }
 
     function updateUnreadBadges() {
@@ -3241,13 +3235,15 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         if (!el) return;
         const n = unreadCounts[room] || 0;
         if (n > 0) {
-          el.textContent = n > 99 ? '99+' : n;
+          el.textContent = '';
+          el.setAttribute('aria-label', '有未读消息');
           el.hidden = false;
         } else {
+          el.removeAttribute('aria-label');
           el.hidden = true;
         }
       });
-      // 未读变化后同步横幅：未读为 0 则横幅自动隐藏
+      // 不再展示顶部未读横幅，只保留频道红点。
       showUnreadBanner();
     }
 
