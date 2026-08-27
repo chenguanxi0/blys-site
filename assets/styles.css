@@ -1720,7 +1720,15 @@ html.blys-native-app body.chat-body .chat-notif-float {
   .chat-head { flex-direction:column; align-items:flex-start; gap:8px; margin-bottom:10px; }
   .chat-head .section-head h1 { font-size:20px; }
   .chat-head-actions { width:100%; }
-  .chat-tabs { min-height:54px; }
+  .chat-tabs {
+    min-height:54px;
+    overflow-x:auto;
+    overflow-y:hidden;
+    scroll-snap-type:x proximity;
+    -webkit-overflow-scrolling:touch;
+    padding:0 2px 2px;
+  }
+  .chat-tabs::-webkit-scrollbar { display:none; }
   .chat-tabs-wrapper { top:64px; padding:6px 0; }
   html.blys-native-app body.chat-body .chat-tabs-wrapper { top: calc(64px + var(--app-safe-top)); }
   .chat-box { top:122px; height:calc(100dvh - 122px); min-height:320px; }
@@ -1731,7 +1739,7 @@ html.blys-native-app body.chat-body .chat-notif-float {
   .chat-msg-body { max-width:78%; }
   .chat-msg-text { font-size:13px; padding:8px 10px; }
   .chat-msg-img { max-height:180px; }
-  .chat-tab { min-height:54px; padding:8px 6px; font-size:13px; }
+  .chat-tab { flex:0 0 128px; min-height:54px; padding:8px 6px; font-size:13px; scroll-snap-align:start; }
   .chat-tab-live-stats { font-size:10px; }
   .chat-input-wrap .btn { padding:10px 14px; }
   .chat-emoji-panel { width:92vw; max-width:320px; bottom:100px; }
@@ -2217,3 +2225,25 @@ body.chat-body:not(.chat-admin-mode) .chat-tab-admin-stats,
 body.chat-body:not(.chat-admin-mode) .chat-members-admin { display:none !important; }
 body.chat-body.chat-admin-mode .chat-tabs { min-height:76px !important; }
 body.chat-body.chat-admin-mode .chat-tab { min-height:76px !important; }
+@media (max-width:560px) {
+  body.chat-body.chat-admin-mode .chat-tabs {
+    overflow-x:auto;
+    overflow-y:hidden;
+    scroll-snap-type:x proximity;
+    -webkit-overflow-scrolling:touch;
+    padding:0 2px 2px;
+  }
+  body.chat-body.chat-admin-mode .chat-tabs::-webkit-scrollbar { display:none; }
+  body.chat-body.chat-admin-mode .chat-tab {
+    flex:0 0 148px !important;
+    min-width:148px;
+    scroll-snap-align:start;
+  }
+  body.chat-body.chat-admin-mode .chat-tab-admin-stats { width:min(132px, 96%); font-size:11px; padding:3px 6px; }
+  html.blys-native-app body.chat-body .chat-input-area {
+    padding-bottom:max(10px, env(safe-area-inset-bottom)) !important;
+  }
+  html.blys-native-app body.chat-body .chat-messages {
+    padding-bottom:128px !important;
+  }
+}

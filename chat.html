@@ -8,14 +8,14 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082707" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082708" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
 html.blys-native-app body.chat-body .chat-page { padding-top:0 !important; }
-html.blys-native-app body.chat-body .chat-input-area { position:fixed !important; left:0; right:0; bottom:0; z-index:999; display:block; flex-shrink:0; box-shadow:0 -4px 16px rgba(15,23,42,.08); }
+html.blys-native-app body.chat-body .chat-input-area { position:fixed !important; left:0; right:0; bottom:0; z-index:999; display:block; flex-shrink:0; padding-bottom:max(10px, env(safe-area-inset-bottom)); box-shadow:0 -4px 16px rgba(15,23,42,.08); }
 html.blys-native-app body.chat-body .chat-box { padding-bottom:0; }
-html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
+html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     html.blys-native-app body.chat-body .nav { padding-top: var(--app-safe-top); }
     html.blys-native-app body.chat-body .chat-tabs-wrapper { top: calc(64px + var(--app-safe-top)); }
     html.blys-native-app body.chat-body .chat-box { top: var(--chat-box-top, calc(124px + var(--app-safe-top))); height: calc(100dvh - var(--chat-box-top, calc(124px + var(--app-safe-top)))); }
@@ -451,6 +451,16 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       document.body.style.setProperty('--chat-box-top', bottom + 'px');
     }
 
+    function scheduleChatViewportLayout() {
+      requestAnimationFrame(() => {
+        updateChatViewportLayout();
+        const activeTab = document.querySelector('.chat-tab.active');
+        if (activeTab && activeTab.scrollIntoView) {
+          activeTab.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        }
+      });
+    }
+
     window.addEventListener('resize', () => {
       requestAnimationFrame(updateChatViewportLayout);
     });
@@ -477,7 +487,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       updateChatRoomAvailability();
       startChatLiveStats();
       window.addEventListener('blys:online-count', updateChatLiveStats);
-      updateChatViewportLayout();
+      scheduleChatViewportLayout();
       refreshLatestReviewNotice();
       const preferredRoom = getPreferredChatRoom();
       await switchChatRoom(preferredRoom, { skipUserRefresh: true });
@@ -714,6 +724,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
       updateChatRoomAvailability();
       // 更新标签样式（用 getAttribute 避免个别浏览器 dataset 兼容性问题导致中断）
       document.querySelectorAll('.chat-tab').forEach(t => t.classList.toggle('active', t.getAttribute('data-room') === room));
+      scheduleChatViewportLayout();
       clearRoomUnread(room);
 
       const vipLock = document.getElementById('chatVipLock');
@@ -1097,6 +1108,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
     function updateChatAdminMode() {
       const on = isBlysAdminUser();
       document.body.classList.toggle('chat-admin-mode', on);
+      scheduleChatViewportLayout();
       if (!on) {
         chatMembersPanelOpen = false;
         const stats = document.getElementById('vipTabMemberStats');
@@ -1492,6 +1504,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
           btn.style.display = '';
           btn.onclick = __user && __user.loggedIn ? openMembershipPrivateChat : openAuthModal;
         }
+        scheduleChatViewportLayout();
         return;
       }
       if (__user && __user.loggedIn && currentRoom === 'vip' && !isBlysAdminUser()) {
@@ -1499,6 +1512,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         wrap.style.display = 'none';
         if (text) text.textContent = '会员通知群只有管理员可以发布消息';
         if (btn) btn.style.display = 'none';
+        scheduleChatViewportLayout();
         return;
       }
       if (btn) {
@@ -1513,6 +1527,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:96px; }
         wrap.style.display = 'none';
       }
       setChatLoginLoading(false);
+      scheduleChatViewportLayout();
     }
 
     function fmtDateTime(dt){
