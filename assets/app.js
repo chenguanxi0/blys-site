@@ -1498,6 +1498,33 @@ function vipGate(label){
 }
 
 // ---- 评论系统（教程页调用） ----
+let __commentReplyTargets = {};
+function commentReplyKey(article){ return String(article || 'default'); }
+function getCommentReplyTarget(article){ return __commentReplyTargets[commentReplyKey(article)] || null; }
+function clearCommentReply(article){
+  article = decodeURIComponent(String(article || ''));
+  delete __commentReplyTargets[commentReplyKey(article)];
+  const hint = document.getElementById("commentHint");
+  const btn = document.getElementById("commentBtn");
+  if (hint) hint.textContent = "";
+  if (btn) btn.textContent = "发表评论";
+}
+function replyToComment(article, id, nickname){
+  article = decodeURIComponent(String(article || ''));
+  nickname = decodeURIComponent(String(nickname || ''));
+  if (!__user.loggedIn){ openAuthModal(); return; }
+  const name = nickname || "用户";
+  __commentReplyTargets[commentReplyKey(article)] = { id, nickname: name };
+  const hint = document.getElementById("commentHint");
+  const btn = document.getElementById("commentBtn");
+  const ta = document.getElementById("commentInput");
+  if (hint) hint.innerHTML = '正在回复 <b>' + esc(name) + '</b> <button class="comment-reply-cancel" type="button" onclick="clearCommentReply(\'' + encodeURIComponent(article) + '\')">取消</button>';
+  if (btn) btn.textContent = "回复评论";
+  if (ta) ta.focus();
+}
+window.replyToComment = replyToComment;
+window.clearCommentReply = clearCommentReply;
+
 async function loadComments(article){
   const box = document.getElementById("commentList");
   if (!box) return;
@@ -1508,7 +1535,10 @@ async function loadComments(article){
       if (d.list.length === 0){ box.innerHTML = '<p class="muted">还没有评论，来抢沙发～</p>'; return; }
       box.innerHTML = d.list.map(c => `<div class="comment-item">
         <div class="comment-head"><b>${esc(c.nickname || "匿名")}</b><span class="comment-time">${fmtDateTime(c.created_at)}</span></div>
-        <div class="comment-body">${esc(c.content)}</div></div>`).join("");
+        ${c.parent_id ? `<div class="comment-reply-ref">回复 ${esc(c.parent_nickname || "用户")}：${esc(c.parent_content || "[原评论已删除]")}</div>` : ""}
+        <div class="comment-body">${esc(c.content)}</div>
+        ${__user.loggedIn ? `<button class="comment-reply-btn" type="button" onclick="replyToComment('${encodeURIComponent(String(article))}', ${Number(c.id) || 0}, '${encodeURIComponent(c.nickname || "匿名")}')">回复</button>` : ""}
+      </div>`).join("");
     } else { box.innerHTML = '<p class="muted">评论加载失败</p>'; }
   } catch(e){ box.innerHTML = '<p class="muted">评论加载失败</p>'; }
 }
@@ -1519,10 +1549,12 @@ async function submitComment(article){
   if (!content){ alert("写点什么再发吧"); return; }
   const btn = document.getElementById("commentBtn");
   try {
-    const d = await sbRpc("add_comment", { p_token: __user.token, p_article: article, p_content: content });
+    const reply = getCommentReplyTarget(article);
+    const d = await sbRpc("add_comment", { p_token: __user.token, p_article: article, p_content: content, p_parent_id: reply && reply.id ? reply.id : null });
     if (!d || !d.ok){ alert((d && d.msg) || "发送失败"); return; }
     ta.value = "";
     if (btn) btn.textContent = "已发送 ✓";
+    clearCommentReply(article);
     loadComments(article);
     setTimeout(()=>{ if (btn) btn.textContent = "发表评论"; }, 1500);
   } catch(e){ alert("网络错误"); }
@@ -2092,6 +2124,34 @@ function injectReviewMeta(box, date){
   const cmtSubmit = section.querySelector('.rpt-comment-submit');
   const cmtList = section.querySelector('.rpt-comment-list');
   const cmtStat = section.querySelector('.rpt-comment-stat');
+  let replyTarget = null;
+
+  function updateReplyState(){
+    let tip = section.querySelector('.rpt-comment-reply-tip');
+    if(!replyTarget){
+      if(tip) tip.remove();
+      cmtSubmit.textContent = '发表评论';
+      return;
+    }
+    if(!tip){
+      tip = document.createElement('div');
+      tip.className = 'rpt-comment-reply-tip';
+      cmtText.parentNode.insertBefore(tip, cmtText);
+    }
+    tip.innerHTML = '正在回复 <b>' + _escHtml(replyTarget.nickname || '用户') + '</b><button type="button">取消</button>';
+    tip.querySelector('button').onclick = () => {
+      replyTarget = null;
+      updateReplyState();
+    };
+    cmtSubmit.textContent = '回复评论';
+  }
+
+  function renderReplyRef(c){
+    if(!c.parent_id) return '';
+    const name = _escHtml(c.parent_nickname || '用户');
+    const text = _escHtml(c.parent_content || '[原评论已删除]').replace(/\n/g, '<br>');
+    return `<div class="rpt-comment-reply-ref">回复 ${name}：${text}</div>`;
+  }
 
   function renderComments(){
     cmtList.innerHTML = '<li class="rpt-comment-empty">加载中…</li>';
@@ -2107,7 +2167,9 @@ function injectReviewMeta(box, date){
               <span class="rpt-comment-name-text">${_escHtml(c.nickname || c.email || '用户')}</span>
               <span class="rpt-comment-time">${_fmtRelTime(new Date(c.created_at).getTime())}</span>
             </div>
+            ${renderReplyRef(c)}
             <div class="rpt-comment-body">${_escHtml(c.content || '').replace(/\n/g, '<br>')}</div>
+            <button class="rpt-comment-reply-btn" type="button" data-id="${Number(c.id) || 0}" data-name="${_escHtml(c.nickname || c.email || '用户')}">回复</button>
            </li>`
           ).join('');
       }
@@ -2148,7 +2210,7 @@ function injectReviewMeta(box, date){
     const oldLabel = cmtSubmit.textContent;
     cmtSubmit.textContent = '发送中…';
     cmtSubmit.disabled = true;
-    sbRpc('add_comment', { p_token: __user.token, p_article: 'review:' + date, p_content: text.slice(0, 500) }).then(d => {
+    sbRpc('add_comment', { p_token: __user.token, p_article: 'review:' + date, p_content: text.slice(0, 500), p_parent_id: replyTarget && replyTarget.id ? replyTarget.id : null }).then(d => {
       cmtSubmit.disabled = false;
       if(!d || !d.ok){
         cmtSubmit.textContent = oldLabel;
@@ -2156,10 +2218,12 @@ function injectReviewMeta(box, date){
         return;
       }
       cmtText.value = '';
+      replyTarget = null;
+      updateReplyState();
       renderComments();
       cmtSubmit.textContent = '已发送 ✓';
       refreshPointsUI();
-      setTimeout(()=>{ cmtSubmit.textContent = oldLabel; }, 1500);
+      setTimeout(()=>{ cmtSubmit.textContent = '发表评论'; }, 1500);
       const first = cmtList.querySelector('.rpt-comment-item');
       if(first) first.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       // 滚动到新评论
@@ -2168,6 +2232,14 @@ function injectReviewMeta(box, date){
       cmtSubmit.textContent = oldLabel;
       alert('网络错误');
     });
+  });
+
+  cmtList.addEventListener('click', (e) => {
+    const btn = e.target.closest('.rpt-comment-reply-btn');
+    if(!btn) return;
+    replyTarget = { id: Number(btn.dataset.id) || null, nickname: btn.dataset.name || '用户' };
+    updateReplyState();
+    cmtText.focus();
   });
 
   cmtText.addEventListener('keydown', (e) => {

@@ -420,7 +420,7 @@
       if(search) list = list.filter(c => (c.content||'').toLowerCase().includes(search) || (c.nickname||'').toLowerCase().includes(search));
       if(!list.length){ box.innerHTML = '<p>暂无评论</p>'; return; }
       box.innerHTML = '<table class="admin-table"><tr><th>昵称</th><th>邮箱</th><th>文章</th><th>评论</th><th>时间</th><th>操作</th></tr>' +
-        list.map(c=>`<tr><td>${esc(c.nickname||'匿名')}</td><td class="email">${esc(c.email||'-')}</td><td><span class="badge">${esc(cmtArticleLabel(c.article))}</span></td><td class="wrap">${esc(c.content||'')}</td><td>${fmt(c.created_at)}</td><td><button class="danger" onclick="delComment(${c.id})">删除</button></td></tr>`).join('') +
+        list.map(c=>`<tr><td>${esc(c.nickname||'匿名')}</td><td class="email">${esc(c.email||'-')}</td><td><span class="badge">${esc(cmtArticleLabel(c.article))}</span></td><td class="wrap">${c.parent_id ? '<div class="muted">回复 ' + esc(c.parent_nickname || c.parent_email || '用户') + '：' + esc(c.parent_content || '[原评论已删除]') + '</div>' : ''}${esc(c.content||'')}</td><td>${fmt(c.created_at)}</td><td><button class="danger" onclick="delComment(${c.id})">删除</button></td></tr>`).join('') +
         '</table>';
     }
 

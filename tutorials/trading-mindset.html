@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>交易中必备的四种心态 · 白鹿原上-交易笔记</title>
-  <link rel="stylesheet" href="../assets/styles.css?v=2026082706" />
+  <link rel="stylesheet" href="../assets/styles.css?v=2026082713" />
   <link rel="icon" type="image/png" href="../assets/favicon.png" />
   <style>
     .tutorial { max-width:800px; margin:0 auto; padding:20px; }
@@ -339,7 +339,7 @@
   <p>&copy; 2026 白鹿原上-交易笔记 · blys.top ｜ 本内容为个人分享，不构成投资建议</p>
 </footer>
 
-<script src="../assets/app.js?v=2026082705"></script>
+<script src="../assets/app.js?v=2026082713"></script>
 <script>
 // 心态自检清单进度
 document.querySelectorAll('#mindCheckList li').forEach(function(li){
@@ -364,24 +364,41 @@ async function tutRpc(fn, params){
 }
 function tutEsc(s){ return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
 function tutFmt(dt){ const d=new Date(dt); if(isNaN(d))return""; const p=n=>String(n).padStart(2,"0"); return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes()); }
+let TUT_REPLY_TARGET = null;
+function tutSetReply(id,name){
+  TUT_REPLY_TARGET = { id:id, name:name||"用户" };
+  document.getElementById("commentHint").innerHTML='正在回复 <b>'+tutEsc(TUT_REPLY_TARGET.name)+'</b> <button class="comment-reply-cancel" type="button" onclick="tutClearReply()">取消</button>';
+  document.getElementById("commentBtn").textContent="回复评论";
+  document.getElementById("commentInput").focus();
+}
+function tutClearReply(){
+  TUT_REPLY_TARGET = null;
+  document.getElementById("commentHint").textContent="";
+  document.getElementById("commentBtn").textContent="发表评论";
+}
 async function tutLoad(){
   const box=document.getElementById("commentList");
   try{
     const d=await tutRpc("list_comments",{p_article:TUT_ARTICLE});
     if(d&&d.ok&&Array.isArray(d.list)){
       if(d.list.length===0){ box.innerHTML='<p class="muted">还没有评论，来抢沙发～</p>'; return; }
-      box.innerHTML=d.list.map(c=>'<div class="comment-item"><div class="comment-head"><b>'+tutEsc(c.nickname||"匿名")+'</b><span class="comment-time">'+tutFmt(c.created_at)+'</span></div><div class="comment-body">'+tutEsc(c.content)+'</div></div>').join("");
+      box.innerHTML=d.list.map(c=>'<div class="comment-item"><div class="comment-head"><b>'+tutEsc(c.nickname||"匿名")+'</b><span class="comment-time">'+tutFmt(c.created_at)+'</span></div>'+(c.parent_id?'<div class="comment-reply-ref">回复 '+tutEsc(c.parent_nickname||"用户")+"："+tutEsc(c.parent_content||"[原评论已删除]")+'</div>':'')+'<div class="comment-body">'+tutEsc(c.content)+'</div><button class="comment-reply-btn" type="button" data-id="'+Number(c.id||0)+'" data-name="'+encodeURIComponent(c.nickname||"匿名")+'">回复</button></div>').join("");
     }
   }catch(e){ box.innerHTML='<p class="muted">评论加载失败</p>'; }
 }
+document.getElementById("commentList").addEventListener("click", function(e){
+  const btn=e.target.closest(".comment-reply-btn");
+  if(btn) tutSetReply(Number(btn.dataset.id)||0, decodeURIComponent(btn.dataset.name||"用户"));
+});
 async function tutSubmit(){
   const token=localStorage.getItem("blys_user_token");
   if(!token){ document.getElementById("commentHint").textContent="请先在首页 blys.site 登录后再评论"; return; }
   const ta=document.getElementById("commentInput");
   const content=(ta.value||"").trim();
   if(!content){ alert("写点什么再发吧"); return; }
-  const d=await tutRpc("add_comment",{p_token:token,p_article:TUT_ARTICLE,p_content:content});
+  const d=await tutRpc("add_comment",{p_token:token,p_article:TUT_ARTICLE,p_content:content,p_parent_id:TUT_REPLY_TARGET&&TUT_REPLY_TARGET.id?TUT_REPLY_TARGET.id:null});
   if(!d||!d.ok){ alert((d&&d.msg)||"发送失败"); return; }
+  tutClearReply();
   ta.value=""; document.getElementById("commentBtn").textContent="已发送 ✓";
   tutLoad();
   if(d.points!=null) alert("评论成功 +2 积分，当前积分 " + d.points);

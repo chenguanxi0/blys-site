@@ -655,6 +655,28 @@ a { color: inherit; text-decoration: none; transition: color var(--transition); 
 .comment-head b { color: var(--ink); font-weight: 600; }
 .comment-time { color: var(--muted); font-size: 12px; }
 .comment-body { font-size: 14px; line-height: 1.75; color: #334155; white-space: pre-wrap; word-break: break-word; }
+.comment-reply-ref {
+  margin: 6px 0 8px;
+  padding: 8px 10px;
+  border-left: 3px solid #ef4444;
+  border-radius: 8px;
+  background: #fff7ed;
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.comment-reply-btn,
+.comment-reply-cancel {
+  border: 0;
+  background: transparent;
+  color: var(--brand);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 0;
+}
+.comment-reply-cancel { margin-left: 8px; }
 
 /* ===================== 完整复盘报告（A股每日复盘） ===================== */
 .report-status {
@@ -931,6 +953,37 @@ a { color: inherit; text-decoration: none; transition: color var(--transition); 
 .rpt-comment-name-text { font-weight:600; color:#334155; font-size:13px; }
 .rpt-comment-time { color:#94a3b8; font-size:12px; }
 .rpt-comment-body { color:#1e293b; font-size:14px; line-height:1.55; word-break:break-word; }
+.rpt-comment-reply-tip,
+.rpt-comment-reply-ref {
+  padding:8px 10px;
+  border-radius:9px;
+  background:#f8fafc;
+  color:#64748b;
+  font-size:13px;
+  line-height:1.5;
+}
+.rpt-comment-reply-ref {
+  margin:7px 0 8px;
+  border-left:3px solid #ef4444;
+}
+.rpt-comment-reply-tip {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  justify-content:space-between;
+}
+.rpt-comment-reply-tip button,
+.rpt-comment-reply-btn {
+  border:0;
+  background:transparent;
+  color:#ef4444;
+  font:inherit;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+  padding:4px 0;
+}
+.rpt-comment-reply-btn { margin-top:8px; }
 @keyframes rptShake { 0%,100%{transform:translateX(0);} 20%,60%{transform:translateX(-4px);} 40%,80%{transform:translateX(4px);} }
 @keyframes rptLikePop { 0%{transform:scale(1);} 50%{transform:scale(1.4);} 100%{transform:scale(1);} }
 
