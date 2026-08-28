@@ -2542,6 +2542,11 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
           if (shouldAutoReplyMembershipInquiry(content)) {
             await maybeSendMembershipAutoReply();
           }
+          triggerPrivatePushNotification({
+            conversationId: currentPrivateConversationId,
+            content,
+            image: !!image
+          });
         } else {
           const box = document.getElementById('chatMessages');
           const node = box && box.querySelector('[data-message-id="' + tempId + '"]');
@@ -3523,6 +3528,22 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         const text = 'App推送调用异常：' + ((err && err.message) ? err.message : String(err || 'unknown'));
         if (isNativeNotificationApp()) setNotifDiag(text);
         console.warn('[chat] notify-native-chat failed', err);
+      }
+    }
+
+    async function triggerPrivatePushNotification(message) {
+      if (!message || !message.conversationId || !__user || !__user.loggedIn || !__user.token) return;
+      try {
+        const d = await callEdge('notify-private-chat', {
+          token: __user.token,
+          conversation_id: message.conversationId,
+          content: message.content || '',
+          image: !!message.image
+        });
+        console.log('[chat] notify-private-chat result', d);
+      } catch (e) {
+        // 私聊已成功发送；推送失败不能影响消息本身。
+        console.warn('[chat] notify-private-chat failed', e);
       }
     }
 
