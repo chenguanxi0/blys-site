@@ -3089,6 +3089,12 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       return sub;
     }
 
+    async function getExistingChatPushSubscription() {
+      if (!supportsSystemPush()) return null;
+      const reg = await chatWithTimeout(navigator.serviceWorker.ready, 12000, 'SW ready');
+      return chatWithTimeout(reg.pushManager.getSubscription(), 12000, 'get subscription');
+    }
+
     function markChatPushEnabled(message) {
       notifEnabled = true;
       localStorage.setItem('blys_notif', 'on');
@@ -3208,10 +3214,13 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       // 不要在每次用户开关时都注销 SW：Chrome 在同一浏览器切换账号后，
       // 注销中的旧 registration 会让新的 PushManager.subscribe 一直挂起。
       setNotifDiag('正在检查已有浏览器推送订阅...');
-      let sub = await recoverExistingChatPushSubscription();
+      let sub = await getExistingChatPushSubscription();
       if (!sub) {
         setNotifDiag('正在向浏览器申请推送订阅...');
         sub = await subscribeChatPush();
+      } else {
+        // 订阅本身已经有效；服务器同步失败不应把界面错误降级为“当前页弹窗”。
+        saveChatPushSubscription(sub).catch((e) => console.warn('[chat] existing push sync failed', e));
       }
       setNotifDiag('系统弹窗提醒已开启');
       return sub;
@@ -3237,11 +3246,14 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       if (Notification.permission !== 'granted') return;
       if (!__user.loggedIn || !__user.token) return;
       try {
+        const existing = await getExistingChatPushSubscription();
+        if (existing) {
+          markChatPushEnabled('系统弹窗提醒已开启');
+          saveChatPushSubscription(existing).catch((e) => console.warn('[chat] background push sync failed', e));
+          return;
+        }
         await subscribeChatPush();
-        notifEnabled = true;
-        localStorage.setItem('blys_notif', 'on');
-        setNotifDiag('系统弹窗提醒已开启');
-        updateNotifBtn();
+        markChatPushEnabled('系统弹窗提醒已开启');
       } catch (e) {
         notifEnabled = false;
         setNotifDiag(getNotifErrorText(e));
