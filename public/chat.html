@@ -261,6 +261,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     let chatHasMore = { public: true, vip: true, vip_chat: true, private: true };
     let currentPrivateConversationId = '';
     let currentPrivateTitle = '';
+    let currentPrivateUserIsVip = false;
     let privateConversations = [];
     const PRIVATE_CONVERSATION_PAGE_SIZE = 10;
     let privateConversationOffset = 0;
@@ -1498,7 +1499,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         const last = c.last_message || '还没有消息';
         const time = c.last_message_at ? fmtDateTime(c.last_message_at) : '';
         return '<button class="private-thread" type="button" onclick="openPrivateConversation(&quot;' + esc(c.id) + '&quot;)">' +
-          '<span class="private-thread-avatar">' + esc(String(title).charAt(0).toUpperCase()) + '</span>' +
+          '<span class="private-thread-avatar' + (c.user_is_vip === true ? ' is-vip' : '') + '">' + (c.user_is_vip === true ? '<span class="private-vip-badge">会员</span>' : '') + esc(String(title).charAt(0).toUpperCase()) + '</span>' +
           '<span class="private-thread-main"><b>' + esc(title) + '</b><small>' + esc(last) + '</small></span>' +
           '<span class="private-thread-side">' + (unread ? '<em>' + unread + '</em>' : '') + '<small>' + esc(time) + '</small></span>' +
         '</button>';
@@ -1520,6 +1521,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       if (!conv) return;
       currentPrivateConversationId = conv.id;
       currentPrivateTitle = conv.user_nickname || conv.user_email || '用户';
+      currentPrivateUserIsVip = conv.user_is_vip === true;
       currentRoom = 'private';
       lastSeenTs.private = 0;
       chatOldestTs.private = 0;
@@ -2028,6 +2030,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       const rawName = m.user_nickname || m.user_email?.split('@')[0] || '匿名';
       const name = esc(rawName);
       const isAdminMsg = isAdminMessage(m);
+      const isPrivateVip = room === 'private' && !isAdminMsg && (isMe ? !!(__user && __user.isVip) : currentPrivateUserIsVip);
       const avatarLabel = isAdminMsg ? '主' : name.charAt(0).toUpperCase();
       const ownerBadge = isAdminMsg ? '<span class="chat-owner-badge">群主</span>' : '';
       chatMessageCache.set(`${room}:${m.id}`, m);
@@ -2049,7 +2052,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       const avatarTitle = canQuickRenew ? '长按或右键续30天' : (isAdminMsg ? '群主' : (isMe ? '自己' : '发起私聊'));
       return `<div class="chat-msg ${isMe ? 'chat-msg-me' : 'chat-msg-other'}${isAdminMsg ? ' chat-msg-admin' : ''}${stateCls}" data-message-id="${esc(m.id || '')}" data-room="${esc(room)}">
         ${canRecall ? `<button class="chat-recall-btn" type="button" onclick="recallChatMessage('${esc(m.id)}')">撤回</button>` : ''}
-        <button class="chat-msg-avatar" type="button" title="${avatarTitle}"${avatarRenewAttrs} onclick="startPrivateFromMessage('${avatarEmail}','${avatarName}')">${avatarLabel}</button>
+        <button class="chat-msg-avatar${isPrivateVip ? ' chat-private-vip' : ''}" type="button" title="${avatarTitle}"${avatarRenewAttrs} onclick="startPrivateFromMessage('${avatarEmail}','${avatarName}')">${isPrivateVip ? '<span class="chat-private-vip-badge">会员</span>' : ''}${avatarLabel}</button>
         <div class="chat-msg-body">
           <div class="chat-msg-meta">
             <span class="chat-msg-name">${name}</span>${ownerBadge}

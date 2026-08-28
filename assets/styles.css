@@ -1503,6 +1503,7 @@ html.blys-native-app body.chat-body .chat-notif-float {
   width:40px; height:40px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center;
   background:linear-gradient(135deg, var(--brand), #f87171); color:#fff; font-weight:700;
 }
+.private-thread-avatar.is-vip,.chat-private-vip{position:relative;background:linear-gradient(135deg,#7c3aed,#a855f7)!important}.private-vip-badge,.chat-private-vip-badge{position:absolute;top:-7px;left:-13px;z-index:1;padding:3px 5px;border-radius:999px;background:#7c3aed;color:#fff;font-size:10px;font-weight:800;line-height:1;white-space:nowrap}
 .private-thread-main { flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; }
 .private-thread-main b { font-size:14px; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .private-thread-main small { font-size:12px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
