@@ -6,3 +6,6 @@ verify_jwt = false
 
 [functions.notify-private-chat]
 verify_jwt = false
+
+[functions.notify-private-native-chat]
+verify_jwt = false
