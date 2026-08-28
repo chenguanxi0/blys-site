@@ -329,8 +329,13 @@
       const box = document.getElementById('userList');
       if(!d || !d.ok){ box.innerHTML = '<p>加载失败：' + (d&&d.msg) + '</p>'; return; }
       if(!d.list.length){ box.innerHTML = '<p>暂无用户</p>'; return; }
-      box.innerHTML = '<table class="admin-table"><tr><th>昵称</th><th>邮箱</th><th>注册时间</th><th>会员</th><th>开通时间</th><th>会员天数</th><th>到期时间</th><th>剩余天数</th><th>操作</th></tr>' +
-        d.list.map(u=>`<tr class="${vipRemainClass(u.vip_expire)}"><td>${esc(u.nickname||'')}</td><td class="email">${esc(u.email||'')}</td><td>${u.created_at?fmt(u.created_at):'-'}</td><td>${u.is_vip?'是':'否'}</td><td>${u.vip_started_at?fmt(u.vip_started_at):'-'}</td><td>${vipDays(u.vip_started_at)}</td><td>${u.vip_expire?fmt(u.vip_expire):'-'}</td><td><span class="${vipRemainTextClass(u.vip_expire)}">${vipRemainDays(u.vip_expire)}</span></td><td><button onclick="openVipModal('${jsStr(u.email||'')}')">设会员</button><button class="renew" onclick="renewVip30('${jsStr(u.email||'')}','${jsStr(u.vip_expire||'')}')">续30天</button></td></tr>`).join('') +
+      const users = Array.isArray(d.list) ? d.list : [];
+      const members = users.filter(u => u.is_vip).sort((a,b) => new Date(b.vip_started_at || 0) - new Date(a.vip_started_at || 0));
+      const normalUsers = users.filter(u => !u.is_vip);
+      const row = u => `<tr class="${vipRemainClass(u.vip_expire)}"><td>${esc(u.nickname||'')}</td><td class="email">${esc(u.email||'')}</td><td>${u.created_at?fmt(u.created_at):'-'}</td><td>${u.is_vip?'是':'否'}</td><td>${u.vip_started_at?fmt(u.vip_started_at):'-'}</td><td>${vipDays(u.vip_started_at)}</td><td>${u.vip_expire?fmt(u.vip_expire):'-'}</td><td><span class="${vipRemainTextClass(u.vip_expire)}">${vipRemainDays(u.vip_expire)}</span></td><td><button onclick="openVipModal('${jsStr(u.email||'')}')">设会员</button><button class="renew" onclick="renewVip30('${jsStr(u.email||'')}','${jsStr(u.vip_expire||'')}')">续30天</button></td></tr>`;
+      const head = '<tr><th>昵称</th><th>邮箱</th><th>注册时间</th><th>会员</th><th>开通时间</th><th>会员天数</th><th>到期时间</th><th>剩余天数</th><th>操作</th></tr>';
+      box.innerHTML = '<table class="admin-table">' + head + normalUsers.map(row).join('') + '</table>' +
+        '<h3 style="margin:24px 0 10px;">⭐ 会员专区（按开通时间由近到远）</h3><table class="admin-table">' + head + members.map(row).join('') + '</table>' +
         '</table>';
     }
 
@@ -418,6 +423,7 @@
       if(filter === '__reviews') list = list.filter(c => String(c.article || '').startsWith('review:'));
       else if(filter) list = list.filter(c => c.article === filter);
       if(search) list = list.filter(c => (c.content||'').toLowerCase().includes(search) || (c.nickname||'').toLowerCase().includes(search));
+      list = list.slice().sort((a,b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
       if(!list.length){ box.innerHTML = '<p>暂无评论</p>'; return; }
       box.innerHTML = '<table class="admin-table"><tr><th>昵称</th><th>邮箱</th><th>文章</th><th>评论</th><th>时间</th><th>操作</th></tr>' +
         list.map(c=>`<tr><td>${esc(c.nickname||'匿名')}</td><td class="email">${esc(c.email||'-')}</td><td><span class="badge">${esc(cmtArticleLabel(c.article))}</span></td><td class="wrap">${c.parent_id ? '<div class="muted">回复 ' + esc(c.parent_nickname || c.parent_email || '用户') + '：' + esc(c.parent_content || '[原评论已删除]') + '</div>' : ''}${esc(c.content||'')}</td><td>${fmt(c.created_at)}</td><td><button class="danger" onclick="delComment(${c.id})">删除</button></td></tr>`).join('') +
