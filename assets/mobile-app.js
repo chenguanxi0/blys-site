@@ -8,9 +8,7 @@
     nativePush: false,
     provider: '',
     token: '',
-    initPromise: null,
-    bootstrapPromise: null,
-    lastBootstrapAt: 0
+    initPromise: null
   };
 
   function isNativeApp() {
@@ -115,7 +113,7 @@
       p_device_token: token,
       p_platform: platform || APP_BRIDGE.provider || 'android',
       p_user_agent: navigator.userAgent || ''
-    }, { timeoutMs: 5000 });
+    }, { timeoutMs: 10000 });
     return !!(d && d.ok);
   }
 
@@ -124,7 +122,7 @@
     const d = await window.sbRpc('delete_native_push_token', {
       p_token: window.__user.token,
       p_device_token: token
-    }, { timeoutMs: 5000 });
+    }, { timeoutMs: 10000 });
     return !!(d && d.ok);
   }
 
@@ -402,20 +400,12 @@
   }
 
   async function bootstrapNativePush() {
-    const loggedIn = !!(window.__user && window.__user.loggedIn && window.__user.token);
     writeDiag({
       switchWanted: isPushWanted(),
       bootstrapAt: nowIso(),
-      loggedIn
+      loggedIn: !!(window.__user && window.__user.loggedIn)
     });
-    if (!loggedIn) return { ok: false, msg: 'not-logged-in' };
-    if (!isPushWanted()) return { ok: true, msg: 'disabled' };
-    const now = Date.now();
-    if (APP_BRIDGE.bootstrapPromise) return APP_BRIDGE.bootstrapPromise;
-    if (APP_BRIDGE.lastBootstrapAt && now - APP_BRIDGE.lastBootstrapAt < 60000) return { ok: true, msg: 'throttled' };
-    APP_BRIDGE.lastBootstrapAt = now;
-    APP_BRIDGE.bootstrapPromise = (async () => {
-      const result = await ensureNativePush();
+    const result = await ensureNativePush();
     if (!result || !result.ok) return result;
     if (!isPushWanted()) return { ok: true, msg: 'disabled' };
     const token = APP_BRIDGE.token || localStorage.getItem(APP_TOKEN_KEY) || '';
@@ -470,13 +460,7 @@
         }
       }
     }
-      return result;
-    })();
-    try {
-      return await APP_BRIDGE.bootstrapPromise;
-    } finally {
-      APP_BRIDGE.bootstrapPromise = null;
-    }
+    return result;
   }
 
   async function enableNativePush(options) {
@@ -563,20 +547,21 @@
     });
   }
 
-  window.addEventListener('blys:user:change', function (event) {
+  window.addEventListener('blys:user:change', async function (event) {
     const detail = event && event.detail ? event.detail : null;
     if (!detail || !detail.loggedIn) return;
-    setTimeout(() => { bootstrapNativePush().catch(() => {}); }, 1200);
+    await bootstrapNativePush();
   });
 
   window.addEventListener('load', function () {
     if (!isNativeApp()) return;
-    setTimeout(() => { bootstrapNativePush().catch(() => {}); }, 2500);
+    setTimeout(() => { bootstrapNativePush().catch(() => {}); }, 600);
+    setTimeout(() => { bootstrapNativePush().catch(() => {}); }, 3000);
   });
 
   document.addEventListener('visibilitychange', function () {
     if (!document.hidden && isNativeApp()) {
-      setTimeout(() => { bootstrapNativePush().catch(() => {}); }, 1200);
+      setTimeout(() => { bootstrapNativePush().catch(() => {}); }, 200);
     }
   });
 
