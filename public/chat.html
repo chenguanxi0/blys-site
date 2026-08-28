@@ -252,7 +252,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    const BLYS_CHAT_PUSH_VERSION = '2026082809';
+    const BLYS_CHAT_PUSH_VERSION = '2026082810';
     console.log('[chat] build v' + BLYS_CHAT_PUSH_VERSION + ' (notification recovery)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
@@ -2907,12 +2907,15 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       browserAutoResetRunning = true;
       try {
         sessionStorage.setItem(key, 'done');
-        setNotifDiag('正在刷新浏览器提醒...');
-        await unsubscribeChatPush();
+        setNotifDiag('正在检查已有浏览器提醒...');
+        const existing = await getExistingChatPushSubscription();
+        if (existing) {
+          markChatPushEnabled('系统弹窗提醒已开启');
+          saveChatPushSubscription(existing).catch((e) => console.warn('[chat] auto recovery sync failed', e));
+          return;
+        }
         await subscribeChatPush();
-        notifEnabled = true;
-        localStorage.setItem('blys_notif', 'on');
-        setNotifDiag('系统弹窗提醒已开启');
+        markChatPushEnabled('系统弹窗提醒已开启');
       } catch (e) {
         sessionStorage.removeItem(key);
         console.warn('[chat] browser notification auto reset failed', reason, e);
