@@ -552,87 +552,6 @@ function groupLogs(logs, mode){
   return arr;
 }
 
-// 计算做T 盈亏：用（前一日成本 - 当日成本）× 做T 匹配股数
-// 原理：做T 是卖出底仓、当天买回；成本降低 = 高卖低买盈利，成本升高 = 低卖高买亏损。
-// tShares 取等额部分：持仓不变时 = cur；净加/净减时 = min(prev, cur)。
-function calcTpnl(prevCost, curCost, tShares) {
-  if (prevCost == null || curCost == null || !tShares || tShares <= 0) return null;
-  return (prevCost - curCost) * tShares;
-}
-
-// 分析单只票当日行为：新买 / 加仓 / 减仓 / 清仓 / 做T
-// ⚠ 必须结合【前一日】同名持仓一起比较，不能只看当天：
-//    prevH = 前一日该股票的持仓对象（含 shares / avail / cost），当日无该股则为 null。
-//    net = 当日持仓 - 前一日持仓。
-// ⭐ 判断做T 的核心依据 = 【可用股数 avail】这一列（用户硬规则，强制执行）：
-//    可用=持仓 → 当日没动；可用=0 且 昨日持有 → 把昨日的卖了又买回 = 做T；可用=0 且 昨日没持有 → 新买。
-//    ⚠ 做T 只由「持仓/可用」两列判定，绝不靠成本变化推断（成本变化仅用于算做T盈亏金额，不作是否做T的依据）。
-// 做T 返回对象带 pnl 字段（数值），渲染时显示盈亏金额而非股数。
-function analyzeBehavior(h, l, prevH) {
-  const trades = (l.trades || []).filter(t => t.name === h.name);
-  let buy = 0, sell = 0;
-  trades.forEach(t => {
-    const sh = t.shares || 0;
-    if (t.action === "buy") buy += sh;
-    else if (t.action === "sell") sell += sh;
-  });
-  const prev = (prevH && prevH.shares > 0) ? prevH.shares : 0;     // 前一日持仓
-  const cur = h.shares || 0;                                        // 当日持仓
-  const net = cur - prev; // ⭐ 与【前一日】对比得出的净变化
-  const avail = (typeof h.avail === "number") ? h.avail : null;    // 当日可用股数(T+1 信号)
-  const prevCost = (prevH && typeof prevH.cost === "number") ? prevH.cost : null;
-  const costDelta = (prevCost != null && typeof h.cost === "number") ? (h.cost - prevCost) : 0; // 成本变化
-  const costMove = (prevCost != null && Math.abs(prevCost) > 0) ? Math.abs(costDelta / prevCost) : 0; // 相对幅度
-
-  // 做T 匹配股数 = 等额部分（净加/净减里只有等额部分才是T）
-  const tShares = (net === 0) ? cur : Math.max(0, Math.min(prev, cur));
-
-  // 0) 同日有买有卖 → 做T
-  if (buy > 0 && sell > 0) {
-    if (buy === sell) return { main: "做T", detail: buy.toLocaleString("zh-CN") + "股等量", pnl: calcTpnl(prevCost, h.cost, buy) };
-    return { main: "做T", detail: "净" + (net > 0 ? "加" : "减") + Math.abs(net).toLocaleString("zh-CN") + "股", pnl: calcTpnl(prevCost, h.cost, tShares) };
-  }
-  // 1) ⭐ 优先用【可用股数 avail】判定（判断做T 看可用数量这一列）
-  if (avail !== null) {
-    if (avail === 0 && cur > 0) {
-      // 持仓被 T+1 锁定：当日有买入动作
-      if (prev > 0) {
-        // 昨日就持有，今日可用却为0 → 把昨日可卖的卖了又买回 = 做T
-        if (net === 0) return { main: "做T", detail: cur.toLocaleString("zh-CN") + "股等量", pnl: calcTpnl(prevCost, h.cost, cur) };
-        if (net > 0) return { main: "做T", detail: "净加" + net.toLocaleString("zh-CN") + "股", pnl: calcTpnl(prevCost, h.cost, tShares) };
-        return { main: "做T", detail: "净减" + Math.abs(net).toLocaleString("zh-CN") + "股", pnl: calcTpnl(prevCost, h.cost, tShares) };
-      }
-      // 昨日没持有，今日新买（T+1 锁定）
-      return { main: "新买", detail: (buy || cur).toLocaleString("zh-CN") + "股" };
-    }
-    if (avail === cur && cur > 0) {
-      // 可用=持仓 → 当日没动（既没卖也没新买锁定）
-      if (net === 0 && buy === 0 && sell === 0) return null; // 无操作
-    }
-  }
-  // 2) 仅买入：与前一日对比
-  if (buy > 0) {
-    if (net === 0) return { main: "做T", detail: buy.toLocaleString("zh-CN") + "股等量", pnl: calcTpnl(prevCost, h.cost, buy) };
-    if (net > 0) return { main: prev > 0 ? "加仓" : "新买", detail: net.toLocaleString("zh-CN") + "股" };
-    return { main: "做T", detail: "净减" + Math.abs(net).toLocaleString("zh-CN") + "股", pnl: calcTpnl(prevCost, h.cost, tShares) };
-  }
-  // 3) 仅卖出：与前一日对比
-  if (sell > 0) {
-    if (net === 0) return { main: "做T", detail: sell.toLocaleString("zh-CN") + "股等量", pnl: calcTpnl(prevCost, h.cost, sell) };
-    if (net < 0) return { main: cur === 0 ? "清仓" : "减仓", detail: Math.abs(net).toLocaleString("zh-CN") + "股" };
-    return { main: "做T", detail: "净加" + net.toLocaleString("zh-CN") + "股", pnl: calcTpnl(prevCost, h.cost, tShares) };
-  }
-  // 4) 无交易记录 → 用【前一日↔当日】持仓变化兜底推断
-  if (net !== 0) {
-    if (net > 0) return { main: prev > 0 ? "加仓" : "新买", detail: net.toLocaleString("zh-CN") + "股" };
-    return { main: cur === 0 ? "清仓" : "减仓", detail: Math.abs(net).toLocaleString("zh-CN") + "股" };
-  }
-  // 4b) 持仓未变：仅当【可用=0 且 昨日持有】→ 做T（唯一判定依据=持仓/可用两列）
-  // ⚠ 硬规则：做T 只由 持仓/可用 两列判定，绝不靠成本变化推断；成本变化不作是否做T的依据
-  if (avail !== null && avail === 0 && prev > 0) return { main: "做T", detail: cur.toLocaleString("zh-CN") + "股等量", pnl: calcTpnl(prevCost, h.cost, cur) };
-  return null; // 持仓/可用/交易均无变化，无操作标签（成本变化不单独判T）
-}
-
 function renderDiary(){
   const listEl = document.getElementById("diaryList");
   const statsEl = document.getElementById("diaryStats");
@@ -666,23 +585,9 @@ function renderDiary(){
 
   const nameCode = (h)=> `${h.name}${h.code? '<span class="stock-code">('+h.code+')</span>' : ''}`;
   const cardHTML = (l)=>{
-    const idx = logs.findIndex(d => d.date === l.date);
-    const prevSharesFor = (name)=>{
-      if (idx > 0) {
-        const hh = (logs[idx-1].holdings||[]).find(x => x.name === name);
-        return (hh && hh.shares > 0) ? hh.shares : 0;
-      }
-      return 0;
-    };
-    // 返回前一日同名持仓对象（含 shares / avail），供 analyzeBehavior 与前一日对比
-    const prevHoldingFor = (name)=>{
-      if (idx > 0) {
-        return (logs[idx-1].holdings||[]).find(x => x.name === name) || null;
-      }
-      return null;
-    };
+    const tradeMap = {};
+    (l.trades||[]).forEach(t=>{ if (!tradeMap[t.name]) tradeMap[t.name] = []; tradeMap[t.name].push(t); });
 
-    const behaviors = [];
     const holdRows = (l.holdings||[]).map(h=>{
       let amt = 0;
       if (h.shares && h.shares > 0 && h.cur && h.cost) {
@@ -690,35 +595,26 @@ function renderDiary(){
       } else if (h.mv && h.pnlPct) {
         amt = h.mv * h.pnlPct / 100;
       } else if (h.cur && h.cost) {
-        const prevSh = prevSharesFor(h.name);
-        if (prevSh > 0) { amt = prevSh * (h.cur - h.cost); }
-      }
-      const b = analyzeBehavior(h, l, prevHoldingFor(h.name));
-      let tags = "";
-      if (b) {
-        const cls = b.main === "做T" ? "ti-t" : (b.main === "新买" || b.main === "加仓") ? "ti-buy" : "ti-sell";
-        // 做T 优先显示盈亏金额（用户要求：只写做T的盈亏）；其余仍显示股数
-        let detail = b.detail || "";
-        if (b.main === "做T" && typeof b.pnl === "number") {
-          detail = yuan(b.pnl);
+        const idx = logs.findIndex(d => d.date === l.date);
+        if (idx > 0) {
+          const prevDate = logs[idx - 1].date;
+          const prevSh = (prevSharesMap[prevDate] || {})[h.name];
+          if (prevSh > 0) { amt = prevSh * (h.cur - h.cost); }
         }
-        tags = `<span class="trade-inline ${cls}">${b.main}${detail ? " " + detail : ""}</span>`;
-        behaviors.push({ ...b, detail });
       }
+      const tags = (tradeMap[h.name]||[]).map(t=>{
+        const isBuy = t.action==="buy";
+        const tag = isBuy ? (t.open?"新买":"加仓") : (t.close?"清仓":"减仓");
+        const sh = t.shares ? t.shares.toLocaleString("zh-CN")+"股" : "";
+        return `<span class="trade-inline ${isBuy?'ti-buy':'ti-sell'}">${tag}${sh}</span>`;
+      }).join("");
       return `<tr>
         <td class="hold-name">${nameCode(h)}${tags ? " "+tags : ""}</td>
-        <td data-label="股数">${h.shares? h.shares.toLocaleString("zh-CN") : "<span class=\"muted\">已清</span>"}${typeof h.avail==="number"? `<span class="avail-tag">可用${h.avail.toLocaleString("zh-CN")}</span>`:""}</td>
+        <td data-label="股数">${h.shares? h.shares.toLocaleString("zh-CN") : "<span class=\"muted\">已清</span>"}</td>
         <td data-label="市值">${h.mv? "¥"+h.mv.toLocaleString("zh-CN",{maximumFractionDigits:0}) : "—"}</td>
         <td class="pnl-amt ${clsD(amt)}" data-label="盈亏金额">${yuan(amt)}</td>
         <td class="${clsD(h.pnlPct)}" data-label="盈亏%">${pct(h.pnlPct||0)}</td>
       </tr>`}).join("");
-
-    // 汇总行：只显示当天做T 的总收益；其他操作（新买/加仓/减仓/清仓）在个股标签里已有，这里不再重复
-    const tOps = behaviors.filter(b => b.main === "做T");
-    const tPnl = tOps.reduce((sum, b) => sum + (typeof b.pnl === "number" ? b.pnl : 0), 0);
-    const opSummary = tOps.length
-      ? `<div class="diary-ops">📊 今日操作：<span class="op-item ${clsD(tPnl)}">做T ${yuan(tPnl)}</span></div>`
-      : "";
 
     const dAmt = dayAmt(l);
     return `<div class="diary-card">
@@ -729,7 +625,6 @@ function renderDiary(){
         <span>总资产 <b>${wan(l.total||0)}</b></span>
         <span>当日盈亏 <b class="${clsD(dAmt)}">${yuan(dAmt)}</b></span>
       </div>
-      ${opSummary}
       ${holdRows? `<div class="diary-hold"><table class="hold-table">
         <thead><tr><th>持仓(代码)</th><th>股数</th><th>市值</th><th>盈亏金额</th><th>盈亏%</th></tr></thead>
         <tbody>${holdRows}</tbody></table></div>` : ""}
@@ -792,6 +687,7 @@ const SUPABASE_ANON = "sb_publishable_rGCr3ILVWQpvpURhctuYQg_K_jC-WHV";  // publ
 const USE_SUPABASE = /^https?:\/\//.test(SUPABASE_URL) && SUPABASE_ANON.length > 0;
 
 const USER_TOKEN_KEY = "blys_user_token";
+const USER_PROFILE_CACHE_KEY = "blys_user_profile_cache";
 const ADMIN_TOKEN_KEY = "blys_admin_token";
 
 // 调用 Supabase RPC
@@ -861,19 +757,31 @@ function syncUserGlobals(){
 
 async function fetchUser(){
   const token = localStorage.getItem(USER_TOKEN_KEY);
-  if (!token){ __user = { loggedIn: false }; syncUserGlobals(); renderUserStatus(); lockVipZones(); initReview(); initTutorialGate(); emitUserChange(); return; }
+  if (!token){ __user = { loggedIn: false }; syncUserGlobals(); renderUserStatus(); updateMemberDisciplineNav(); lockVipZones(); initReview(); initTutorialGate(); emitUserChange(); return; }
   try {
     const d = await sbRpc("get_profile", { p_token: token });
     if (d && d.ok){
       const isVip = !!(d.vip_expire && new Date(d.vip_expire) > new Date());
-      __user = { loggedIn: true, token, isVip, isAdmin: d.is_admin, nickname: d.nickname, email: d.email, vipExpire: d.vip_expire };
+      __user = { loggedIn: true, token, isVip, isAdmin: d.is_admin, is_admin: d.is_admin, nickname: d.nickname, email: d.email, vipExpire: d.vip_expire };
+      try { localStorage.setItem(USER_PROFILE_CACHE_KEY, JSON.stringify(__user)); } catch(e){}
     } else {
       localStorage.removeItem(USER_TOKEN_KEY);
+      localStorage.removeItem(USER_PROFILE_CACHE_KEY);
       __user = { loggedIn: false };
     }
-  } catch(e){ __user = { loggedIn: false }; }
+  } catch(e){
+    let cached = null;
+    try { cached = JSON.parse(localStorage.getItem(USER_PROFILE_CACHE_KEY) || 'null'); } catch(_e){}
+    if (cached && cached.token === token) {
+      __user = Object.assign({}, cached, { loggedIn: true, token, __cached: true });
+    } else {
+      __user = { loggedIn: false };
+    }
+  }
   syncUserGlobals();
   renderUserStatus();
+  updateMemberDisciplineNav();
+  await renderVipLocks();
   lockVipZones();
   initReview();
   initTutorialGate();
@@ -885,13 +793,81 @@ function emitUserChange(){
 }
 
 function isVIP(){ return __user.loggedIn && __user.isVip; }
+function updateMemberDisciplineNav(){
+  document.querySelectorAll(".member-discipline-nav-link").forEach(link => {
+    link.hidden = !isVIP();
+  });
+}
+function getVipDaysLeft(){
+  if (!__user || !__user.vipExpire) return null;
+  const expire = new Date(__user.vipExpire);
+  if (Number.isNaN(expire.getTime())) return null;
+  return Math.max(0, Math.ceil((expire.getTime() - Date.now()) / 86400000));
+}
+function goRenewVip(){
+  const target = "chat.html?membership_entry=home#private";
+  if (location.pathname.endsWith("/chat.html") || location.pathname.endsWith("/chat")) {
+    try {
+      if (typeof switchChatRoom === "function") { switchChatRoom("private"); return; }
+    } catch(e){}
+  }
+  location.href = target;
+}
+
+function getVipRenewState(){
+  const daysLeft = getVipDaysLeft();
+  if (daysLeft == null) return null;
+  if (daysLeft <= 0) return { level: "expired", daysLeft, title: "会员已到期", text: "续费后可继续进入会员群聊和会员内容。" };
+  if (daysLeft <= 7) return { level: "urgent", daysLeft, title: "会员即将到期", text: "你的会员还剩 " + daysLeft + " 天，到期后会员群聊会自动关闭。" };
+  return null;
+}
+function closeVipRenewModal(snooze){
+  const modal = document.getElementById("vipRenewModal");
+  if (modal) modal.remove();
+  if (snooze) {
+    const today = new Date().toISOString().slice(0, 10);
+    localStorage.setItem("blys_vip_renew_snooze_" + ((__user && __user.email) || "guest"), today);
+  }
+}
+function maybeShowVipRenewModal(){
+  return;
+  if (!__user || !__user.loggedIn) return;
+  const state = getVipRenewState();
+  if (!state) return;
+  const today = new Date().toISOString().slice(0, 10);
+  const key = "blys_vip_renew_snooze_" + (__user.email || "guest");
+  if (localStorage.getItem(key) === today) return;
+  if (document.getElementById("vipRenewModal")) return;
+  const daysText = state.daysLeft > 0 ? "剩余 " + state.daysLeft + " 天" : "已到期";
+  const html = '<div class="vip-renew-modal" id="vipRenewModal" role="dialog" aria-modal="true">' +
+    '<div class="vip-renew-card">' +
+      '<button class="vip-renew-close" type="button" onclick="closeVipRenewModal(true)" aria-label="关闭">×</button>' +
+      '<div class="vip-renew-kicker">会员续费提醒</div>' +
+      '<h3>' + esc(state.title) + '</h3>' +
+      '<p>' + esc(state.text) + '</p>' +
+      '<div class="vip-renew-days">' + esc(daysText) + '</div>' +
+      '<div class="vip-renew-actions">' +
+        '<button class="btn btn-primary" type="button" onclick="closeVipRenewModal(true); goRenewVip();">私聊续费</button>' +
+        '<button class="btn btn-secondary" type="button" onclick="closeVipRenewModal(true)">今天不再提醒</button>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+  document.body.insertAdjacentHTML("beforeend", html);
+}
 function isAdmin(){ return __user.loggedIn && __user.isAdmin; }
+
+function updateAdminNavLinks(){
+  document.querySelectorAll(".admin-nav-link").forEach(link => {
+    link.hidden = !isAdmin();
+  });
+}
 
 function logoutUser(){
   localStorage.removeItem(USER_TOKEN_KEY);
   __user = { loggedIn: false };
   syncUserGlobals();
   renderUserStatus();
+  updateAdminNavLinks();
   lockVipZones();
   emitUserChange();
 }
@@ -915,31 +891,301 @@ function closeUserMenu(){
 
 document.addEventListener("click", (event)=>{
   if (!event.target.closest(".user-menu")) closeUserMenu();
+  if (!event.target.closest(".site-notice-menu")) closeSiteNoticeMenu();
 });
 
 // 渲染右上角用户状态
 function renderUserStatus(){
+  updateAdminNavLinks();
   const el = document.getElementById("vipStatus");
   if (!el) return;
   if (__user.loggedIn){
+    const daysLeft = getVipDaysLeft();
     const tag = __user.isVip ? `⭐ 会员至 ${fmtDateStr(new Date(__user.vipExpire))}` : "普通用户";
-    let html = `<button class="vip-open checkin-btn" id="checkinBtn" onclick="doCheckin()" title="每日签到领积分">📅 签到</button>
+    const vipCountdown = daysLeft != null
+      ? (daysLeft > 0
+        ? `<div class="vip-expiry ${daysLeft <= 7 ? 'urgent' : ''}">会员还剩 <b>${daysLeft}</b> 天${daysLeft <= 7 ? '，请及时续费' : ''}</div>`
+        : `<div class="vip-expiry urgent">会员已到期，可以私聊续费</div>`)
+      : '';
+    const renewBtn = daysLeft != null && daysLeft <= 7
+      ? `<button class="vip-open renew-btn" onclick="goRenewVip()">私聊续费</button>`
+      : '';
+    const avatarText = esc((__user.nickname || __user.email || "用").trim().charAt(0).toUpperCase() || "用");
+    const siteNoticeUnreadCount = getSiteNoticeUnreadCount();
+    const hasSiteNoticeUnread = siteNoticeUnreadCount > 0;
+    const noticeUnreadCls = hasSiteNoticeUnread ? ' has-unread' : '';
+    const noticeItemCls = hasSiteNoticeUnread ? ' unread' : '';
+    const noticeItemsHtml = renderSiteNoticeItems(noticeItemCls);
+    let html = `<button class="nav-icon-btn checkin-btn" id="checkinBtn" onclick="doCheckin()" title="每日签到领积分" aria-label="每日签到"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2v4M16 2v4M4 10h16M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="m8 15 2.4 2.4L16 12"/></svg></button>
+    <div class="site-notice-menu">
+      <button class="nav-icon-btn notice-btn${noticeUnreadCls}" id="siteNoticeTrigger" type="button" onclick="toggleSiteNoticeMenu(event)" title="站内通知" aria-label="站内通知">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg><span class="notice-dot" id="siteNoticeDot">${siteNoticeUnreadCount}</span>
+      </button>
+      <div class="site-notice-dropdown" id="siteNoticeDropdown">
+        <div class="site-notice-head">
+          <b>通知</b>
+          <small>站内更新提醒</small>
+        </div>
+        ${noticeItemsHtml}
+      </div>
+    </div>
     <div class="user-menu">
       <button class="user-menu-trigger" id="userMenuTrigger" type="button" onclick="toggleUserMenu(event)" aria-expanded="false" aria-haspopup="true">
-        <span class="user-menu-name">${esc(__user.nickname || __user.email || "用户")}</span><span class="user-menu-chevron" aria-hidden="true"></span>
+        <span class="user-menu-avatar">${avatarText}</span><span class="user-menu-chevron" aria-hidden="true"></span>
       </button>
       <div class="user-menu-dropdown" id="userMenuDropdown">
-        <div class="user-menu-status">${tag}</div>
-        <span class="vip-badge points-badge" id="userPointsBadge" title="当前积分，可兑换会员专享内容">🪙 <b id="userPointsNum">0</b> 分</span>
+        <div class="user-menu-status">${tag}</div>\n        ${vipCountdown}\n        <span class="vip-badge points-badge" id="userPointsBadge" title="当前积分，可兑换会员专享内容">🪙 <b id="userPointsNum">0</b> 分</span>
+        ${renewBtn}
         ${__user.isAdmin ? `<button class="vip-open" onclick="location.href='admin.html'">后台</button>` : ''}
         <button class="vip-open logout-btn" onclick="logoutUser()">退出登录</button>
       </div>
     </div>`;
     el.innerHTML = html;
     refreshPointsUI();
+    scheduleSiteAnnouncementLoad();
   } else {
-    el.innerHTML = `<button class="vip-open" onclick="openAuthModal()">登录/注册</button>`;
+    el.innerHTML = `<button class="nav-icon-btn notice-btn" type="button" title="站内通知" aria-label="站内通知"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v12H4z"/><path d="m4 7 8 6 8-6"/></svg></button><button class="vip-open login-compact" onclick="openAuthModal()">登录</button>`;
+    scheduleSiteAnnouncementLoad();
   }
+}
+
+function toggleSiteNoticeMenu(event){
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  closeUserMenu();
+  const menu = document.getElementById("siteNoticeDropdown");
+  if (!menu) return;
+  menu.classList.toggle("open");
+}
+
+function closeSiteNoticeMenu(){
+  const menu = document.getElementById("siteNoticeDropdown");
+  if (menu) menu.classList.remove("open");
+}
+
+let SITE_ANNOUNCEMENT = {
+  id: "site-announcement-2026-08-26",
+  group: "网站公告",
+  title: "网站公告模块已上线",
+  text: "",
+  type: "announcement"
+};
+let SITE_CONTENT_NOTICES = [];
+function getAnnouncementPreview(text){
+  const lines = String(text || "").split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+  return lines[0] || "";
+}
+function getAnnouncementRest(text){
+  const lines = String(text || "").split(/\r?\n/);
+  const firstIdx = lines.findIndex(x => x.trim());
+  if (firstIdx < 0) return "";
+  return lines.slice(firstIdx + 1).join("\n").trim();
+}
+function getSiteNoticeItems(){
+  return [
+    ...(SITE_ANNOUNCEMENT && String(SITE_ANNOUNCEMENT.text || '').trim() ? [SITE_ANNOUNCEMENT] : []),
+    ...SITE_CONTENT_NOTICES
+  ];
+}
+function getSiteNoticeVersion(){
+  return getSiteNoticeItems().map(item => item.id).join("|");
+}
+function renderSiteNoticeItems(){
+  const readIds = getSiteNoticeReadIds();
+  const groups = [];
+  getSiteNoticeItems().forEach(item => {
+    if (item.type !== 'announcement' && item.type !== 'chat' && readIds.includes(item.id)) return;
+    let group = groups.find(g => g.name === item.group);
+    if (!group) {
+      group = { name: item.group, items: [] };
+      groups.push(group);
+    }
+    group.items.push(item);
+  });
+  return groups.map(group => {
+    const body = group.items.length
+      ? group.items.map(item => {
+        const unreadCls = item.type === 'chat' ? ' unread' : (readIds.includes(item.id) ? '' : ' unread');
+        if (item.type === 'announcement') {
+          const text = item.text || item.summary || '';
+          const canExpand = String(text || '').trim().length > 0;
+          const toggle = canExpand ? '<em aria-hidden="true">展开</em>' : '';
+          const full = canExpand ? `<span class="site-announcement-full" hidden>${esc(text)}</span>` : '';
+          return `<button class="site-notice-item site-announcement-item${unreadCls}" type="button" aria-expanded="false" onclick="toggleSiteAnnouncement('${esc(item.id)}', event)"><span class="site-announcement-title"><b>${esc(item.title)}</b>${toggle}</span><small class="site-announcement-summary">${esc(getAnnouncementPreview(text))}</small>${full}</button>`;
+        }
+        const click = item.type === 'chat' ? '' : ` onclick="markSiteNoticeItemRead('${esc(item.id)}', event)"`;
+        return `<a class="site-notice-item${unreadCls}" href="${esc(item.href)}"${click}><b>${esc(item.title)}</b><small>${esc(item.text)}</small></a>`;
+      }).join("")
+      : '<div class="site-notice-empty">暂无公告</div>';
+    return `<div class="site-notice-section"><div class="site-notice-section-title">${esc(group.name)}</div>${body}</div>`;
+  }).join("");
+}
+function getSiteNoticeKey(){
+  const email = (__user && __user.email) ? String(__user.email).toLowerCase() : "guest";
+  return "blys_site_notice_read_" + email;
+}
+function getSiteNoticeUnread(){
+  return getSiteNoticeUnreadCount() > 0;
+}
+function getSiteNoticeReadIds(){
+  try {
+    const raw = localStorage.getItem(getSiteNoticeKey());
+    const list = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list) ? list : [];
+  } catch(e){ return []; }
+}
+function setSiteNoticeReadIds(ids){
+  try { localStorage.setItem(getSiteNoticeKey(), JSON.stringify(Array.from(new Set(ids)))); } catch(e){}
+}
+function getSiteNoticeUnreadCount(){
+  const readIds = getSiteNoticeReadIds();
+  return getSiteNoticeItems().reduce((sum, item) => {
+    if (item.type === 'chat') return sum + (Number(item.count) || 1);
+    return sum + (readIds.includes(item.id) ? 0 : 1);
+  }, 0);
+}
+function markSiteNoticeItemRead(id, event){
+  const item = getSiteNoticeItems().find(x => x.id === id);
+  if (event && item && item.href === '#') event.preventDefault();
+  if (event && event.currentTarget) event.currentTarget.classList.remove("unread");
+  const readIds = getSiteNoticeReadIds();
+  if (!readIds.includes(id)) readIds.push(id);
+  setSiteNoticeReadIds(readIds);
+  const count = getSiteNoticeUnreadCount();
+  document.querySelectorAll(".notice-btn").forEach(btn => btn.classList.toggle("has-unread", count > 0));
+  const dot = document.getElementById("siteNoticeDot");
+  if (dot) dot.textContent = count ? String(count) : '';
+}
+function pruneEmptySiteNoticeSections(dropdown){
+  if (!dropdown) return;
+  dropdown.querySelectorAll(".site-notice-section").forEach(section => {
+    if (!section.querySelector(".site-notice-item")) section.remove();
+  });
+  if (!dropdown.querySelector(".site-notice-section")) {
+    dropdown.insertAdjacentHTML("beforeend", '<div class="site-notice-empty">暂无新通知</div>');
+  }
+}
+function toggleSiteAnnouncement(id, event){
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  markSiteNoticeItemRead(id);
+  const btn = event && event.currentTarget;
+  if (!btn) return;
+  btn.classList.remove("unread");
+  const full = btn.querySelector(".site-announcement-full");
+  if (!full) return;
+  const expanded = btn.classList.toggle("expanded");
+  btn.setAttribute("aria-expanded", expanded ? "true" : "false");
+  full.hidden = !expanded;
+  const summary = btn.querySelector(".site-announcement-summary");
+  if (summary) summary.hidden = expanded;
+  const label = btn.querySelector(".site-announcement-title em");
+  if (label) label.textContent = expanded ? "收起" : "展开";
+}
+function markSiteNoticeRead(){
+  setSiteNoticeReadIds(getSiteNoticeItems().map(item => item.id));
+  document.querySelectorAll(".notice-btn").forEach(btn => btn.classList.remove("has-unread"));
+  const dot = document.getElementById("siteNoticeDot");
+  if (dot) dot.textContent = '';
+  document.querySelectorAll(".site-notice-item.unread").forEach(item => item.classList.remove("unread"));
+}
+/* legacy compatibility */
+function getSiteNoticeUnreadLegacy(){
+  try { return localStorage.getItem(getSiteNoticeKey()) !== getSiteNoticeVersion(); }
+  catch(e){ return true; }
+}
+let __siteAnnouncementLoadStarted = false;
+function scheduleSiteAnnouncementLoad(){
+  if (__siteAnnouncementLoadStarted) return;
+  __siteAnnouncementLoadStarted = true;
+  setTimeout(refreshSiteAnnouncementNotice, 80);
+  setTimeout(refreshContentUpdateNotices, 120);
+  setInterval(refreshContentUpdateNotices, 60000);
+}
+function updateSiteNoticeDropdown(){
+  const trigger = document.getElementById("siteNoticeTrigger");
+  const dropdown = document.getElementById("siteNoticeDropdown");
+  if (!trigger || !dropdown) return;
+  const count = getSiteNoticeUnreadCount();
+  trigger.classList.toggle("has-unread", count > 0);
+  const dot = document.getElementById("siteNoticeDot");
+  if (dot) dot.textContent = count ? String(count) : "";
+  dropdown.querySelectorAll(".site-notice-section,.site-notice-empty").forEach(el => el.remove());
+  const more = dropdown.querySelector(".site-notice-more");
+  if (more) more.remove();
+  dropdown.insertAdjacentHTML("beforeend", renderSiteNoticeItems());
+}
+async function refreshSiteAnnouncementNotice(){
+  try {
+    const d = await sbRpc("get_site_announcement", {});
+    if (!d || !d.ok || !d.item) return;
+    SITE_ANNOUNCEMENT = {
+      id: "site-announcement-" + String(d.item.updated_at || d.item.id || "default"),
+      group: "网站公告",
+      title: d.item.title || "网站公告",
+      text: d.item.content || d.item.summary || "",
+      type: "announcement"
+    };
+    updateSiteNoticeDropdown();
+  } catch(e){}
+}
+async function refreshContentUpdateNotices(){
+  const notices = [];
+  try {
+    const r = await fetch("assets/data.js?t=" + Date.now(), { cache: "no-store" });
+    if (r.ok) {
+      const text = await r.text();
+      const dates = Array.from(new Set(text.match(/20\d{2}-\d{2}-\d{2}/g) || [])).sort();
+      const latestDate = dates[dates.length - 1];
+      if (latestDate) {
+        notices.push({
+          id: "diary-" + latestDate + "-" + String(text.length),
+          group: "内容更新",
+          title: "实盘日记已更新",
+          text: latestDate + " 实盘记录已更新",
+          href: "diary.html",
+          type: "content"
+        });
+      }
+    }
+  } catch(e){}
+  try {
+    const r = await fetch("assets/reviews/index.json?t=" + Date.now(), { cache: "no-store" });
+    if (r.ok) {
+      const list = await r.json();
+      const latest = Array.isArray(list) && list.length ? list[list.length - 1] : null;
+      if (latest && latest.date) {
+        notices.push({
+          id: "review-" + (latest.notice_id || latest.updated_at || latest.date),
+          group: "内容更新",
+          title: "今日复盘已更新",
+          text: (latest.title || latest.date) + " 复盘已发布",
+          href: "daily.html?date=" + encodeURIComponent(latest.date),
+          type: "content"
+        });
+      }
+    }
+  } catch(e){}
+  try {
+    const d = await sbRpc("list_daily_ideas", {}, { timeoutMs: 5000 });
+    const latestIdea = d && d.ok && Array.isArray(d.list) && d.list.length ? d.list[0] : null;
+    if (latestIdea && latestIdea.idea_date) {
+      notices.push({
+        id: "idea-" + latestIdea.idea_date + "-" + String(latestIdea.updated_at || ""),
+        group: "内容更新",
+        title: "今日思路已更新",
+        text: (latestIdea.title || latestIdea.idea_date) + " 已发布",
+        href: "ideas.html?date=" + encodeURIComponent(latestIdea.idea_date),
+        type: "content"
+      });
+    }
+  } catch(e){}
+  SITE_CONTENT_NOTICES = notices;
+  updateSiteNoticeDropdown();
 }
 
 // ---- 积分体系（签到 / 评论奖励 / 兑换解锁） ----
@@ -959,10 +1205,12 @@ async function refreshPointsUI(){
     __user.todayChecked = !!d.today_checked;
     if (btn){
       if (__user.todayChecked){
-        btn.textContent = "✅ 已签到";
+        btn.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2v4M16 2v4M4 10h16M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="m8 15 2.4 2.4L16 12"/></svg>`;
+        btn.title = "今日已签到";
         btn.disabled = true;
       } else {
-        btn.textContent = "📅 签到";
+        btn.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2v4M16 2v4M4 10h16M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="m8 15 2.4 2.4L16 12"/></svg>`;
+        btn.title = "每日签到领积分";
         btn.disabled = false;
       }
     }
@@ -993,7 +1241,8 @@ async function redeemContent(page, cost){
     }
     alert(`✅ 兑换成功！已解锁「${page}」`);
     refreshPointsUI();
-    renderVipLocks();
+    await renderVipLocks();
+    initTutorialGate();
     emitUserChange();
   } catch(e){ alert("网络错误"); }
 }
@@ -1029,17 +1278,18 @@ async function renderVipLocks(){
       card.appendChild(b);
     }
   });
+  document.querySelectorAll("[data-vip-course]").forEach(c=>{
+    const page = c.dataset.page;
+    const hasLock = page && locks.indexOf(page) >= 0;
+    c.classList.toggle("is-locked", !isVIP() && !hasLock);
+  });
 }
 
 // 根据会员状态锁定 / 解锁会员专属区块
 function lockVipZones(){
   document.querySelectorAll(".vip-zone").forEach(z=>{
     const isLoginGate = z.id === "vip";   // 会员课程：登录即可
-    // 积分兑换区：登录用户即可看到卡片（未解锁卡片带兑换按钮）；VIP 直接全部解锁
-    const isPointsZone = !!z.querySelector("[data-page][data-cost]");
-    const unlocked = isPointsZone
-      ? (isVIP() || __user.loggedIn)
-      : (isLoginGate ? __user.loggedIn : isVIP());
+    const unlocked = isLoginGate ? __user.loggedIn : isVIP();
     z.classList.toggle("unlocked", unlocked);
     z.classList.toggle("is-locked", !unlocked);
   });
@@ -1075,7 +1325,7 @@ function ensureAuthModal(){
         <p class="muted">用邮箱注册，首次需邮箱验证码（演示模式页面直接显示）。</p>
         <div class="form-row"><label>邮箱</label><input id="regEmail" type="email" placeholder="you@example.com" autocomplete="username" /></div>
         <div class="form-row"><label>密码</label><input id="regPwd" type="password" placeholder="至少 6 位" autocomplete="new-password" /></div>
-        <div class="form-row"><label>昵称</label><input id="regNick" type="text" placeholder="怎么称呼你（选填）" /></div>
+        <div class="form-row"><label>昵称</label><input id="regNick" type="text" placeholder="昵称不能和别人重复" /></div>
         <div class="form-row" id="regCodeRow" style="display:none"><label>验证码</label><input id="regCode" type="text" placeholder="6 位验证码" /></div>
         <div id="regMsg" class="result"></div>
         <button class="btn btn-primary btn-block" id="regSendBtn" onclick="regSend()">获取验证码</button>
@@ -1162,10 +1412,15 @@ async function regSubmit(){
   const code  = (document.getElementById("regCode").value || "").trim();
   const msg = document.getElementById("regMsg");
   if (!code){ msg.textContent = "请填写验证码"; return; }
+  if (nick.length > 20){ msg.textContent = "昵称最多 20 个字"; return; }
   msg.textContent = "注册中…";
   try {
     const d = await sbRpc("register_user", { p_email: email, p_code: code, p_password: pwd, p_nickname: nick });
-    if (!d || !d.ok){ msg.textContent = (d && d.msg) || "注册失败"; return; }
+    const errText = String((d && (d.msg || d.message || d.details || d.hint)) || "");
+    if (!d || !d.ok){
+      msg.textContent = /nickname|昵称|duplicate|unique/i.test(errText) ? "这个昵称已经有人用了，请换一个" : ((d && d.msg) || "注册失败");
+      return;
+    }
     localStorage.setItem(USER_TOKEN_KEY, d.token);
     msg.className = "result"; msg.innerHTML = "✅ 注册成功，已自动登录！";
     await fetchUser();
@@ -1224,10 +1479,6 @@ async function doRedeem(){
   const code = (document.getElementById("redeemCode").value || "").trim().toUpperCase();
   const msg = document.getElementById("redeemMsg");
   if (!code){ msg.textContent = "请填写激活码"; return; }
-  if (["BLYS-VIP-30"].includes(code)) {
-    msg.textContent = "该激活码已失效，请联系博主获取新的专属激活码";
-    return;
-  }
   msg.textContent = "兑换中…";
   try {
     const d = await sbRpc("redeem_code", { p_token: __user.token, p_code: code });
@@ -1247,6 +1498,33 @@ function vipGate(label){
 }
 
 // ---- 评论系统（教程页调用） ----
+let __commentReplyTargets = {};
+function commentReplyKey(article){ return String(article || 'default'); }
+function getCommentReplyTarget(article){ return __commentReplyTargets[commentReplyKey(article)] || null; }
+function clearCommentReply(article){
+  article = decodeURIComponent(String(article || ''));
+  delete __commentReplyTargets[commentReplyKey(article)];
+  const hint = document.getElementById("commentHint");
+  const btn = document.getElementById("commentBtn");
+  if (hint) hint.textContent = "";
+  if (btn) btn.textContent = "发表评论";
+}
+function replyToComment(article, id, nickname){
+  article = decodeURIComponent(String(article || ''));
+  nickname = decodeURIComponent(String(nickname || ''));
+  if (!__user.loggedIn){ openAuthModal(); return; }
+  const name = nickname || "用户";
+  __commentReplyTargets[commentReplyKey(article)] = { id, nickname: name };
+  const hint = document.getElementById("commentHint");
+  const btn = document.getElementById("commentBtn");
+  const ta = document.getElementById("commentInput");
+  if (hint) hint.innerHTML = '正在回复 <b>' + esc(name) + '</b> <button class="comment-reply-cancel" type="button" onclick="clearCommentReply(\'' + encodeURIComponent(article) + '\')">取消</button>';
+  if (btn) btn.textContent = "回复评论";
+  if (ta) ta.focus();
+}
+window.replyToComment = replyToComment;
+window.clearCommentReply = clearCommentReply;
+
 async function loadComments(article){
   const box = document.getElementById("commentList");
   if (!box) return;
@@ -1257,7 +1535,10 @@ async function loadComments(article){
       if (d.list.length === 0){ box.innerHTML = '<p class="muted">还没有评论，来抢沙发～</p>'; return; }
       box.innerHTML = d.list.map(c => `<div class="comment-item">
         <div class="comment-head"><b>${esc(c.nickname || "匿名")}</b><span class="comment-time">${fmtDateTime(c.created_at)}</span></div>
-        <div class="comment-body">${esc(c.content)}</div></div>`).join("");
+        ${c.parent_id ? `<div class="comment-reply-ref">回复 ${esc(c.parent_nickname || "用户")}：${esc(c.parent_content || "[原评论已删除]")}</div>` : ""}
+        <div class="comment-body">${esc(c.content)}</div>
+        ${__user.loggedIn ? `<button class="comment-reply-btn" type="button" onclick="replyToComment('${encodeURIComponent(String(article))}', ${Number(c.id) || 0}, '${encodeURIComponent(c.nickname || "匿名")}')">回复</button>` : ""}
+      </div>`).join("");
     } else { box.innerHTML = '<p class="muted">评论加载失败</p>'; }
   } catch(e){ box.innerHTML = '<p class="muted">评论加载失败</p>'; }
 }
@@ -1268,10 +1549,12 @@ async function submitComment(article){
   if (!content){ alert("写点什么再发吧"); return; }
   const btn = document.getElementById("commentBtn");
   try {
-    const d = await sbRpc("add_comment", { p_token: __user.token, p_article: article, p_content: content });
+    const reply = getCommentReplyTarget(article);
+    const d = await sbRpc("add_comment", { p_token: __user.token, p_article: article, p_content: content, p_parent_id: reply && reply.id ? reply.id : null });
     if (!d || !d.ok){ alert((d && d.msg) || "发送失败"); return; }
     ta.value = "";
     if (btn) btn.textContent = "已发送 ✓";
+    clearCommentReply(article);
     loadComments(article);
     setTimeout(()=>{ if (btn) btn.textContent = "发表评论"; }, 1500);
   } catch(e){ alert("网络错误"); }
@@ -1294,7 +1577,9 @@ async function submitComment(article){
   base = Math.max(3, base);
 
   function show(n){
+    window.BLYS_SITE_ONLINE_COUNT = n;
     if (numEl) numEl.textContent = n;
+    try { window.dispatchEvent(new CustomEvent("blys:online-count", { detail: { count: n } })); } catch(e){}
   }
   show(base);
   // 每 12~20 秒微调 ±1~3，模拟真实波动
@@ -1629,15 +1914,17 @@ function pinNameColumn(root){
 }
 
 // ========== 内容预览 + 登录解锁 ==========
-function injectGateMask(container, title, desc){
+function injectGateMask(container, title, desc, actionHtml){
   container.classList.add("gate-content");
-  if (container.querySelector(".gate-mask")) return; // 已存在
+  const oldMask = container.querySelector(".gate-mask");
+  if (oldMask) oldMask.remove();
   const mask = document.createElement("div");
   mask.className = "gate-mask";
+  const action = actionHtml || `<button class="btn btn-primary" onclick="openAuthModal()">注册 / 登录</button>`;
   mask.innerHTML = `<div class="gate-mask-inner">
     <h4>${title}</h4>
     <p>${desc}</p>
-    <button class="btn btn-primary" onclick="openAuthModal()">注册 / 登录</button>
+    ${action}
   </div>`;
   container.appendChild(mask);
 }
@@ -1667,13 +1954,26 @@ function initTutorialGate(){
   const tut = document.querySelector(".tutorial.gate-content, main.tutorial");
   if (!tut) return;
   const sections = Array.from(tut.querySelectorAll(".tut-section"));
-  if (__user.loggedIn) {
+  const page = tut.dataset.page || "";
+  const cost = Number(tut.dataset.cost || 0);
+  const locks = (typeof __user !== 'undefined' && __user && Array.isArray(__user.locks)) ? __user.locks : [];
+  const hasLock = page && locks.indexOf(page) >= 0;
+  const needsPoints = page && cost > 0;
+  const unlocked = __user.loggedIn && (!needsPoints || isVIP() || hasLock);
+  if (unlocked) {
     removeGateMask(tut);
     return;
   }
   sections.forEach((sec, i)=>{ if (i >= 2) sec.classList.add("gate-hidden"); });
   tut.classList.add("gate-content", "is-gated");
-  injectGateMask(tut, "登录查看完整课程", "你已阅读课程预览部分。登录后即可解锁全部章节、实战案例与评论区互动。");
+  const action = __user.loggedIn && needsPoints
+    ? `<button class="btn btn-primary" onclick='redeemContent(${JSON.stringify(page)}, ${cost})'>${cost}积分解锁</button>`
+    : undefined;
+  const title = __user.loggedIn && needsPoints ? `${cost}积分解锁完整文章` : "登录查看完整课程";
+  const desc = __user.loggedIn && needsPoints
+    ? "你已阅读文章预览部分，解锁后可长期查看完整内容。"
+    : "你已阅读课程预览部分。登录后可使用积分解锁完整内容。";
+  injectGateMask(tut, title, desc, action);
 }
 
 // 从 index.json 取出最新日期（按 date 字符串倒序，取首条非空 date）
@@ -1824,6 +2124,34 @@ function injectReviewMeta(box, date){
   const cmtSubmit = section.querySelector('.rpt-comment-submit');
   const cmtList = section.querySelector('.rpt-comment-list');
   const cmtStat = section.querySelector('.rpt-comment-stat');
+  let replyTarget = null;
+
+  function updateReplyState(){
+    let tip = section.querySelector('.rpt-comment-reply-tip');
+    if(!replyTarget){
+      if(tip) tip.remove();
+      cmtSubmit.textContent = '发表评论';
+      return;
+    }
+    if(!tip){
+      tip = document.createElement('div');
+      tip.className = 'rpt-comment-reply-tip';
+      cmtText.parentNode.insertBefore(tip, cmtText);
+    }
+    tip.innerHTML = '正在回复 <b>' + _escHtml(replyTarget.nickname || '用户') + '</b><button type="button">取消</button>';
+    tip.querySelector('button').onclick = () => {
+      replyTarget = null;
+      updateReplyState();
+    };
+    cmtSubmit.textContent = '回复评论';
+  }
+
+  function renderReplyRef(c){
+    if(!c.parent_id) return '';
+    const name = _escHtml(c.parent_nickname || '用户');
+    const text = _escHtml(c.parent_content || '[原评论已删除]').replace(/\n/g, '<br>');
+    return `<div class="rpt-comment-reply-ref">回复 ${name}：${text}</div>`;
+  }
 
   function renderComments(){
     cmtList.innerHTML = '<li class="rpt-comment-empty">加载中…</li>';
@@ -1839,7 +2167,9 @@ function injectReviewMeta(box, date){
               <span class="rpt-comment-name-text">${_escHtml(c.nickname || c.email || '用户')}</span>
               <span class="rpt-comment-time">${_fmtRelTime(new Date(c.created_at).getTime())}</span>
             </div>
+            ${renderReplyRef(c)}
             <div class="rpt-comment-body">${_escHtml(c.content || '').replace(/\n/g, '<br>')}</div>
+            <button class="rpt-comment-reply-btn" type="button" data-id="${Number(c.id) || 0}" data-name="${_escHtml(c.nickname || c.email || '用户')}">回复</button>
            </li>`
           ).join('');
       }
@@ -1880,7 +2210,7 @@ function injectReviewMeta(box, date){
     const oldLabel = cmtSubmit.textContent;
     cmtSubmit.textContent = '发送中…';
     cmtSubmit.disabled = true;
-    sbRpc('add_comment', { p_token: __user.token, p_article: 'review:' + date, p_content: text.slice(0, 500) }).then(d => {
+    sbRpc('add_comment', { p_token: __user.token, p_article: 'review:' + date, p_content: text.slice(0, 500), p_parent_id: replyTarget && replyTarget.id ? replyTarget.id : null }).then(d => {
       cmtSubmit.disabled = false;
       if(!d || !d.ok){
         cmtSubmit.textContent = oldLabel;
@@ -1888,10 +2218,12 @@ function injectReviewMeta(box, date){
         return;
       }
       cmtText.value = '';
+      replyTarget = null;
+      updateReplyState();
       renderComments();
       cmtSubmit.textContent = '已发送 ✓';
       refreshPointsUI();
-      setTimeout(()=>{ cmtSubmit.textContent = oldLabel; }, 1500);
+      setTimeout(()=>{ cmtSubmit.textContent = '发表评论'; }, 1500);
       const first = cmtList.querySelector('.rpt-comment-item');
       if(first) first.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       // 滚动到新评论
@@ -1900,6 +2232,14 @@ function injectReviewMeta(box, date){
       cmtSubmit.textContent = oldLabel;
       alert('网络错误');
     });
+  });
+
+  cmtList.addEventListener('click', (e) => {
+    const btn = e.target.closest('.rpt-comment-reply-btn');
+    if(!btn) return;
+    replyTarget = { id: Number(btn.dataset.id) || null, nickname: btn.dataset.name || '用户' };
+    updateReplyState();
+    cmtText.focus();
   });
 
   cmtText.addEventListener('keydown', (e) => {
@@ -2026,3 +2366,43 @@ function initReview(){
 window.addEventListener('popstate', () => {
   if(document.getElementById('reviewRoot')) loadFullReport();
 });
+
+
+// 全站记住上次页面：首页 HTML 被 CDN 缓存时也由 app.js 兜底
+function blysRememberCurrentPage(){
+  try {
+    var name = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+    if (['daily.html','diary.html'].indexOf(name) >= 0) {
+      localStorage.setItem('blys_last_page', name);
+    } else if (name === 'chat.html') {
+      localStorage.removeItem('blys_last_page');
+    }
+  } catch(e){}
+}
+function blysEnhanceHomeEntry(){
+  try {
+    var name = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+    var isHome = name === '' || name === 'index.html';
+    if (!isHome) { blysRememberCurrentPage(); return; }
+    var params = new URLSearchParams(location.search);
+    if (params.get('home') === '1') { localStorage.removeItem('blys_last_page'); }
+    var last = localStorage.getItem('blys_last_page') || '';
+    if (last === 'chat.html') localStorage.removeItem('blys_last_page');
+    var grid = document.querySelector('.hero .entry-grid');
+    if (!grid) return;
+    var existing = grid.querySelector('a[href="chat.html"]');
+    if (existing) return;
+    if (!existing) {
+      existing = document.createElement('a');
+      existing.className = 'entry-card';
+      existing.href = 'chat.html';
+      existing.innerHTML = '<div class="entry-icon">💬</div><div class="entry-body"><h3>聊天室</h3><p>和站友交流观点、分享经验。注册用户可发言，会员群聊为 VIP 专属，也可以在这里和站长私聊。</p><span class="entry-go">进入聊天室 →</span></div>';
+    }
+    if (grid.firstElementChild !== existing) grid.insertBefore(existing, grid.firstElementChild);
+  } catch(e){}
+}
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', blysEnhanceHomeEntry);
+} else {
+  blysEnhanceHomeEntry();
+}
