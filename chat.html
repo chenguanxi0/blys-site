@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082713" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026082810" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -1803,8 +1803,10 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         }
         if (isHistory) {
           prependChatHistory(list, 'private');
+          setTimeout(() => hydrateChatImagePlaceholders(4), 80);
         } else if (isFirst) {
           renderChatMessages(sortMessagesAsc(list), 'private', true);
+          setTimeout(() => hydrateChatImagePlaceholders(5), 120);
           if (!list.length) box.innerHTML = '<div class="chat-empty">这里是你和' + esc(currentPrivateTitle || '白鹿原上') + '的私聊</div>';
           if (list.length) {
             const minTs = list.reduce((mn, m) => Math.min(mn, m.created_at ? new Date(m.created_at).getTime() : 0), Infinity);
@@ -1813,6 +1815,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
           }
         } else {
           for (const m of list) appendChatMessage(m, 'private', { stickToBottom: shouldStickToBottom });
+          setTimeout(() => hydrateChatImagePlaceholders(3), 120);
         }
         if (!isHistory && list.length) {
           const maxTs = list.reduce((mx, m) => Math.max(mx, m.created_at ? new Date(m.created_at).getTime() : 0), 0);
@@ -1833,7 +1836,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     function renderChatMessageContent(m, room) {
       const text = (m.content || '').trim();
       const img = m.image;
-      const hasImage = !!(img || m.has_image || m.image_full);
+      const isPrivateImageFallback = room === 'private' && !m.recalled_at && !text && !img && !!m.id;
+      const hasImage = !!(img || m.has_image || m.image_full || isPrivateImageFallback);
       let html = '';
       if (m.reply_to_id) {
         const replyName = esc(m.reply_to_nickname || '群友');
@@ -1847,12 +1851,49 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       if (img) {
         html += `<img class="chat-msg-img" src="${esc(img)}" data-full-src="${esc(m.image_full || img)}" alt="图片" loading="lazy" />`;
       } else if (hasImage && m.id) {
-        html += `<button class="chat-msg-img-placeholder" type="button" data-message-id="${esc(m.id)}" data-room="${esc(room || currentRoom)}" onclick="openChatImageFromMessage('${esc(m.id)}', '${esc(room || currentRoom)}')">加载图片中</button>`;
+        html += `<button class="chat-msg-img-placeholder" type="button" data-message-id="${esc(m.id)}" data-room="${esc(room || currentRoom)}" onclick="openChatImageFromMessage('${esc(m.id)}', '${esc(room || currentRoom)}')">${isPrivateImageFallback ? '查看图片' : '加载图片中'}</button>`;
       }
       if (text) {
         html += `<div class="chat-msg-text">${esc(text).replace(/\n/g, '<br>')}</div>`;
       }
       return html || '<div class="chat-msg-text">[空消息]</div>';
+    }
+
+    function privateImageSeenText(seenAt) {
+      return seenAt ? ('对方已查看图片 · ' + fmtDateTime(seenAt)) : '等待对方查看图片';
+    }
+
+    function renderPrivateImageSeenStatus(m, room) {
+      const myEmail = (__user && __user.email) || '';
+      const hasImage = !!(m && !m.recalled_at && (m.image || m.has_image || m.image_full));
+      if (room !== 'private' || !m || !m.id || m.__pending || m.__failed || m.user_email !== myEmail || !hasImage) return '';
+      const seenAt = m.image_seen_at || '';
+      return `<div class="chat-image-seen-status${seenAt ? ' seen' : ''}" data-image-seen-id="${esc(m.id)}">${esc(privateImageSeenText(seenAt))}</div>`;
+    }
+
+    async function refreshPrivateImageSeenStatuses() {
+      if (currentRoom !== 'private' || !currentPrivateConversationId || !__user.loggedIn || !__user.token) return;
+      const box = document.getElementById('chatMessages');
+      if (!box || !box.querySelector('.chat-image-seen-status')) return;
+      try {
+        const d = await sbRpc('list_private_image_receipts', {
+          p_token: __user.token,
+          p_conversation_id: currentPrivateConversationId
+        }, { timeoutMs: 8000 });
+        const list = Array.isArray(d) ? d : (d && d.list);
+        if (!Array.isArray(list)) return;
+        list.forEach(item => {
+          const id = item && item.id ? String(item.id) : '';
+          if (!id) return;
+          const node = box.querySelector('.chat-image-seen-status[data-image-seen-id="' + id.replace(/"/g, '\\"') + '"]');
+          if (!node) return;
+          const seenAt = item.image_seen_at || '';
+          node.textContent = privateImageSeenText(seenAt);
+          node.classList.toggle('seen', !!seenAt);
+        });
+      } catch (e) {
+        console.warn('[chat] refresh private image receipts failed', e);
+      }
     }
 
     // 图片查看器（点击聊天里的图片放大查看）
@@ -2014,7 +2055,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
             <span class="chat-msg-name">${name}</span>${ownerBadge}
             ${timeHtml}
           </div>
-          ${recalled ? '<div class="chat-recalled">消息已撤回</div>' : renderChatMessageContent(m, room)}
+          ${recalled ? '<div class="chat-recalled">消息已撤回</div>' : renderChatMessageContent(m, room) + renderPrivateImageSeenStatus(m, room)}
         </div>
       </div>`;
     }
@@ -2492,7 +2533,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         if (d && d.ok) {
           const box = document.getElementById('chatMessages');
           const node = box && box.querySelector('[data-message-id="' + tempId + '"]');
-          if (node) node.outerHTML = renderChatMessageHtml(Object.assign({}, optimistic, { id: d.id, __pending: false }), 'private');
+          if (node) node.outerHTML = renderChatMessageHtml(Object.assign({}, optimistic, { id: d.id, has_image: !!image, __pending: false }), 'private');
           lastSeenTs.private = Math.max(lastSeenTs.private || 0, new Date(optimistic.created_at).getTime());
           if (shouldAutoReplyMembershipInquiry(content)) {
             await maybeSendMembershipAutoReply();
@@ -2674,17 +2715,10 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       if (file.size > 8 * 1024 * 1024) { alert('图片最大支持 8MB'); return Promise.resolve(); }
 
       // 聊天图片保留可查看清晰度，但不能把整页消息列表拖慢。
-      return compressChatImage(file, 1200, 0.82).then(({ base64, name }) => {
-        // 体积太大时逐级降档，避免会员群最近图片多时首屏卡住
-        const roughSize = Math.round(base64.length * 0.75);
-        if (roughSize > 800 * 1024) {
-          return compressChatImage(file, 960, 0.78);
-        }
-        return { base64, name };
-      }).then(({ base64, name }) => {
+      return compressChatImageSmart(file).then(({ base64, name }) => {
         const finalSize = Math.round(base64.length * 0.75);
-        if (finalSize > 900 * 1024) {
-          throw new Error('图片压缩后仍超过 900KB，请换一张更小的图片');
+        if (finalSize > 650 * 1024) {
+          throw new Error('图片压缩后仍超过 650KB，请截图裁剪后再发');
         }
         pendingChatImage = base64;
         const thumb = document.getElementById('chatImgPreviewThumb');
@@ -2698,6 +2732,22 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         alert('图片处理失败: ' + (err && err.message || '未知错误'));
         clearChatImage();
       });
+    }
+
+    async function compressChatImageSmart(file) {
+      const plans = [
+        { maxWidth: 1200, quality: 0.82 },
+        { maxWidth: 960, quality: 0.78 },
+        { maxWidth: 820, quality: 0.72 },
+        { maxWidth: 720, quality: 0.68 }
+      ];
+      let best = null;
+      for (const plan of plans) {
+        const result = await compressChatImage(file, plan.maxWidth, plan.quality);
+        best = result;
+        if (Math.round(result.base64.length * 0.75) <= 650 * 1024) return result;
+      }
+      return best;
     }
 
     function clearChatImage() {
@@ -2745,7 +2795,10 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       chatPollTimer = setInterval(() => {
         if (currentRoom === 'private') {
           if (chatHistLoading) return;
-          if (currentPrivateConversationId) loadChatMessages('private');
+          if (currentPrivateConversationId) {
+            loadChatMessages('private');
+            refreshPrivateImageSeenStatuses();
+          }
           else if (isBlysAdminUser()) loadPrivateConversations({ silent: true });
           return;
         }

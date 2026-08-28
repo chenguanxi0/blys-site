@@ -1634,6 +1634,14 @@ html.blys-native-app body.chat-body .chat-notif-float {
   cursor:zoom-in; background:#fff; display:block;
 }
 .chat-msg-me .chat-msg-img { border-color:rgba(255,255,255,.3); }
+.chat-image-seen-status {
+  margin-top:4px;
+  text-align:right;
+  color:#94a3b8;
+  font-size:11px;
+  line-height:1.4;
+}
+.chat-image-seen-status.seen { color:#22c55e; }
 
 /* 聊天图片查看器（点击放大） */
 .chat-img-viewer {
