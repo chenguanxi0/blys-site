@@ -1,4 +1,4 @@
-const CACHE_NAME = 'blys-v28';
+const CACHE_NAME = 'blys-v29';
 const ASSETS = [
   '/',
   '/index.html',
@@ -16,7 +16,18 @@ const ASSETS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+    caches.open(CACHE_NAME).then(async (cache) => {
+      // 预缓存中个别页面可能尚未部署；不能因此让整个 Service Worker 安装失败，
+      // 否则 Chrome 会一直卡在 “SW ready timeout”，浏览器提醒只能退回页内提醒。
+      await Promise.all(ASSETS.map(async (url) => {
+        try {
+          const response = await fetch(url, { cache: 'no-cache' });
+          if (response.ok) await cache.put(url, response);
+        } catch (e) {
+          // 离线或单个资源缺失时跳过，Worker 仍可正常激活并接收推送。
+        }
+      }));
+    })
   );
   self.skipWaiting();
 });
