@@ -2045,6 +2045,10 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       const canRecall = room !== 'private' && isMe && !pending && !failed && !m.recalled_at && m.id && m.created_at && (Date.now() - new Date(m.created_at).getTime() <= 2 * 60 * 1000);
       const recalled = !!m.recalled_at;
       const stateCls = pending ? ' chat-msg-pending' : (failed ? ' chat-msg-failed' : '');
+      if (recalled) {
+        const recalledName = isMe ? '你' : name;
+        return `<div class="chat-msg chat-msg-recalled" data-message-id="${esc(m.id || '')}" data-room="${esc(room)}"><span class="chat-recalled">${recalledName} 撤回了一条消息</span></div>`;
+      }
       const pendingText = m.__sendState || '发送中…';
       const timeHtml = failed
         ? `<span class="chat-msg-state chat-msg-state-failed">发送失败 <button type="button" class="chat-retry-btn" onclick="retryChatSend('${esc(m.id)}')">重试</button></span>`
@@ -2064,7 +2068,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
             <span class="chat-msg-name">${name}</span>${ownerBadge}
             ${timeHtml}
           </div>
-          ${recalled ? '<div class="chat-recalled">消息已撤回</div>' : renderChatMessageContent(m, room) + renderPrivateImageSeenStatus(m, room)}
+          ${renderChatMessageContent(m, room) + renderPrivateImageSeenStatus(m, room)}
         </div>
       </div>`;
     }
