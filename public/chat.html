@@ -252,7 +252,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    const BLYS_CHAT_PUSH_VERSION = '2026082901';
+    const BLYS_CHAT_PUSH_VERSION = '2026082902';
     console.log('[chat] build v' + BLYS_CHAT_PUSH_VERSION + ' (notification recovery)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
@@ -3110,9 +3110,30 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       return msg.includes('subscribe push timeout');
     }
 
+    async function getActiveChatServiceWorker(registration) {
+      let reg = registration;
+      if (!reg) {
+        reg = await navigator.serviceWorker.register('sw.js?v=' + BLYS_CHAT_PUSH_VERSION, { updateViaCache: 'none' });
+      }
+      if (!reg.active) {
+        const worker = reg.installing || reg.waiting;
+        if (worker) {
+          await chatWithTimeout(new Promise((resolve) => {
+            if (worker.state === 'activated') return resolve();
+            worker.addEventListener('statechange', () => {
+              if (worker.state === 'activated' || worker.state === 'redundant') resolve();
+            }, { once: false });
+          }), 15000, 'SW activate');
+        }
+      }
+      const ready = await chatWithTimeout(navigator.serviceWorker.ready, 15000, 'SW ready');
+      if (!ready.active) throw new Error('SW active failed');
+      return ready;
+    }
+
     async function recoverExistingChatPushSubscription() {
       if (!supportsSystemPush() || !__user.loggedIn || !__user.token) return null;
-      const reg = await chatWithTimeout(navigator.serviceWorker.ready, 12000, 'SW ready');
+      const reg = await getActiveChatServiceWorker();
       const sub = await chatWithTimeout(reg.pushManager.getSubscription(), 12000, 'get subscription');
       if (!sub) return null;
       const saved = await saveChatPushSubscription(sub);
@@ -3186,13 +3207,14 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         console.warn('[chat] rebuild service worker scan failed', e);
       }
       try {
-        return await navigator.serviceWorker.register('sw.js?v=' + BLYS_CHAT_PUSH_VERSION, { updateViaCache: 'none' });
+        const reg = await navigator.serviceWorker.register('sw.js?v=' + BLYS_CHAT_PUSH_VERSION, { updateViaCache: 'none' });
+        return await getActiveChatServiceWorker(reg);
       } catch (e) {
         throw new Error('SW rebuild failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
     }
 
-    async function subscribeChatPush(retryMode) {
+    async function subscribeChatPush(retryMode, registration) {
       if (!supportsSystemPush()) throw new Error('当前浏览器不支持系统推送');
       if (!__user.loggedIn || !__user.token) throw new Error('请先登录后再开启提醒');
       const permission = Notification.permission === 'granted'
@@ -3202,7 +3224,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
 
       let reg;
       try {
-        reg = await navigator.serviceWorker.ready;
+        reg = await getActiveChatServiceWorker(registration);
       } catch (e) {
         throw new Error('SW ready failed: ' + ((e && e.message) ? e.message : 'unknown'));
       }
@@ -3230,16 +3252,16 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         if (retryMode === 'after-reset') throw e;
         console.warn('[chat] subscribe failed, retry after reset', e);
         await clearChatPushSubscription(reg);
-        await rebuildChatServiceWorker();
-        return subscribeChatPush('after-reset');
+        const replacement = await rebuildChatServiceWorker();
+        return subscribeChatPush('after-reset', replacement);
       }
     }
 
     async function repairAndSubscribeChatPush() {
       setNotifDiag('正在重建浏览器提醒组件...');
-      await rebuildChatServiceWorker();
+      const reg = await rebuildChatServiceWorker();
       setNotifDiag('正在向浏览器申请推送订阅...');
-      const sub = await subscribeChatPush('after-reset');
+      const sub = await subscribeChatPush('after-reset', reg);
       setNotifDiag('系统弹窗提醒已开启');
       return sub;
     }
