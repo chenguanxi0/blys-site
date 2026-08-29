@@ -252,7 +252,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    const BLYS_CHAT_PUSH_VERSION = '2026082904';
+    const BLYS_CHAT_PUSH_VERSION = '2026082905';
     console.log('[chat] build v' + BLYS_CHAT_PUSH_VERSION + ' (notification recovery)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
@@ -1819,6 +1819,11 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         } else {
           for (const m of list) appendChatMessage(m, 'private', { stickToBottom: shouldStickToBottom });
           setTimeout(() => hydrateChatImagePlaceholders(3), 120);
+          // 浏览器后台推送不可用时，只要聊天室标签仍开着，就用本地轮询补发私聊弹窗。
+          // 该路径只依赖网站接口和浏览器通知权限，不依赖 Chrome/FCM。
+          const myEmail = (__user && __user.email) || '';
+          const fresh = list.filter(m => m.user_email !== myEmail);
+          if (fresh.length) maybeShowClientFallbackNotification('private', fresh);
         }
         if (!isHistory && list.length) {
           const maxTs = list.reduce((mx, m) => Math.max(mx, m.created_at ? new Date(m.created_at).getTime() : 0), 0);
@@ -3494,7 +3499,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     function shouldShowClientPopupForRoom(room) {
       if (isBlysAdminUser()) return true;
       if (room === 'public') return !!(__user && __user.loggedIn && !__user.isVip);
-      if (room === 'vip') return !!(__user && __user.loggedIn && __user.isVip);
+      if (room === 'vip' || room === 'vip_chat') return !!(__user && __user.loggedIn && __user.isVip);
+      if (room === 'private') return !!(__user && __user.loggedIn);
       return false;
     }
 
