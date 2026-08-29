@@ -252,7 +252,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    const BLYS_CHAT_PUSH_VERSION = '2026082902';
+    const BLYS_CHAT_PUSH_VERSION = '2026082903';
     console.log('[chat] build v' + BLYS_CHAT_PUSH_VERSION + ' (notification recovery)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
@@ -3126,9 +3126,12 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
           }), 15000, 'SW activate');
         }
       }
+      // 注册对象本身先变为 active 时，直接使用它；避免刚注销旧 Worker 后
+      // navigator.serviceWorker.ready 短暂返回旧注册对象，从而误报没有 active Worker。
+      if (reg.active) return reg;
       const ready = await chatWithTimeout(navigator.serviceWorker.ready, 15000, 'SW ready');
-      if (!ready.active) throw new Error('SW active failed');
-      return ready;
+      if (ready.active) return ready;
+      throw new Error('SW active failed');
     }
 
     async function recoverExistingChatPushSubscription() {
@@ -3192,21 +3195,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     async function rebuildChatServiceWorker() {
       if (!('serviceWorker' in navigator)) return navigator.serviceWorker.ready;
       try {
-        const regs = await navigator.serviceWorker.getRegistrations();
-        for (const reg of regs) {
-          const url = reg.active && reg.active.scriptURL ? reg.active.scriptURL : '';
-          const waiting = reg.waiting && reg.waiting.scriptURL ? reg.waiting.scriptURL : '';
-          const installing = reg.installing && reg.installing.scriptURL ? reg.installing.scriptURL : '';
-          const hit = [url, waiting, installing].some((s) => String(s).includes('/sw.js'));
-          if (hit) {
-            try { await clearChatPushSubscription(reg); } catch (e) {}
-            try { await reg.unregister(); } catch (e) {}
-          }
-        }
-      } catch (e) {
-        console.warn('[chat] rebuild service worker scan failed', e);
-      }
-      try {
+        // 只检查并更新新版 Worker。不能先注销旧 Worker 或取消旧订阅，
+        // 否则在 Chrome 激活窗口期会造成 “no active Service Worker”。
         const reg = await navigator.serviceWorker.register('sw.js?v=' + BLYS_CHAT_PUSH_VERSION, { updateViaCache: 'none' });
         return await getActiveChatServiceWorker(reg);
       } catch (e) {
