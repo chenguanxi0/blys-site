@@ -252,7 +252,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    const BLYS_CHAT_PUSH_VERSION = '2026082810';
+    const BLYS_CHAT_PUSH_VERSION = '2026082704';
     console.log('[chat] build v' + BLYS_CHAT_PUSH_VERSION + ' (notification recovery)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
@@ -2912,15 +2912,12 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       browserAutoResetRunning = true;
       try {
         sessionStorage.setItem(key, 'done');
-        setNotifDiag('正在检查已有浏览器提醒...');
-        const existing = await getExistingChatPushSubscription();
-        if (existing) {
-          markChatPushEnabled('系统弹窗提醒已开启');
-          saveChatPushSubscription(existing).catch((e) => console.warn('[chat] auto recovery sync failed', e));
-          return;
-        }
+        setNotifDiag('正在刷新浏览器提醒...');
+        await unsubscribeChatPush();
         await subscribeChatPush();
-        markChatPushEnabled('系统弹窗提醒已开启');
+        notifEnabled = true;
+        localStorage.setItem('blys_notif', 'on');
+        setNotifDiag('系统弹窗提醒已开启');
       } catch (e) {
         sessionStorage.removeItem(key);
         console.warn('[chat] browser notification auto reset failed', reason, e);
@@ -3097,12 +3094,6 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       return sub;
     }
 
-    async function getExistingChatPushSubscription() {
-      if (!supportsSystemPush()) return null;
-      const reg = await chatWithTimeout(navigator.serviceWorker.ready, 12000, 'SW ready');
-      return chatWithTimeout(reg.pushManager.getSubscription(), 12000, 'get subscription');
-    }
-
     function markChatPushEnabled(message) {
       notifEnabled = true;
       localStorage.setItem('blys_notif', 'on');
@@ -3219,17 +3210,10 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     }
 
     async function repairAndSubscribeChatPush() {
-      // 不要在每次用户开关时都注销 SW：Chrome 在同一浏览器切换账号后，
-      // 注销中的旧 registration 会让新的 PushManager.subscribe 一直挂起。
-      setNotifDiag('正在检查已有浏览器推送订阅...');
-      let sub = await getExistingChatPushSubscription();
-      if (!sub) {
-        setNotifDiag('正在向浏览器申请推送订阅...');
-        sub = await subscribeChatPush();
-      } else {
-        // 订阅本身已经有效；服务器同步失败不应把界面错误降级为“当前页弹窗”。
-        saveChatPushSubscription(sub).catch((e) => console.warn('[chat] existing push sync failed', e));
-      }
+      setNotifDiag('正在重建浏览器提醒组件...');
+      await rebuildChatServiceWorker();
+      setNotifDiag('正在向浏览器申请推送订阅...');
+      const sub = await subscribeChatPush('after-reset');
       setNotifDiag('系统弹窗提醒已开启');
       return sub;
     }
@@ -3254,14 +3238,11 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       if (Notification.permission !== 'granted') return;
       if (!__user.loggedIn || !__user.token) return;
       try {
-        const existing = await getExistingChatPushSubscription();
-        if (existing) {
-          markChatPushEnabled('系统弹窗提醒已开启');
-          saveChatPushSubscription(existing).catch((e) => console.warn('[chat] background push sync failed', e));
-          return;
-        }
         await subscribeChatPush();
-        markChatPushEnabled('系统弹窗提醒已开启');
+        notifEnabled = true;
+        localStorage.setItem('blys_notif', 'on');
+        setNotifDiag('系统弹窗提醒已开启');
+        updateNotifBtn();
       } catch (e) {
         notifEnabled = false;
         setNotifDiag(getNotifErrorText(e));
@@ -3321,10 +3302,10 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       }
       // 优先显示「页内提醒」状态（任何浏览器都生效，且可持久化）
       if (inAppNotifOn) {
-        btn.textContent = '📬 当前页弹窗';
+        btn.textContent = '📬 页内提醒';
         btn.classList.add('on');
-        btn.title = '页面打开时会显示浏览器本地弹窗；后台系统推送仍在恢复中';
-        if (!notifDiagMsg) setNotifDiag('当前页弹窗已开启，后台系统推送恢复中');
+        btn.title = '页内未读提醒已开启（切走再回来会看到未读横幅）';
+        if (!notifDiagMsg) setNotifDiag('当前只开启了页内提醒');
         return;
       }
       // 未开启
@@ -3533,15 +3514,20 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
 
     async function triggerPrivatePushNotification(message) {
       if (!message || !message.conversationId || !__user || !__user.loggedIn || !__user.token) return;
+      const body = {
+        token: __user.token,
+        conversation_id: message.conversationId,
+        content: message.content || '',
+        image: !!message.image
+      };
       try {
-        const body = { token: __user.token, conversation_id: message.conversationId, content: message.content || '', image: !!message.image };
-        const [web, native] = await Promise.allSettled([
+        const results = await Promise.allSettled([
           callEdge('notify-private-chat', body),
           callEdge('notify-private-native-chat', body)
         ]);
-        console.log('[chat] private push results', web, native);
+        console.log('[chat] private push results', results);
       } catch (e) {
-        // 私聊已成功发送；推送失败不能影响消息本身。
+        // 私聊本身已成功发送；推送失败不影响消息。
         console.warn('[chat] private push failed', e);
       }
     }

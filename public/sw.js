@@ -1,8 +1,8 @@
-const CACHE_NAME = 'blys-v30';
+const CACHE_NAME = 'blys-v28';
 const ASSETS = [
   '/',
   '/index.html',
-  '/chat.html?v=2026082805',
+  '/chat.html?v=2026082704',
   '/daily.html',
   '/diary.html?v=2026082102',
   '/changelog.html',
@@ -16,10 +16,9 @@ const ASSETS = [
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => Promise.all(ASSETS.map((asset) => cache.add(asset).catch(() => null))))
-      .then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
   );
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
@@ -39,7 +38,7 @@ self.addEventListener('push', (event) => {
       body: data.body || '聊天室有新消息',
       icon: '/assets/favicon.png',
       badge: '/assets/favicon.png',
-      tag: (data.tag || 'chat-message') + '-' + Date.now(),
+      tag: data.tag || 'chat-message',
       renotify: true,
       data: { url: data.url || '/chat.html' }
     })
