@@ -252,7 +252,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    const BLYS_CHAT_PUSH_VERSION = '2026082905';
+    const BLYS_CHAT_PUSH_VERSION = '2026082906';
     console.log('[chat] build v' + BLYS_CHAT_PUSH_VERSION + ' (notification recovery)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
@@ -3244,11 +3244,10 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         if (!saved) throw new Error('订阅保存失败，请确认已执行 push_upgrade.sql');
         return sub;
       } catch (e) {
-        if (retryMode === 'after-reset') throw e;
-        console.warn('[chat] subscribe failed, retry after reset', e);
-        await clearChatPushSubscription(reg);
-        const replacement = await rebuildChatServiceWorker();
-        return subscribeChatPush('after-reset', replacement);
+        // 读取、保存或网络短暂失败时，绝不能自动取消已有订阅。
+        // 旧逻辑会把可用订阅删掉再重建，导致一次波动后永久退回页内提醒。
+        console.warn('[chat] subscribe failed; preserving existing subscription', e);
+        throw e;
       }
     }
 
