@@ -3044,8 +3044,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     }
 
     function shouldShowNotifDiag() {
-      const email = __user && __user.email ? String(__user.email).trim().toLowerCase() : '';
-      return email === '809134100@qq.com' || email === '915877953@qq.com';
+      // 浏览器/APP 排查结束后不再向任何用户展示内部诊断信息。
+      return false;
     }
 
     function setNotifDiag(msg) {
