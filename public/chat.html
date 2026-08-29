@@ -252,7 +252,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    const BLYS_CHAT_PUSH_VERSION = '2026082906';
+    const BLYS_CHAT_PUSH_VERSION = '2026082907';
     console.log('[chat] build v' + BLYS_CHAT_PUSH_VERSION + ' (notification recovery)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
@@ -2058,7 +2058,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       const avatarTitle = canQuickRenew ? '长按或右键续30天' : (isAdminMsg ? '群主' : (isMe ? '自己' : '发起私聊'));
       return `<div class="chat-msg ${isMe ? 'chat-msg-me' : 'chat-msg-other'}${isAdminMsg ? ' chat-msg-admin' : ''}${stateCls}" data-message-id="${esc(m.id || '')}" data-room="${esc(room)}">
         ${canRecall ? `<button class="chat-recall-btn" type="button" onclick="recallChatMessage('${esc(m.id)}')">撤回</button>` : ''}
-        <button class="chat-msg-avatar${isPrivateVip ? ' chat-private-vip' : ''}" type="button" title="${avatarTitle}"${avatarRenewAttrs} onclick="startPrivateFromMessage('${avatarEmail}','${avatarName}')">${isPrivateVip ? '<span class="chat-private-vip-badge">会员</span>' : ''}${avatarLabel}</button>
+        <button class="chat-msg-avatar${isPrivateVip ? ' chat-private-vip' : ''}" type="button" title="${avatarTitle}"${avatarRenewAttrs} onclick="startPrivateFromMessage('${avatarEmail}','${avatarName}')">${isAdminMsg ? '<span class="chat-owner-avatar-badge">群主</span>' : ''}${isPrivateVip ? '<span class="chat-private-vip-badge">会员</span>' : ''}${avatarLabel}</button>
         <div class="chat-msg-body">
           <div class="chat-msg-meta">
             <span class="chat-msg-name">${name}</span>${ownerBadge}
