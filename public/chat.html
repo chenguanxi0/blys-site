@@ -2038,7 +2038,6 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       const isAdminMsg = isAdminMessage(m);
       const isPrivateVip = room === 'private' && !isAdminMsg && (isMe ? !!(__user && __user.isVip) : currentPrivateUserIsVip);
       const avatarLabel = isAdminMsg ? '主' : name.charAt(0).toUpperCase();
-      const ownerBadge = isAdminMsg ? '<span class="chat-owner-badge">群主</span>' : '';
       chatMessageCache.set(`${room}:${m.id}`, m);
       const pending = !!m.__pending;
       const failed = !!m.__failed;
@@ -2065,7 +2064,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         <button class="chat-msg-avatar${isPrivateVip ? ' chat-private-vip' : ''}" type="button" title="${avatarTitle}"${avatarRenewAttrs} onclick="startPrivateFromMessage('${avatarEmail}','${avatarName}')">${isAdminMsg ? '<span class="chat-owner-avatar-badge">群主</span>' : ''}${isPrivateVip ? '<span class="chat-private-vip-badge">会员</span>' : ''}${avatarLabel}</button>
         <div class="chat-msg-body">
           <div class="chat-msg-meta">
-            <span class="chat-msg-name">${name}</span>${ownerBadge}
+            <span class="chat-msg-name">${name}</span>
             ${timeHtml}
           </div>
           ${renderChatMessageContent(m, room) + renderPrivateImageSeenStatus(m, room)}
