@@ -2896,8 +2896,9 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     let browserAutoResetRunning = false;
     function scheduleBrowserNotificationAutoReset(reason) {
       if (isNativeNotificationApp()) return;
-      if (!supportsSystemPush()) return;
-      setTimeout(() => autoResetBrowserNotification(reason), reason === 'init' ? 1200 : 300);
+      // 浏览器订阅不能在后台自动“重置”：旧逻辑会先取消已有效的订阅，
+      // Chrome 在重新创建订阅超时时，用户就只剩页内提醒。这里只做只读诊断。
+      setTimeout(refreshBrowserPushDiag, reason === 'init' ? 1200 : 300);
     }
 
     async function autoResetBrowserNotification(reason) {
@@ -3039,7 +3040,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
 
     function shouldShowNotifDiag() {
       const email = __user && __user.email ? String(__user.email).trim().toLowerCase() : '';
-      return email === '809134100@qq.com';
+      return email === '809134100@qq.com' || email === '915877953@qq.com';
     }
 
     function setNotifDiag(msg) {
@@ -3048,7 +3049,32 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       if (!el) return;
       el.textContent = notifDiagMsg;
       el.hidden = !notifDiagMsg || !shouldShowNotifDiag();
-      el.style.whiteSpace = isNativeNotificationApp() ? 'pre-line' : 'normal';
+      el.style.whiteSpace = 'pre-line';
+    }
+
+    async function refreshBrowserPushDiag() {
+      if (isNativeNotificationApp() || !shouldShowNotifDiag()) return;
+      const lines = ['浏览器弹窗诊断（只读，不会重置订阅）'];
+      const permission = (typeof Notification === 'undefined') ? '不支持' : Notification.permission;
+      lines.push('通知权限：' + permission);
+      lines.push('浏览器能力：' + (supportsSystemPush() ? '支持 Web Push' : '不支持 Web Push'));
+      lines.push('登录状态：' + (__user && __user.loggedIn ? '已登录' : '未登录'));
+      if (!supportsSystemPush()) {
+        setNotifDiag(lines.join('\n'));
+        return;
+      }
+      try {
+        const reg = await chatWithTimeout(navigator.serviceWorker.ready, 12000, 'SW ready');
+        const script = reg && reg.active && reg.active.scriptURL ? new URL(reg.active.scriptURL).pathname : '等待激活';
+        lines.push('Service Worker：已就绪（' + script + '）');
+        const sub = await chatWithTimeout(reg.pushManager.getSubscription(), 12000, 'get subscription');
+        lines.push('本机浏览器订阅：' + (sub ? '已存在' : '不存在'));
+        if (sub) lines.push('订阅端点：' + (sub.endpoint && sub.endpoint.includes('fcm.googleapis.com') ? 'Chrome/FCM' : '已存在'));
+      } catch (e) {
+        lines.push('Service Worker / 订阅读取失败：' + ((e && e.message) ? e.message : 'unknown'));
+      }
+      lines.push('页面提醒开关：' + (localStorage.getItem('blys_notif') === 'on' ? '系统弹窗' : (localStorage.getItem('blys_notif_inapp') === 'on' ? '页内提醒' : '关闭')));
+      setNotifDiag(lines.join('\n'));
     }
 
     function urlBase64ToUint8Array(base64String) {
