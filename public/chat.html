@@ -252,7 +252,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    const BLYS_CHAT_PUSH_VERSION = '2026082903';
+    const BLYS_CHAT_PUSH_VERSION = '2026082904';
     console.log('[chat] build v' + BLYS_CHAT_PUSH_VERSION + ' (notification recovery)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
@@ -3436,8 +3436,9 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         if (recovered) {
           markChatPushEnabled('系统弹窗提醒已开启');
         } else if (isChatPushTimeoutError(e)) {
-          setNotifDiag('Chrome 推送订阅超时，已开启页内提醒；后台会自动重试。');
-          scheduleChatPushBackgroundRetry();
+          // Chrome 已在内部做指数退避重试；网页再并发调用 subscribe 会生成多条
+          // 注册请求，反而延长恢复时间。保留当前请求，等待 Chrome 自己完成即可。
+          setNotifDiag('Chrome 正在后台登记浏览器订阅，暂时使用页内提醒。请保持页面打开约 8 分钟，不要重复点击；随后刷新页面即可完成绑定。');
         } else {
           setNotifDiag(getNotifErrorText(e));
         }
