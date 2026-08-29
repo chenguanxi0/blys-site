@@ -1595,21 +1595,21 @@ html.blys-native-app body.chat-body .chat-notif-float {
 .chat-msg-avatar:hover { filter:brightness(.96); transform:translateY(-1px); }
 .chat-msg-me .chat-msg-avatar { background:linear-gradient(135deg, #3b82f6, #60a5fa); }
 .chat-msg-admin .chat-msg-avatar {
-  background:linear-gradient(145deg, #38bdf8 0%, #2563eb 52%, #4f46e5 100%);
-  border:2px solid #eff6ff;
-  box-shadow:0 0 0 3px rgba(59,130,246,.22), 0 7px 16px rgba(37,99,235,.25);
+  background:linear-gradient(145deg, #fb7185 0%, #be123c 52%, #881337 100%);
+  border:2px solid #fff1f2;
+  box-shadow:0 0 0 3px rgba(244,63,94,.20), 0 7px 16px rgba(190,18,60,.25);
   position:relative;
 }
 .chat-msg-admin .chat-msg-avatar::after {
   content:'';
   position:absolute; right:-3px; bottom:-3px; width:11px; height:11px;
-  border-radius:50%; background:#60a5fa; border:2px solid #fff;
+  border-radius:50%; background:#fb7185; border:2px solid #fff;
 }
 .chat-owner-avatar-badge {
   position:absolute; z-index:2; left:-7px; top:-8px; height:15px; padding:0 4px;
   border-radius:999px; display:flex; align-items:center; justify-content:center;
-  background:linear-gradient(135deg, #4338ca, #2563eb); color:#f8fbff;
-  border:1px solid rgba(255,255,255,.9); box-shadow:0 2px 5px rgba(49,46,129,.3);
+  background:linear-gradient(135deg, #9f1239, #be123c); color:#fff8f8;
+  border:1px solid rgba(255,255,255,.9); box-shadow:0 2px 5px rgba(136,19,55,.3);
   font-size:9px; line-height:1; font-weight:800; letter-spacing:.2px;
 }
 .chat-owner-badge {
@@ -1617,7 +1617,7 @@ html.blys-native-app body.chat-body .chat-notif-float {
   border-radius:999px; background:linear-gradient(135deg, #fff7d6, #ffedd5); color:#9a3412;
   border:1px solid #fbbf24; font-size:11px; font-weight:800; box-shadow:0 1px 3px rgba(180,83,9,.14);
 }
-.chat-msg-admin .chat-msg-name { color:#1d4ed8; font-weight:800; }
+.chat-msg-admin .chat-msg-name { color:#9f1239; font-weight:800; }
 .chat-msg-body { max-width:70%; width:fit-content; flex:0 0 auto; min-width:0; }
 .chat-msg-meta { display:flex; align-items:center; gap:8px; margin-bottom:4px; font-size:12px; }
 .chat-msg-me .chat-msg-meta { justify-content:flex-end; }
@@ -1639,12 +1639,12 @@ html.blys-native-app body.chat-body .chat-notif-float {
 }
 .chat-msg-me .chat-msg-text { background:var(--brand); color:#fff; border-color:var(--brand); }
 .chat-msg-admin .chat-msg-text {
-  background:linear-gradient(135deg, #f8fcff 0%, #edf6ff 100%); color:#1e3a8a;
-  border-color:#93c5fd; box-shadow:0 4px 12px rgba(37,99,235,.11);
+  background:linear-gradient(135deg, #fff8f8 0%, #fff1f2 100%); color:#881337;
+  border-color:#fda4af; box-shadow:0 4px 12px rgba(190,18,60,.11);
 }
 .chat-msg-admin.chat-msg-me .chat-msg-text {
-  background:linear-gradient(135deg, #2563eb 0%, #4338ca 100%); color:#f8fbff; border-color:#2563eb;
-  box-shadow:0 5px 14px rgba(49,46,129,.23);
+  background:linear-gradient(135deg, #be123c 0%, #881337 100%); color:#fff8f8; border-color:#be123c;
+  box-shadow:0 5px 14px rgba(136,19,55,.23);
 }
 .chat-msg-img {
   max-width:100%; max-height:240px; width:auto; height:auto; object-fit:contain;
