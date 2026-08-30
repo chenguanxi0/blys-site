@@ -145,7 +145,7 @@
     const ADMIN_TOKEN_KEY = "blys_admin_token";
     const MONTHLY_MEMBER_STATS_KEY = "blys_admin_monthly_member_stats_v1";
     let monthlyMemberStatsExpanded = false;
-    let vipMembersExpanded = false;
+    let normalUsersExpanded = false;
 
     async function sbRpc(fn, params){
       const r = await fetch(SB_URL + "/rest/v1/rpc/" + fn, {
@@ -353,16 +353,18 @@
       const normalUsers = users.filter(u => !u.is_vip);
       const row = u => `<tr class="${vipRemainClass(u.vip_expire)}"><td>${esc(u.nickname||'')}</td><td class="email">${esc(u.email||'')}</td><td>${u.created_at?fmt(u.created_at):'-'}</td><td>${u.is_vip?'是':'否'}</td><td>${u.vip_started_at?fmt(u.vip_started_at):'-'}</td><td>${vipDays(u.vip_started_at)}</td><td>${u.vip_expire?fmt(u.vip_expire):'-'}</td><td><span class="${vipRemainTextClass(u.vip_expire)}">${vipRemainDays(u.vip_expire)}</span></td><td><button onclick="openVipModal('${jsStr(u.email||'')}')">设会员</button><button class="renew" onclick="renewVip30('${jsStr(u.email||'')}','${jsStr(u.vip_expire||'')}')">续30天</button></td></tr>`;
       const head = '<tr><th>昵称</th><th>邮箱</th><th>注册时间</th><th>会员</th><th>开通时间</th><th>会员天数</th><th>到期时间</th><th>剩余天数</th><th>操作</th></tr>';
-      const memberSection = '<div class="admin-form-actions" style="justify-content:space-between;margin:24px 0 10px;">' +
-        '<h3 style="margin:0;">⭐ 会员专区（' + members.length + ' 人，按开通时间由近到远）</h3>' +
-        '<button class="btn btn-secondary" type="button" onclick="toggleVipMembers()">' + (vipMembersExpanded ? '收起会员' : '展开会员') + '</button>' +
+      const normalSection = '<div class="admin-form-actions" style="justify-content:space-between;margin:0 0 10px;">' +
+        '<h3 style="margin:0;">普通用户（' + normalUsers.length + ' 人）</h3>' +
+        '<button class="btn btn-secondary" type="button" onclick="toggleNormalUsers()">' + (normalUsersExpanded ? '收起普通用户' : '展开普通用户') + '</button>' +
         '</div>' +
-        (vipMembersExpanded ? '<table class="admin-table">' + head + members.map(row).join('') + '</table>' : '');
-      box.innerHTML = '<table class="admin-table">' + head + normalUsers.map(row).join('') + '</table>' + memberSection;
+        (normalUsersExpanded ? '<table class="admin-table">' + head + normalUsers.map(row).join('') + '</table>' : '');
+      const memberSection = '<h3 style="margin:24px 0 10px;">⭐ 会员专区（' + members.length + ' 人，按开通时间由近到远）</h3>' +
+        '<table class="admin-table">' + head + members.map(row).join('') + '</table>';
+      box.innerHTML = normalSection + memberSection;
     }
 
-    function toggleVipMembers(){
-      vipMembersExpanded = !vipMembersExpanded;
+    function toggleNormalUsers(){
+      normalUsersExpanded = !normalUsersExpanded;
       loadUsers();
     }
 
