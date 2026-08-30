@@ -2058,7 +2058,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       const avatarRenewAttrs = canQuickRenew
         ? ` data-quick-renew-email="${avatarEmail}" data-quick-renew-name="${avatarName}"`
         : '';
-      const avatarTitle = canQuickRenew ? '长按或右键续30天' : (isAdminMsg ? '群主' : (isMe ? '自己' : '发起私聊'));
+      const avatarTitle = canQuickRenew ? '长按或右键续31天' : (isAdminMsg ? '群主' : (isMe ? '自己' : '发起私聊'));
       return `<div class="chat-msg ${isMe ? 'chat-msg-me' : 'chat-msg-other'}${isAdminMsg ? ' chat-msg-admin' : ''}${stateCls}" data-message-id="${esc(m.id || '')}" data-room="${esc(room)}">
         ${canRecall ? `<button class="chat-recall-btn" type="button" onclick="recallChatMessage('${esc(m.id)}')">撤回</button>` : ''}
         <button class="chat-msg-avatar${isPrivateVip ? ' chat-private-vip' : ''}" type="button" title="${avatarTitle}"${avatarRenewAttrs} onclick="startPrivateFromMessage('${avatarEmail}','${avatarName}')">${isAdminMsg ? '<span class="chat-owner-avatar-badge">群主</span>' : ''}${isPrivateVip ? '<span class="chat-private-vip-badge">会员</span>' : ''}${avatarLabel}</button>
@@ -2090,14 +2090,14 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       const nickname = decodeURIComponent(encodedName || '');
       if (!email || !__user.loggedIn || !isBlysAdminUser()) return;
       const label = nickname && nickname !== email ? nickname + '（' + email + '）' : email;
-      if (!confirm('确认给 ' + label + ' 续 30 天会员？')) return;
+      if (!confirm('确认给 ' + label + ' 续 31 天会员？')) return;
       try {
         const d = await sbRpc('admin_extend_vip', {
           p_admin_token: __user.token,
           p_email: email,
-          p_days: 30
+          p_days: 31
         }, { timeoutMs: 10000 });
-        alert(d && d.ok ? ('已续 30 天，到期：' + fmtDateTime(d.vip_expire)) : ('续费失败：' + ((d && d.msg) || '未知错误')));
+        alert(d && d.ok ? ('已续 31 天，到期：' + fmtDateTime(d.vip_expire)) : ('续费失败：' + ((d && d.msg) || '未知错误')));
       } catch (e) {
         alert('续费失败：' + (e && e.message ? e.message : '网络异常'));
       }

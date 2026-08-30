@@ -81,7 +81,11 @@
       <div class="panel">
         <div class="admin-form-actions" style="justify-content:space-between;margin-bottom:14px;">
           <h2 style="margin:0;">月度会员数量统计</h2>
-          <button class="btn btn-secondary" id="monthlyMemberStatsToggle" onclick="toggleMonthlyMemberStats()">展开</button>
+          <div class="admin-form-actions" style="margin:0;">
+            <span class="admin-save-msg" id="monthlyMemberStatsMsg"></span>
+            <button class="btn btn-primary" type="button" onclick="saveMonthlyMemberStatsFromForm()">保存数量</button>
+            <button class="btn btn-secondary" id="monthlyMemberStatsToggle" onclick="toggleMonthlyMemberStats()">展开</button>
+          </div>
         </div>
         <div class="table-wrap" id="monthlyMemberStats">加载中...</div>
       </div>
@@ -261,11 +265,7 @@
     function updateMonthlyMemberStat(input){
       const month = input && input.dataset ? input.dataset.month : '';
       if(!month) return;
-      const data = getMonthlyMemberStats();
       const count = Math.max(0, Math.floor(Number(input.value) || 0));
-      if(count) data[month] = count;
-      else delete data[month];
-      saveMonthlyMemberStats(data);
       const amountEl = document.querySelector('[data-month-amount="' + month + '"]');
       if(amountEl) amountEl.textContent = fmtMoney(monthlyAmount(count));
       const visibleInputs = Array.from(document.querySelectorAll('.monthly-stat-input'));
@@ -274,6 +274,20 @@
       const totalAmountEl = document.getElementById('monthlyStatTotalAmount');
       if(totalCountEl) totalCountEl.textContent = String(totalCount);
       if(totalAmountEl) totalAmountEl.textContent = fmtMoney(monthlyAmount(totalCount));
+      const msg = document.getElementById('monthlyMemberStatsMsg');
+      if(msg) msg.textContent = '有未保存修改';
+    }
+    function saveMonthlyMemberStatsFromForm(){
+      const data = getMonthlyMemberStats();
+      document.querySelectorAll('.monthly-stat-input').forEach(input => {
+        const month = input.dataset.month || '';
+        const count = Math.max(0, Math.floor(Number(input.value) || 0));
+        if(month && count) data[month] = count;
+        else if(month) delete data[month];
+      });
+      saveMonthlyMemberStats(data);
+      const msg = document.getElementById('monthlyMemberStatsMsg');
+      if(msg) msg.textContent = '已保存';
     }
 
     async function loadSiteAnnouncementAdmin(){
