@@ -219,7 +219,7 @@
     function saveMonthlyMemberStats(data){
       localStorage.setItem(MONTHLY_MEMBER_STATS_KEY, JSON.stringify(data || {}));
     }
-    function recentMonthKeys(count){
+    function currentAndFutureMonthKeys(count){
       const out = [];
       const d = new Date();
       d.setDate(1);
@@ -227,7 +227,7 @@
         const y = d.getFullYear();
         const m = String(d.getMonth() + 1).padStart(2, '0');
         out.push(y + '-' + m);
-        d.setMonth(d.getMonth() - 1);
+        d.setMonth(d.getMonth() + 1);
       }
       return out;
     }
@@ -241,7 +241,7 @@
       const box = document.getElementById('monthlyMemberStats');
       if(!box) return;
       const data = getMonthlyMemberStats();
-      const months = recentMonthKeys(monthlyMemberStatsExpanded ? 12 : 3);
+      const months = currentAndFutureMonthKeys(monthlyMemberStatsExpanded ? 12 : 3);
       const toggle = document.getElementById('monthlyMemberStatsToggle');
       if(toggle) toggle.textContent = monthlyMemberStatsExpanded ? '收起' : '展开';
       let totalCount = 0;
@@ -279,6 +279,10 @@
     }
     function saveMonthlyMemberStatsFromForm(){
       const data = getMonthlyMemberStats();
+      const firstMonth = currentAndFutureMonthKeys(1)[0];
+      Object.keys(data).forEach(month => {
+        if(month < firstMonth) delete data[month];
+      });
       document.querySelectorAll('.monthly-stat-input').forEach(input => {
         const month = input.dataset.month || '';
         const count = Math.max(0, Math.floor(Number(input.value) || 0));
