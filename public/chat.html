@@ -252,7 +252,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     let pendingChatImage = null;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
-    const BLYS_CHAT_PUSH_VERSION = '2026082907';
+    const BLYS_CHAT_PUSH_VERSION = '2026083101';
     console.log('[chat] build v' + BLYS_CHAT_PUSH_VERSION + ' (notification recovery)');
     let chatLoadSeq = 0;
     let vipRefreshing = false;
@@ -947,13 +947,26 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       updateLatestReviewNotice();
     }
 
+    function getVipDisciplineDismissKeys() {
+      if (!__user || !__user.loggedIn) return [];
+      // 以登录 token 为主键，避免资料刷新、昵称或邮箱格式变化后找不到关闭记录。
+      // 同时读取旧版邮箱/昵称键，已关闭过的用户无需再次操作。
+      const values = [__user.token, __user.email, __user.nickname]
+        .filter(Boolean)
+        .map(value => String(value).toLowerCase());
+      return [...new Set(values)].map(value => 'blys_vip_discipline_dismissed_' + value);
+    }
+
+    function hasDismissedVipDisciplineEntry() {
+      return getVipDisciplineDismissKeys().some(key => localStorage.getItem(key) === '1');
+    }
+
     function updateVipDisciplineEntry(room) {
       const el = document.getElementById('vipDisciplineEntry');
       if (!el) return;
       const isVipRoom = room === 'vip';
       const canView = __user && __user.loggedIn && (__user.isVip || isBlysAdminUser());
-      const key = getChatLocalUserKey('blys_vip_discipline_dismissed');
-      const dismissed = key && localStorage.getItem(key) === '1';
+      const dismissed = hasDismissedVipDisciplineEntry();
       el.hidden = !(isVipRoom && canView) || dismissed;
       requestAnimationFrame(updateChatViewportLayout);
     }
@@ -976,8 +989,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         event.preventDefault();
         event.stopPropagation();
       }
-      const key = getChatLocalUserKey('blys_vip_discipline_dismissed');
-      if (key) localStorage.setItem(key, '1');
+      // 新旧主键都写入，确保同一账号在资料刷新后仍保持关闭状态。
+      getVipDisciplineDismissKeys().forEach(key => localStorage.setItem(key, '1'));
       updateVipDisciplineEntry(currentRoom);
       updateLatestReviewNotice();
     }
