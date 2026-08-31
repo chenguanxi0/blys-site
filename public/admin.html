@@ -240,8 +240,8 @@
         if(!d || !d.ok) throw new Error((d&&d.msg)||'加载失败');
         const items = Array.isArray(d.items) ? d.items : [];
         if(!items.length){ if(box) box.innerHTML = '<p style="padding:12px 0;color:#64748b;">暂无自动化项目</p>'; return; }
-        const rows = items.map(item => `<tr><td><strong>${esc(item.project||'')}</strong><div style="color:#64748b;font-size:12px;margin-top:4px;">${esc(item.source_file||'')}</div>${item.issue_note?`<div style="color:#dc2626;font-size:12px;margin-top:4px;">问题：${esc(item.issue_note)}</div>`:''}</td><td>${esc(item.owner||'—')}</td><td><span style="font-weight:700;color:${automationStatusColor(item.status)};">${automationStatusText(item.status)}</span></td><td>${item.submitted_at?fmt(item.submitted_at):'—'}</td><td>${item.updated_at?fmt(item.updated_at):'—'}</td></tr>`).join('');
-        if(box) box.innerHTML = '<table class="admin-table"><tr><th>项目</th><th>负责人</th><th>状态</th><th>提交时间</th><th>状态更新</th></tr>' + rows + '</table>';
+        const rows = items.map(item => { const progress=Math.max(0,Math.min(100,Number(item.progress)||0)); return `<tr><td><strong>${esc(item.project||'')}</strong><div style="color:#64748b;font-size:12px;margin-top:4px;">${esc(item.source_file||'')}</div>${item.issue_note?`<div style="color:#dc2626;font-size:12px;margin-top:4px;">问题：${esc(item.issue_note)}</div>`:''}</td><td>${esc(item.owner||'—')}</td><td><span style="font-weight:700;color:${automationStatusColor(item.status)};">${automationStatusText(item.status)}</span></td><td><strong>${progress}%</strong></td><td>${item.submitted_at?fmt(item.submitted_at):'—'}</td><td>${item.updated_at?fmt(item.updated_at):'—'}</td></tr>`; }).join('');
+        if(box) box.innerHTML = '<table class="admin-table"><tr><th>项目</th><th>负责人</th><th>状态</th><th>进度</th><th>提交时间</th><th>状态更新</th></tr>' + rows + '</table>';
       } catch(e) { if(box) box.innerHTML = '<p style="padding:12px 0;color:#dc2626;">项目状态加载失败</p>'; }
     }
     function getMonthlyMemberStats(){ return monthlyMemberStats || {}; }
