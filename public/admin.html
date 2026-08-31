@@ -269,11 +269,14 @@
       const d = await sbRpc('get_admin_vip_monthly_activity', { p_admin_token: getTok() });
       monthlyVipActivity = d && d.ok && d.stats && typeof d.stats === 'object' ? d.stats : {};
     }
-    function currentAndFutureMonthKeys(count){
+    // 会员统计从 2026 年 8 月开始连续保留；切换月份不会隐藏或清除历史记录。
+    function membershipMonthKeys(){
       const out = [];
-      const d = new Date();
-      d.setDate(1);
-      for(let i = 0; i < count; i++){
+      const d = new Date(2026, 7, 1);
+      const end = new Date();
+      end.setDate(1);
+      if(monthlyMemberStatsExpanded) end.setMonth(end.getMonth() + 10);
+      while(d <= end){
         const y = d.getFullYear();
         const m = String(d.getMonth() + 1).padStart(2, '0');
         out.push(y + '-' + m);
@@ -295,7 +298,7 @@
     function renderMonthlyMemberStats(){
       const box = document.getElementById('monthlyMemberStats');
       if(!box) return;
-      const months = currentAndFutureMonthKeys(monthlyMemberStatsExpanded ? 12 : 3);
+      const months = membershipMonthKeys();
       const toggle = document.getElementById('monthlyMemberStatsToggle');
       if(toggle) toggle.textContent = monthlyMemberStatsExpanded ? '收起' : '展开';
       let totalNew = 0;
@@ -351,10 +354,6 @@
     }
     async function saveMonthlyMemberStatsFromForm(){
       const data = getMonthlyMemberStats();
-      const firstMonth = currentAndFutureMonthKeys(1)[0];
-      Object.keys(data).forEach(month => {
-        if(month < firstMonth) delete data[month];
-      });
       document.querySelectorAll('.monthly-stat-input').forEach(input => {
         const month = input.dataset.month || '';
         const kind = input.dataset.kind === 'renew' ? 'renew' : 'new';
@@ -362,8 +361,8 @@
         const current = data[month];
         const item = typeof current === 'object' && current ? current : (typeof current === 'number' ? { new: current, renew: 0 } : {});
         item[kind] = monthlyCount(input.value);
-        if(item.new || item.renew) data[month] = item;
-        else delete data[month];
+        // 保留已有月份（包括 0），避免历史统计在保存时被意外清除。
+        data[month] = item;
       });
       const msg = document.getElementById('monthlyMemberStatsMsg');
       if(msg) msg.textContent = '保存中...';
