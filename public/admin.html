@@ -80,7 +80,7 @@
 
       <div class="panel">
         <div class="admin-form-actions" style="justify-content:space-between;margin-bottom:14px;">
-          <h2 style="margin:0;">月度会员数量统计</h2>
+          <h2 style="margin:0;">月度会员开通 / 续费统计</h2>
           <div class="admin-form-actions" style="margin:0;">
             <span class="admin-save-msg" id="monthlyMemberStatsMsg"></span>
             <button class="btn btn-primary" type="button" onclick="saveMonthlyMemberStatsFromForm()">保存数量</button>
@@ -146,6 +146,7 @@
     const MONTHLY_MEMBER_STATS_KEY = "blys_admin_monthly_member_stats_v1";
     let monthlyMemberStatsExpanded = false;
     let monthlyMemberStats = {};
+    let monthlyVipActivity = {};
     let normalUsersExpanded = false;
 
     async function sbRpc(fn, params){
@@ -203,7 +204,7 @@
       loadAll();
     }
 
-    async function loadAll(){ await loadMonthlyMemberStats(); renderMonthlyMemberStats(); await loadStats(); await loadSiteAnnouncementAdmin(); await loadUsers(); await loadComments(); }
+    async function loadAll(){ await loadMonthlyMemberStats(); await loadMonthlyVipActivity(); renderMonthlyMemberStats(); await loadStats(); await loadSiteAnnouncementAdmin(); await loadUsers(); await loadComments(); }
 
     async function loadStats(){
       const d = await sbRpc('admin_stats', { p_admin_token: getTok() });
@@ -239,6 +240,10 @@
       monthlyMemberStats = clean;
       localStorage.setItem(MONTHLY_MEMBER_STATS_KEY, JSON.stringify(clean));
     }
+    async function loadMonthlyVipActivity(){
+      const d = await sbRpc('get_admin_vip_monthly_activity', { p_admin_token: getTok() });
+      monthlyVipActivity = d && d.ok && d.stats && typeof d.stats === 'object' ? d.stats : {};
+    }
     function currentAndFutureMonthKeys(count){
       const out = [];
       const d = new Date();
@@ -251,8 +256,19 @@
       }
       return out;
     }
+    function monthlyCount(n){ return Math.max(0, Math.floor(Number(n) || 0)); }
+    function monthlyRecord(month){
+      const saved = getMonthlyMemberStats()[month];
+      const auto = monthlyVipActivity[month] || {};
+      // 旧版只保存“会员数量”，兼容为新开数量，方便之后按实际情况再调整。
+      if(typeof saved === 'number') return { newCount: monthlyCount(saved), renewCount: 0, manual: true };
+      if(saved && typeof saved === 'object') return {
+        newCount: monthlyCount(saved.new), renewCount: monthlyCount(saved.renew), manual: true
+      };
+      return { newCount: monthlyCount(auto.new), renewCount: monthlyCount(auto.renew), manual: false };
+    }
     function monthlyAmount(n){
-      return Math.max(0, Number(n) || 0) * 500;
+      return monthlyCount(n) * 500;
     }
     function fmtMoney(n){
       return '¥' + Number(n || 0).toLocaleString('zh-CN');
@@ -264,18 +280,21 @@
       const months = currentAndFutureMonthKeys(monthlyMemberStatsExpanded ? 12 : 3);
       const toggle = document.getElementById('monthlyMemberStatsToggle');
       if(toggle) toggle.textContent = monthlyMemberStatsExpanded ? '收起' : '展开';
-      let totalCount = 0;
+      let totalNew = 0;
+      let totalRenew = 0;
       let totalAmount = 0;
       const rows = months.map(month => {
-        const count = Math.max(0, Number(data[month]) || 0);
+        const item = monthlyRecord(month);
+        const count = item.newCount + item.renewCount;
         const amount = monthlyAmount(count);
-        totalCount += count;
+        totalNew += item.newCount;
+        totalRenew += item.renewCount;
         totalAmount += amount;
-        return `<tr><td>${month}</td><td><input class="monthly-stat-input" type="number" min="0" step="1" value="${count || ''}" data-month="${month}" oninput="updateMonthlyMemberStat(this)"></td><td data-month-amount="${month}">${fmtMoney(amount)}</td></tr>`;
+        return `<tr><td>${month}</td><td><input class="monthly-stat-input" type="number" min="0" step="1" value="${item.newCount || ''}" data-month="${month}" data-kind="new" oninput="updateMonthlyMemberStat(this)"></td><td><input class="monthly-stat-input" type="number" min="0" step="1" value="${item.renewCount || ''}" data-month="${month}" data-kind="renew" oninput="updateMonthlyMemberStat(this)"></td><td data-month-total="${month}">${count}</td><td data-month-amount="${month}">${fmtMoney(amount)}</td></tr>`;
       }).join('');
-      box.innerHTML = '<table class="admin-table"><tr><th>月份</th><th>会员数量</th><th>金额</th></tr>' +
+      box.innerHTML = '<table class="admin-table"><tr><th>月份</th><th>新开</th><th>续费</th><th>合计</th><th>金额</th></tr>' +
         rows +
-        `<tr class="monthly-stat-total"><td>汇总</td><td id="monthlyStatTotalCount">${totalCount}</td><td id="monthlyStatTotalAmount">${fmtMoney(totalAmount)}</td></tr>` +
+        `<tr class="monthly-stat-total"><td>汇总</td><td id="monthlyStatTotalNew">${totalNew}</td><td id="monthlyStatTotalRenew">${totalRenew}</td><td id="monthlyStatTotalCount">${totalNew + totalRenew}</td><td id="monthlyStatTotalAmount">${fmtMoney(totalAmount)}</td></tr>` +
         '</table>';
     }
     function toggleMonthlyMemberStats(){
@@ -285,13 +304,28 @@
     function updateMonthlyMemberStat(input){
       const month = input && input.dataset ? input.dataset.month : '';
       if(!month) return;
-      const count = Math.max(0, Math.floor(Number(input.value) || 0));
+      const kind = input.dataset.kind === 'renew' ? 'renew' : 'new';
+      const data = getMonthlyMemberStats();
+      const previous = data[month];
+      const item = typeof previous === 'object' && previous ? previous : (typeof previous === 'number' ? { new: previous, renew: 0 } : {});
+      item[kind] = monthlyCount(input.value);
+      data[month] = item;
+      const monthInputs = Array.from(document.querySelectorAll('.monthly-stat-input[data-month="' + month + '"]'));
+      const monthCount = monthInputs.reduce((sum, item) => sum + monthlyCount(item.value), 0);
       const amountEl = document.querySelector('[data-month-amount="' + month + '"]');
-      if(amountEl) amountEl.textContent = fmtMoney(monthlyAmount(count));
+      const monthTotalEl = document.querySelector('[data-month-total="' + month + '"]');
+      if(amountEl) amountEl.textContent = fmtMoney(monthlyAmount(monthCount));
+      if(monthTotalEl) monthTotalEl.textContent = String(monthCount);
       const visibleInputs = Array.from(document.querySelectorAll('.monthly-stat-input'));
-      const totalCount = visibleInputs.reduce((sum, item) => sum + Math.max(0, Math.floor(Number(item.value) || 0)), 0);
+      const totalNew = visibleInputs.filter(item => item.dataset.kind === 'new').reduce((sum, item) => sum + monthlyCount(item.value), 0);
+      const totalRenew = visibleInputs.filter(item => item.dataset.kind === 'renew').reduce((sum, item) => sum + monthlyCount(item.value), 0);
+      const totalCount = totalNew + totalRenew;
+      const totalNewEl = document.getElementById('monthlyStatTotalNew');
+      const totalRenewEl = document.getElementById('monthlyStatTotalRenew');
       const totalCountEl = document.getElementById('monthlyStatTotalCount');
       const totalAmountEl = document.getElementById('monthlyStatTotalAmount');
+      if(totalNewEl) totalNewEl.textContent = String(totalNew);
+      if(totalRenewEl) totalRenewEl.textContent = String(totalRenew);
       if(totalCountEl) totalCountEl.textContent = String(totalCount);
       if(totalAmountEl) totalAmountEl.textContent = fmtMoney(monthlyAmount(totalCount));
       const msg = document.getElementById('monthlyMemberStatsMsg');
@@ -305,9 +339,13 @@
       });
       document.querySelectorAll('.monthly-stat-input').forEach(input => {
         const month = input.dataset.month || '';
-        const count = Math.max(0, Math.floor(Number(input.value) || 0));
-        if(month && count) data[month] = count;
-        else if(month) delete data[month];
+        const kind = input.dataset.kind === 'renew' ? 'renew' : 'new';
+        if(!month) return;
+        const current = data[month];
+        const item = typeof current === 'object' && current ? current : (typeof current === 'number' ? { new: current, renew: 0 } : {});
+        item[kind] = monthlyCount(input.value);
+        if(item.new || item.renew) data[month] = item;
+        else delete data[month];
       });
       const msg = document.getElementById('monthlyMemberStatsMsg');
       if(msg) msg.textContent = '保存中...';
