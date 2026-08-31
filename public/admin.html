@@ -89,6 +89,14 @@
       </div>
 
       <div class="panel">
+        <div class="admin-form-actions" style="justify-content:space-between;margin-bottom:14px;">
+          <div><h2 style="margin:0;">自动化项目状态</h2><p style="margin:6px 0 0;color:#64748b;font-size:13px;">仅管理员可见 · 来自自动化项目队列</p></div>
+          <button class="btn btn-secondary" type="button" onclick="loadAutomationProjects()">刷新</button>
+        </div>
+        <div class="table-wrap" id="automationProjects">加载中...</div>
+      </div>
+
+      <div class="panel">
         <h2>📣 网站公告</h2>
         <div class="admin-form">
           <label>标题<input id="siteAnnouncementTitle" type="text" placeholder="例如：网站公告"></label>
@@ -202,7 +210,7 @@
       loadAll();
     }
 
-    async function loadAll(){ await loadMonthlyVipActivity(); renderMonthlyMemberStats(); await loadStats(); await loadSiteAnnouncementAdmin(); await loadUsers(); await loadComments(); }
+    async function loadAll(){ await loadMonthlyVipActivity(); renderMonthlyMemberStats(); await loadAutomationProjects(); await loadStats(); await loadSiteAnnouncementAdmin(); await loadUsers(); await loadComments(); }
 
     async function loadStats(){
       const d = await sbRpc('admin_stats', { p_admin_token: getTok() });
@@ -216,6 +224,25 @@
     function getLocalMonthlyMemberStats(){
       try { return JSON.parse(localStorage.getItem(MONTHLY_MEMBER_STATS_KEY) || '{}') || {}; }
       catch(e){ return {}; }
+    }
+
+    function automationStatusText(status){
+      return ({ queued:'排队中', submitted:'排队中', in_progress:'生产中', ready:'待下载', downloaded:'已下载待确认', archived:'检查通过', issue:'发现问题', repaired:'问题已修复 · 待验收', completed_missing:'已完成待同步' })[status] || status || '—';
+    }
+    function automationStatusColor(status){
+      return ({ issue:'#dc2626', in_progress:'#2563eb', ready:'#d97706', archived:'#16a34a', repaired:'#7c3aed', completed_missing:'#64748b' })[status] || '#475569';
+    }
+    async function loadAutomationProjects(){
+      const box = document.getElementById('automationProjects');
+      if(box) box.textContent = '加载中...';
+      try {
+        const d = await sbRpc('get_admin_automation_projects', { p_admin_token: getTok() });
+        if(!d || !d.ok) throw new Error((d&&d.msg)||'加载失败');
+        const items = Array.isArray(d.items) ? d.items : [];
+        if(!items.length){ if(box) box.innerHTML = '<p style="padding:12px 0;color:#64748b;">暂无自动化项目</p>'; return; }
+        const rows = items.map(item => `<tr><td><strong>${esc(item.project||'')}</strong><div style="color:#64748b;font-size:12px;margin-top:4px;">${esc(item.source_file||'')}</div>${item.issue_note?`<div style="color:#dc2626;font-size:12px;margin-top:4px;">问题：${esc(item.issue_note)}</div>`:''}</td><td>${esc(item.owner||'—')}</td><td><span style="font-weight:700;color:${automationStatusColor(item.status)};">${automationStatusText(item.status)}</span></td><td>${item.submitted_at?fmt(item.submitted_at):'—'}</td><td>${item.updated_at?fmt(item.updated_at):'—'}</td></tr>`).join('');
+        if(box) box.innerHTML = '<table class="admin-table"><tr><th>项目</th><th>负责人</th><th>状态</th><th>提交时间</th><th>状态更新</th></tr>' + rows + '</table>';
+      } catch(e) { if(box) box.innerHTML = '<p style="padding:12px 0;color:#dc2626;">项目状态加载失败</p>'; }
     }
     function getMonthlyMemberStats(){ return monthlyMemberStats || {}; }
     async function loadMonthlyMemberStats(){

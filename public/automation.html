@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>自动化项目 · 白鹿原上</title>
+  <link rel="stylesheet" href="assets/styles.css?v=2026082810" />
+  <style>
+    body { background:#f1f5f9; color:#172033; }
+    .automation-page { max-width:1180px; margin:0 auto; padding:38px 18px 64px; }
+    .automation-head { display:flex; justify-content:space-between; gap:18px; align-items:flex-start; flex-wrap:wrap; margin-bottom:22px; }
+    .automation-head h1 { margin:0; font-size:26px; } .automation-head p { margin:8px 0 0; color:#64748b; }
+    .automation-card { background:#fff; border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 1px 3px rgba(15,23,42,.06); overflow:hidden; }
+    .automation-toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:16px 18px; border-bottom:1px solid #e2e8f0; }
+    .automation-toolbar span { color:#64748b; font-size:13px; }
+    .automation-toolbar button { border:0; border-radius:9px; background:#ef4444; color:#fff; padding:9px 15px; cursor:pointer; font-weight:700; }
+    .automation-table-wrap { overflow:auto; } .automation-table { width:100%; min-width:800px; border-collapse:collapse; font-size:13px; }
+    .automation-table th,.automation-table td { padding:13px 16px; border-bottom:1px solid #eef2f7; text-align:left; vertical-align:top; }
+    .automation-table th { background:#f8fafc; color:#64748b; font-size:12px; white-space:nowrap; } .automation-project { font-weight:800; }
+    .automation-file,.automation-time { color:#64748b; font-size:12px; margin-top:4px; } .automation-issue { color:#dc2626; font-size:12px; margin-top:5px; max-width:360px; white-space:normal; }
+    .automation-status { display:inline-block; border-radius:999px; padding:5px 9px; font-weight:800; font-size:12px; white-space:nowrap; }
+    .status-queued { color:#475569; background:#f1f5f9; }.status-in_progress { color:#1d4ed8; background:#dbeafe; }.status-ready { color:#b45309; background:#fef3c7; }.status-downloaded { color:#7c3aed; background:#ede9fe; }.status-archived { color:#15803d; background:#dcfce7; }.status-issue { color:#b91c1c; background:#fee2e2; }.status-repaired { color:#6d28d9; background:#f3e8ff; }.status-completed_missing { color:#64748b; background:#f1f5f9; }
+    .automation-empty { padding:54px 20px; text-align:center; color:#64748b; } .automation-denied { max-width:520px; margin:88px auto; text-align:center; background:#fff; padding:34px; border-radius:16px; border:1px solid #e2e8f0; }.automation-denied a { color:#ef4444; font-weight:700; }
+    @media(max-width:640px){ .automation-page { padding:24px 12px 48px; } .automation-head h1 { font-size:22px; } }
+  </style>
+</head>
+<body>
+  <main class="automation-page" id="automationApp"><div class="automation-empty">正在验证管理员身份…</div></main>
+  <script src="assets/app.js?v=2026082713"></script>
+  <script>
+    function escHtml(value){ return String(value==null?'':value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function fmtTime(value){ if(!value) return '—'; const d=new Date(value); if(isNaN(d)) return '—'; const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes()); }
+    function statusLabel(status){ return ({queued:'排队中',submitted:'排队中',in_progress:'生产中',ready:'待下载',downloaded:'已下载待确认',archived:'检查通过',issue:'发现问题',repaired:'问题已修复 · 待验收',completed_missing:'已完成待同步'})[status]||status||'—'; }
+    function statusClass(status){ return 'status-'+String(status||'queued').replace(/[^a-z_]/g,''); }
+    let automationItems=[];
+    function renderAutomation(){
+      const app=document.getElementById('automationApp');
+      const rows=automationItems.map(item=>`<tr><td><div class="automation-project">${escHtml(item.project)}</div><div class="automation-file">${escHtml(item.source_file||'历史项目')}</div>${item.issue_note?`<div class="automation-issue">问题：${escHtml(item.issue_note)}</div>`:''}</td><td>${escHtml(item.owner||'—')}</td><td><span class="automation-status ${statusClass(item.status)}">${escHtml(statusLabel(item.status))}</span></td><td class="automation-time">${fmtTime(item.submitted_at)}</td><td class="automation-time">${fmtTime(item.updated_at)}</td></tr>`).join('');
+      app.innerHTML=`<div class="automation-head"><div><a href="index.html" style="color:#ef4444;font-weight:700;text-decoration:none;">← 返回首页</a><h1 style="margin-top:14px;">自动化项目</h1><p>全部项目与当前状态 · 仅管理员可见</p></div></div><section class="automation-card"><div class="automation-toolbar"><span>共 ${automationItems.length} 个项目</span><button type="button" onclick="loadAutomation()">刷新状态</button></div><div class="automation-table-wrap">${rows?`<table class="automation-table"><thead><tr><th>项目</th><th>负责人</th><th>当前状态</th><th>提交时间</th><th>状态更新</th></tr></thead><tbody>${rows}</tbody></table>`:'<div class="automation-empty">暂无项目数据</div>'}</div></section>`;
+    }
+    async function loadAutomation(){
+      const app=document.getElementById('automationApp');
+      try { const d=await sbRpc('get_my_admin_automation_projects',{p_token:__user.token}); if(!d||!d.ok) throw new Error((d&&d.msg)||'无权限'); automationItems=Array.isArray(d.items)?d.items:[]; renderAutomation(); } catch(e) { app.innerHTML='<div class="automation-denied"><h2>无法读取项目状态</h2><p>请确认管理员登录状态后重试。</p><a href="index.html">返回首页</a></div>'; }
+    }
+    (async function(){ await fetchUser(); if(!__user||!__user.loggedIn||!__user.isAdmin){ document.getElementById('automationApp').innerHTML='<div class="automation-denied"><h2>仅管理员可查看</h2><p>请使用管理员账号登录后再进入此页面。</p><a href="index.html">返回首页</a></div>'; return; } loadAutomation(); })();
+  </script>
+</body>
+</html>
