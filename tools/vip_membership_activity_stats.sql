@@ -198,4 +198,33 @@ END;
 $function$;
 
 GRANT EXECUTE ON FUNCTION public.get_admin_vip_monthly_activity(text) TO anon, authenticated;
+
+CREATE OR REPLACE FUNCTION public.admin_list_users(p_admin_token text)
+RETURNS json
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $function$
+DECLARE v_list json;
+BEGIN
+  IF length(coalesce(p_admin_token, '')) < 10 THEN
+    RETURN json_build_object('ok', false, 'msg', '无权限');
+  END IF;
+
+  SELECT json_agg(row_to_json(t)) INTO v_list
+  FROM (
+    SELECT p.email, p.nickname, (p.vip_expire > now()) AS is_vip,
+           p.vip_started_at, p.vip_expire, p.created_at,
+           count(e.id) FILTER (WHERE e.event_type = 'renew')::integer AS vip_renew_count
+    FROM public.profiles p
+    LEFT JOIN public.vip_membership_events e ON lower(e.user_email) = lower(p.email)
+    GROUP BY p.email, p.nickname, p.vip_started_at, p.vip_expire, p.created_at
+    ORDER BY p.created_at DESC
+  ) t;
+
+  RETURN json_build_object('ok', true, 'list', coalesce(v_list, '[]'::json));
+END;
+$function$;
+
+GRANT EXECUTE ON FUNCTION public.admin_list_users(text) TO anon, authenticated;
 NOTIFY pgrst, 'reload schema';
