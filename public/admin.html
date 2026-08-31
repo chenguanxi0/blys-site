@@ -80,10 +80,8 @@
 
       <div class="panel">
         <div class="admin-form-actions" style="justify-content:space-between;margin-bottom:14px;">
-          <h2 style="margin:0;">月度会员开通 / 续费统计</h2>
+          <h2 style="margin:0;">月度会员开通 / 续费统计（自动计算）</h2>
           <div class="admin-form-actions" style="margin:0;">
-            <span class="admin-save-msg" id="monthlyMemberStatsMsg"></span>
-            <button class="btn btn-primary" type="button" onclick="saveMonthlyMemberStatsFromForm()">保存数量</button>
             <button class="btn btn-secondary" id="monthlyMemberStatsToggle" onclick="toggleMonthlyMemberStats()">展开</button>
           </div>
         </div>
@@ -204,7 +202,7 @@
       loadAll();
     }
 
-    async function loadAll(){ await loadMonthlyMemberStats(); await loadMonthlyVipActivity(); renderMonthlyMemberStats(); await loadStats(); await loadSiteAnnouncementAdmin(); await loadUsers(); await loadComments(); }
+    async function loadAll(){ await loadMonthlyVipActivity(); renderMonthlyMemberStats(); await loadStats(); await loadSiteAnnouncementAdmin(); await loadUsers(); await loadComments(); }
 
     async function loadStats(){
       const d = await sbRpc('admin_stats', { p_admin_token: getTok() });
@@ -258,14 +256,8 @@
     }
     function monthlyCount(n){ return Math.max(0, Math.floor(Number(n) || 0)); }
     function monthlyRecord(month){
-      const saved = getMonthlyMemberStats()[month];
       const auto = monthlyVipActivity[month] || {};
-      // 旧版只保存“会员数量”，兼容为新开数量，方便之后按实际情况再调整。
-      if(typeof saved === 'number') return { newCount: monthlyCount(saved), renewCount: 0, manual: true };
-      if(saved && typeof saved === 'object') return {
-        newCount: monthlyCount(saved.new), renewCount: monthlyCount(saved.renew), manual: true
-      };
-      return { newCount: monthlyCount(auto.new), renewCount: monthlyCount(auto.renew), manual: false };
+      return { newCount: monthlyCount(auto.new), renewCount: monthlyCount(auto.renew) };
     }
     function monthlyAmount(n){
       return monthlyCount(n) * 500;
@@ -276,7 +268,6 @@
     function renderMonthlyMemberStats(){
       const box = document.getElementById('monthlyMemberStats');
       if(!box) return;
-      const data = getMonthlyMemberStats();
       const months = currentAndFutureMonthKeys(monthlyMemberStatsExpanded ? 12 : 3);
       const toggle = document.getElementById('monthlyMemberStatsToggle');
       if(toggle) toggle.textContent = monthlyMemberStatsExpanded ? '收起' : '展开';
@@ -290,7 +281,7 @@
         totalNew += item.newCount;
         totalRenew += item.renewCount;
         totalAmount += amount;
-        return `<tr><td>${month}</td><td><input class="monthly-stat-input" type="number" min="0" step="1" value="${item.newCount || ''}" data-month="${month}" data-kind="new" oninput="updateMonthlyMemberStat(this)"></td><td><input class="monthly-stat-input" type="number" min="0" step="1" value="${item.renewCount || ''}" data-month="${month}" data-kind="renew" oninput="updateMonthlyMemberStat(this)"></td><td data-month-total="${month}">${count}</td><td data-month-amount="${month}">${fmtMoney(amount)}</td></tr>`;
+        return `<tr><td>${month}</td><td>${item.newCount}</td><td>${item.renewCount}</td><td>${count}</td><td>${fmtMoney(amount)}</td></tr>`;
       }).join('');
       box.innerHTML = '<table class="admin-table"><tr><th>月份</th><th>新开</th><th>续费</th><th>合计</th><th>金额</th></tr>' +
         rows +
@@ -411,18 +402,20 @@
       if(!d || !d.ok){ box.innerHTML = '<p>加载失败：' + (d&&d.msg) + '</p>'; return; }
       if(!d.list.length){ box.innerHTML = '<p>暂无用户</p>'; return; }
       const users = Array.isArray(d.list) ? d.list : [];
-      const members = users.filter(u => u.is_vip).sort((a,b) => new Date(b.vip_started_at || 0) - new Date(a.vip_started_at || 0));
-      const normalUsers = users.filter(u => !u.is_vip);
-      const row = u => `<tr class="${vipRemainClass(u.vip_expire)}"><td>${esc(u.nickname||'')}</td><td class="email">${esc(u.email||'')}</td><td>${u.created_at?fmt(u.created_at):'-'}</td><td>${u.is_vip?'是':'否'}</td><td>${u.vip_started_at?fmt(u.vip_started_at):'-'}</td><td>${vipDays(u.vip_started_at)}</td><td>${Number(u.vip_renew_count)||0} 次</td><td>${u.vip_expire?fmt(u.vip_expire):'-'}</td><td><span class="${vipRemainTextClass(u.vip_expire)}">${vipRemainDays(u.vip_expire)}</span></td><td><button onclick="openVipModal('${jsStr(u.email||'')}')">设会员</button><button class="renew" onclick="renewVip31('${jsStr(u.email||'')}')">续31天</button></td></tr>`;
+      const admins = users.filter(u => u.is_admin);
+      const members = users.filter(u => !u.is_admin && u.is_vip).sort((a,b) => new Date(b.vip_started_at || 0) - new Date(a.vip_started_at || 0));
+      const normalUsers = users.filter(u => !u.is_admin && !u.is_vip);
+      const row = u => `<tr class="${vipRemainClass(u.vip_expire)}"><td>${esc(u.nickname||'')}</td><td class="email">${esc(u.email||'')}</td><td>${u.created_at?fmt(u.created_at):'-'}</td><td>${u.is_admin?'管理员':(u.is_vip?'是':'否')}</td><td>${u.is_admin?'-':(u.vip_started_at?fmt(u.vip_started_at):'-')}</td><td>${u.is_admin?'-':vipDays(u.vip_started_at)}</td><td>${u.is_admin?'-':((Number(u.vip_renew_count)||0) + ' 次')}</td><td>${u.is_admin?'-':(u.vip_expire?fmt(u.vip_expire):'-')}</td><td><span class="${vipRemainTextClass(u.vip_expire)}">${u.is_admin?'-':vipRemainDays(u.vip_expire)}</span></td><td>${u.is_admin?'-':(`<button onclick="openVipModal('${jsStr(u.email||'')}')">设会员</button><button class="renew" onclick="renewVip31('${jsStr(u.email||'')}')">续31天</button>`)}</td></tr>`;
       const head = '<tr><th>昵称</th><th>邮箱</th><th>注册时间</th><th>会员</th><th>开通时间</th><th>会员天数</th><th>续费次数</th><th>到期时间</th><th>剩余天数</th><th>操作</th></tr>';
       const normalSection = '<div class="admin-form-actions" style="justify-content:space-between;margin:0 0 10px;">' +
         '<h3 style="margin:0;">普通用户（' + normalUsers.length + ' 人）</h3>' +
         '<button class="btn btn-secondary" type="button" onclick="toggleNormalUsers()">' + (normalUsersExpanded ? '收起普通用户' : '展开普通用户') + '</button>' +
         '</div>' +
         (normalUsersExpanded ? '<table class="admin-table">' + head + normalUsers.map(row).join('') + '</table>' : '');
+      const adminSection = admins.length ? '<h3 style="margin:0 0 10px;">🛠️ 管理员（不计入会员统计）</h3><table class="admin-table">' + head + admins.map(row).join('') + '</table>' : '';
       const memberSection = '<h3 style="margin:24px 0 10px;">⭐ 会员专区（' + members.length + ' 人，按开通时间由近到远）</h3>' +
         '<table class="admin-table">' + head + members.map(row).join('') + '</table>';
-      box.innerHTML = normalSection + memberSection;
+      box.innerHTML = adminSection + normalSection + memberSection;
     }
 
     function toggleNormalUsers(){

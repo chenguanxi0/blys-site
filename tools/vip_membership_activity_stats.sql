@@ -98,8 +98,10 @@ BEGIN
              'new', count(*) FILTER (WHERE event_type = 'new'),
              'renew', count(*) FILTER (WHERE event_type = 'renew')
            ) AS counts
-    FROM public.vip_membership_events
-    WHERE occurred_at >= timestamptz '2026-08-01 00:00:00+08'
+    FROM public.vip_membership_events e
+    JOIN public.profiles p ON lower(p.email) = lower(e.user_email)
+    WHERE e.occurred_at >= timestamptz '2026-08-01 00:00:00+08'
+      AND NOT coalesce(p.is_admin, false)
     GROUP BY 1
   ) monthly;
 
@@ -213,12 +215,12 @@ BEGIN
 
   SELECT json_agg(row_to_json(t)) INTO v_list
   FROM (
-    SELECT p.email, p.nickname, (p.vip_expire > now()) AS is_vip,
+    SELECT p.email, p.nickname, coalesce(p.is_admin, false) AS is_admin, (p.vip_expire > now()) AS is_vip,
            p.vip_started_at, p.vip_expire, p.created_at,
            count(e.id) FILTER (WHERE e.event_type = 'renew')::integer AS vip_renew_count
     FROM public.profiles p
     LEFT JOIN public.vip_membership_events e ON lower(e.user_email) = lower(p.email)
-    GROUP BY p.email, p.nickname, p.vip_started_at, p.vip_expire, p.created_at
+    GROUP BY p.email, p.nickname, p.is_admin, p.vip_started_at, p.vip_expire, p.created_at
     ORDER BY p.created_at DESC
   ) t;
 
@@ -227,4 +229,25 @@ END;
 $function$;
 
 GRANT EXECUTE ON FUNCTION public.admin_list_users(text) TO anon, authenticated;
+
+CREATE OR REPLACE FUNCTION public.admin_stats(p_admin_token text)
+RETURNS json
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $function$
+DECLARE v_users int; v_vip int; v_cmts int;
+BEGIN
+  IF length(coalesce(p_admin_token, '')) < 10 THEN
+    RETURN json_build_object('ok', false, 'msg', '无权限');
+  END IF;
+  SELECT count(*) INTO v_users FROM public.profiles;
+  SELECT count(*) INTO v_vip FROM public.profiles
+  WHERE vip_expire > now() AND NOT coalesce(is_admin, false);
+  SELECT count(*) INTO v_cmts FROM public.comments;
+  RETURN json_build_object('ok', true, 'users', v_users, 'vip', v_vip, 'comments', v_cmts);
+END;
+$function$;
+
+GRANT EXECUTE ON FUNCTION public.admin_stats(text) TO anon, authenticated;
 NOTIFY pgrst, 'reload schema';
