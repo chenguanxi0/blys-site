@@ -145,6 +145,7 @@
     const ADMIN_TOKEN_KEY = "blys_admin_token";
     const MONTHLY_MEMBER_STATS_KEY = "blys_admin_monthly_member_stats_v1";
     let monthlyMemberStatsExpanded = false;
+    let monthlyMemberStats = {};
     let normalUsersExpanded = false;
 
     async function sbRpc(fn, params){
@@ -202,7 +203,7 @@
       loadAll();
     }
 
-    async function loadAll(){ renderMonthlyMemberStats(); await loadStats(); await loadSiteAnnouncementAdmin(); await loadUsers(); await loadComments(); }
+    async function loadAll(){ await loadMonthlyMemberStats(); renderMonthlyMemberStats(); await loadStats(); await loadSiteAnnouncementAdmin(); await loadUsers(); await loadComments(); }
 
     async function loadStats(){
       const d = await sbRpc('admin_stats', { p_admin_token: getTok() });
@@ -213,12 +214,30 @@
       }
     }
 
-    function getMonthlyMemberStats(){
+    function getLocalMonthlyMemberStats(){
       try { return JSON.parse(localStorage.getItem(MONTHLY_MEMBER_STATS_KEY) || '{}') || {}; }
       catch(e){ return {}; }
     }
-    function saveMonthlyMemberStats(data){
-      localStorage.setItem(MONTHLY_MEMBER_STATS_KEY, JSON.stringify(data || {}));
+    function getMonthlyMemberStats(){ return monthlyMemberStats || {}; }
+    async function loadMonthlyMemberStats(){
+      const localStats = getLocalMonthlyMemberStats();
+      const d = await sbRpc('get_admin_monthly_member_stats', { p_admin_token: getTok() });
+      if(!d || !d.ok){ monthlyMemberStats = localStats; return; }
+      const serverStats = d.stats && typeof d.stats === 'object' ? d.stats : {};
+      if(!Object.keys(serverStats).length && Object.keys(localStats).length){
+        monthlyMemberStats = localStats;
+        try { await saveMonthlyMemberStats(localStats); } catch(e) {}
+        return;
+      }
+      monthlyMemberStats = serverStats;
+      localStorage.setItem(MONTHLY_MEMBER_STATS_KEY, JSON.stringify(serverStats));
+    }
+    async function saveMonthlyMemberStats(data){
+      const clean = data || {};
+      const d = await sbRpc('admin_update_monthly_member_stats', { p_admin_token: getTok(), p_stats: clean });
+      if(!d || !d.ok) throw new Error((d && d.msg) || '保存失败');
+      monthlyMemberStats = clean;
+      localStorage.setItem(MONTHLY_MEMBER_STATS_KEY, JSON.stringify(clean));
     }
     function currentAndFutureMonthKeys(count){
       const out = [];
@@ -278,7 +297,7 @@
       const msg = document.getElementById('monthlyMemberStatsMsg');
       if(msg) msg.textContent = '有未保存修改';
     }
-    function saveMonthlyMemberStatsFromForm(){
+    async function saveMonthlyMemberStatsFromForm(){
       const data = getMonthlyMemberStats();
       const firstMonth = currentAndFutureMonthKeys(1)[0];
       Object.keys(data).forEach(month => {
@@ -290,9 +309,14 @@
         if(month && count) data[month] = count;
         else if(month) delete data[month];
       });
-      saveMonthlyMemberStats(data);
       const msg = document.getElementById('monthlyMemberStatsMsg');
-      if(msg) msg.textContent = '已保存';
+      if(msg) msg.textContent = '保存中...';
+      try {
+        await saveMonthlyMemberStats(data);
+        if(msg) msg.textContent = '已保存，手机和电脑会同步';
+      } catch(e) {
+        if(msg) msg.textContent = '保存失败：' + (e && e.message ? e.message : '网络异常');
+      }
     }
 
     async function loadSiteAnnouncementAdmin(){
