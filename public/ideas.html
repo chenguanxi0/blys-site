@@ -213,7 +213,7 @@
         '<div class="idea-card-kicker">每日思路 · ' + ideaDateLabel(item.idea_date) + '</div>' +
         '<h1>' + ideaEsc(item.title || (item.idea_date + ' 盘前思路')) + '</h1>' +
         '<div class="idea-disclaimer">仅为个人交易记录，不构成任何投资建议。市场有风险，投资需谨慎。</div>' +
-        '<div class="idea-content">' + ideaEsc(item.content || '').replace(/\\n/g, '<br>') + '</div>' +
+        '<div class="idea-content">' + ideaEsc(item.content || '').replace(/\r?\n/g, '<br>') + '</div>' +
       '</article>';
       if (isIdeaAdmin()) {
         const dateInput = document.getElementById('ideaDate');
