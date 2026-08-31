@@ -31,6 +31,31 @@ WHERE p.vip_started_at >= timestamptz '2026-08-01 00:00:00+08'
       AND lower(e.user_email) = lower(p.email)
   );
 
+-- 根据持续会员总时长补推历史续费：现行周期为 31 天，早期的 30 天周期也会
+-- 落入同一续费次数。例如总时长 61 天 = 新开 1 次 + 续费 1 次。
+WITH membership_duration AS (
+  SELECT p.email, p.vip_started_at, p.vip_expire,
+         greatest(0, ceil(extract(epoch FROM (p.vip_expire - p.vip_started_at)) / 86400.0 / 31.0)::integer - 1) AS renew_count
+  FROM public.profiles p
+  WHERE p.vip_started_at >= timestamptz '2026-08-01 00:00:00+08'
+    AND p.vip_expire IS NOT NULL
+), inferred AS (
+  SELECT d.email,
+         d.vip_expire - ((d.renew_count - g.n + 1) * interval '31 days') AS occurred_at
+  FROM membership_duration d
+  CROSS JOIN LATERAL generate_series(1, d.renew_count) AS g(n)
+)
+INSERT INTO public.vip_membership_events
+  (user_email, event_type, days, occurred_at, expire_before, expire_after, source)
+SELECT i.email, 'renew', 31, i.occurred_at, i.occurred_at, i.occurred_at + interval '31 days', 'historical_inferred'
+FROM inferred i
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.vip_membership_events e
+  WHERE e.source = 'historical_inferred'
+    AND lower(e.user_email) = lower(i.email)
+    AND e.occurred_at = i.occurred_at
+);
+
 CREATE OR REPLACE FUNCTION public._blys_log_vip_membership_event(
   p_email text,
   p_expire_before timestamptz,

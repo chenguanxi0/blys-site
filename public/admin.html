@@ -413,7 +413,7 @@
       const users = Array.isArray(d.list) ? d.list : [];
       const members = users.filter(u => u.is_vip).sort((a,b) => new Date(b.vip_started_at || 0) - new Date(a.vip_started_at || 0));
       const normalUsers = users.filter(u => !u.is_vip);
-      const row = u => `<tr class="${vipRemainClass(u.vip_expire)}"><td>${esc(u.nickname||'')}</td><td class="email">${esc(u.email||'')}</td><td>${u.created_at?fmt(u.created_at):'-'}</td><td>${u.is_vip?'是':'否'}</td><td>${u.vip_started_at?fmt(u.vip_started_at):'-'}</td><td>${vipDays(u.vip_started_at)}</td><td>${u.vip_expire?fmt(u.vip_expire):'-'}</td><td><span class="${vipRemainTextClass(u.vip_expire)}">${vipRemainDays(u.vip_expire)}</span></td><td><button onclick="openVipModal('${jsStr(u.email||'')}')">设会员</button><button class="renew" onclick="renewVip30('${jsStr(u.email||'')}','${jsStr(u.vip_expire||'')}')">续30天</button></td></tr>`;
+      const row = u => `<tr class="${vipRemainClass(u.vip_expire)}"><td>${esc(u.nickname||'')}</td><td class="email">${esc(u.email||'')}</td><td>${u.created_at?fmt(u.created_at):'-'}</td><td>${u.is_vip?'是':'否'}</td><td>${u.vip_started_at?fmt(u.vip_started_at):'-'}</td><td>${vipDays(u.vip_started_at)}</td><td>${u.vip_expire?fmt(u.vip_expire):'-'}</td><td><span class="${vipRemainTextClass(u.vip_expire)}">${vipRemainDays(u.vip_expire)}</span></td><td><button onclick="openVipModal('${jsStr(u.email||'')}')">设会员</button><button class="renew" onclick="renewVip31('${jsStr(u.email||'')}')">续31天</button></td></tr>`;
       const head = '<tr><th>昵称</th><th>邮箱</th><th>注册时间</th><th>会员</th><th>开通时间</th><th>会员天数</th><th>到期时间</th><th>剩余天数</th><th>操作</th></tr>';
       const normalSection = '<div class="admin-form-actions" style="justify-content:space-between;margin:0 0 10px;">' +
         '<h3 style="margin:0;">普通用户（' + normalUsers.length + ' 人）</h3>' +
@@ -430,14 +430,12 @@
       loadUsers();
     }
 
-    async function renewVip30(email, expire){
+    async function renewVip31(email){
       if(!email) return;
-      const left = vipRemainNumber(expire);
-      const days = Math.max(0, left == null ? 0 : left) + 30;
-      if(!confirm('确认给 ' + email + ' 续 30 天会员？')) return;
-      const d = await sbRpc('admin_set_vip', { p_admin_token:getTok(), p_email:email, p_days:days });
+      if(!confirm('确认给 ' + email + ' 续 31 天会员？')) return;
+      const d = await sbRpc('admin_extend_vip', { p_admin_token:getTok(), p_email:email, p_days:31 });
       alert(d && d.ok ? ('已续费，到期：' + fmt(d.vip_expire)) : ('失败：' + ((d&&d.msg)||'未知错误')));
-      loadStats(); loadUsers();
+      loadStats(); loadUsers(); loadMonthlyVipActivity().then(renderMonthlyMemberStats);
     }
 
     let __vipTargetEmail = '';
