@@ -42,7 +42,7 @@
     .monthly-stat-total td { background:#f8fafc; font-weight:800; }
     .admin-form { display:grid; gap:10px; }
     .admin-form label { display:flex; flex-direction:column; gap:6px; font-size:13px; color:#64748b; }
-    .admin-form input, .admin-form textarea { width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; font-family:inherit; }
+    .admin-form input, .admin-form textarea, .admin-form select { width:100%; padding:10px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:14px; font-family:inherit; }
     .admin-form textarea { min-height:110px; resize:vertical; line-height:1.6; }
     .admin-form-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
     .admin-save-msg { color:#64748b; font-size:13px; }
@@ -111,6 +111,26 @@
       </div>
 
       <div class="panel">
+        <h2>💬 模拟群聊发言</h2>
+        <p style="margin:-4px 0 14px;color:#64748b;font-size:13px;">选择预置账号后代发：会员账号自动发到会员群聊，普通账号自动发到普通群聊。</p>
+        <div class="admin-form">
+          <label>用户类型
+            <select id="chatDemoType" onchange="renderChatDemoUserOptions()">
+              <option value="vip">会员用户</option>
+              <option value="public">普通用户</option>
+            </select>
+          </label>
+          <label>对应用户<select id="chatDemoUser"><option>加载中…</option></select></label>
+          <label>发送内容<textarea id="chatDemoContent" maxlength="500" placeholder="输入后会以所选用户的身份发送到对应群聊…"></textarea></label>
+          <div class="admin-form-actions">
+            <button class="btn btn-primary" type="button" onclick="sendChatDemoMessage()">发送到群聊</button>
+            <button class="btn btn-secondary" type="button" onclick="loadChatDemoUsers()">刷新用户</button>
+            <span class="admin-save-msg" id="chatDemoMsg"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
         <h2>👥 用户列表</h2>
         <div class="table-wrap" id="userList">加载中…</div>
       </div>
@@ -154,6 +174,7 @@
     let monthlyMemberStats = {};
     let monthlyVipActivity = {};
     let normalUsersExpanded = false;
+    let chatDemoUsers = [];
 
     async function sbRpc(fn, params){
       const r = await fetch(SB_URL + "/rest/v1/rpc/" + fn, {
@@ -210,7 +231,48 @@
       loadAll();
     }
 
-    async function loadAll(){ await loadMonthlyVipActivity(); renderMonthlyMemberStats(); await loadAutomationProjects(); await loadStats(); await loadSiteAnnouncementAdmin(); await loadUsers(); await loadComments(); }
+    async function loadAll(){ await loadMonthlyVipActivity(); renderMonthlyMemberStats(); await loadAutomationProjects(); await loadStats(); await loadSiteAnnouncementAdmin(); await loadChatDemoUsers(); await loadUsers(); await loadComments(); }
+
+    async function loadChatDemoUsers(){
+      const msg = document.getElementById('chatDemoMsg');
+      if(msg) msg.textContent = '加载用户中…';
+      try {
+        const d = await sbRpc('admin_list_chat_demo_users', { p_admin_token: getTok() });
+        if(!d || !d.ok) throw new Error((d&&d.msg)||'加载失败');
+        chatDemoUsers = Array.isArray(d.items) ? d.items : [];
+        renderChatDemoUserOptions();
+        if(msg) msg.textContent = '已就绪：会员 5 个、普通用户 5 个';
+      } catch(e) {
+        chatDemoUsers = [];
+        renderChatDemoUserOptions();
+        if(msg) msg.textContent = '用户加载失败';
+      }
+    }
+    function renderChatDemoUserOptions(){
+      const type = document.getElementById('chatDemoType');
+      const select = document.getElementById('chatDemoUser');
+      if(!type || !select) return;
+      const items = chatDemoUsers.filter(item => item && item.type === type.value);
+      select.innerHTML = items.length
+        ? items.map(item => '<option value="' + esc(item.token) + '">' + esc(item.nickname) + '</option>').join('')
+        : '<option value="">暂无用户</option>';
+    }
+    async function sendChatDemoMessage(){
+      const token = (document.getElementById('chatDemoUser').value || '').trim();
+      const content = (document.getElementById('chatDemoContent').value || '').trim();
+      const msg = document.getElementById('chatDemoMsg');
+      if(!token){ if(msg) msg.textContent = '请先选择用户'; return; }
+      if(!content){ if(msg) msg.textContent = '请输入发送内容'; return; }
+      if(msg) msg.textContent = '发送中…';
+      try {
+        const d = await sbRpc('admin_send_chat_demo_message', { p_admin_token: getTok(), p_user_token: token, p_content: content });
+        if(!d || !d.ok) throw new Error((d&&d.msg)||'发送失败');
+        document.getElementById('chatDemoContent').value = '';
+        if(msg) msg.textContent = '已用「' + (d.nickname || '所选用户') + '」发送到' + (d.room === 'vip_chat' ? '会员群聊' : '普通群聊');
+      } catch(e) {
+        if(msg) msg.textContent = '发送失败：' + (e && e.message ? e.message : '网络异常');
+      }
+    }
 
     async function loadStats(){
       const d = await sbRpc('admin_stats', { p_admin_token: getTok() });
