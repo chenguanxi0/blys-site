@@ -24,21 +24,28 @@ AS $$
 BEGIN
   INSERT INTO public.profiles (token, email, nickname, vip_started_at, vip_expire, is_demo_account)
   VALUES
-    ('demo-vip-01-7fa0b31c', 'demo-vip-01@blys.local', '沐言', now() - interval '20 days', now() + interval '3650 days', true),
-    ('demo-vip-02-5e62cd14', 'demo-vip-02@blys.local', '若川', now() - interval '20 days', now() + interval '3650 days', true),
-    ('demo-vip-03-9c13ea65', 'demo-vip-03@blys.local', '星野', now() - interval '20 days', now() + interval '3650 days', true),
-    ('demo-vip-04-2b76d8f9', 'demo-vip-04@blys.local', '南栀', now() - interval '20 days', now() + interval '3650 days', true),
-    ('demo-vip-05-84a1f0ce', 'demo-vip-05@blys.local', '予安', now() - interval '20 days', now() + interval '3650 days', true),
-    ('demo-public-01-3d60a2f7', 'demo-public-01@blys.local', '林默', null, null, true),
-    ('demo-public-02-8e74c5b1', 'demo-public-02@blys.local', '陈川', null, null, true),
-    ('demo-public-03-1af96d30', 'demo-public-03@blys.local', '宋宁', null, null, true),
-    ('demo-public-04-6c28be45', 'demo-public-04@blys.local', '顾言', null, null, true),
-    ('demo-public-05-f57a9138', 'demo-public-05@blys.local', '周末', null, null, true)
+    ('demo-vip-01-7fa0b31c', 'demo-vip-01@blys.local', 'Vivi_88', now() - interval '20 days', now() + interval '3650 days', true),
+    ('demo-vip-02-5e62cd14', 'demo-vip-02@blys.local', 'Mike Trader', now() - interval '20 days', now() + interval '3650 days', true),
+    ('demo-vip-03-9c13ea65', 'demo-vip-03@blys.local', 'K哥', now() - interval '20 days', now() + interval '3650 days', true),
+    ('demo-vip-04-2b76d8f9', 'demo-vip-04@blys.local', 'Stock007', now() - interval '20 days', now() + interval '3650 days', true),
+    ('demo-vip-05-84a1f0ce', 'demo-vip-05@blys.local', 'Momo', now() - interval '20 days', now() + interval '3650 days', true),
+    ('demo-public-01-3d60a2f7', 'demo-public-01@blys.local', 'tommy', null, null, true),
+    ('demo-public-02-8e74c5b1', 'demo-public-02@blys.local', '小8', null, null, true),
+    ('demo-public-03-1af96d30', 'demo-public-03@blys.local', 'Lucky_09', null, null, true),
+    ('demo-public-04-6c28be45', 'demo-public-04@blys.local', '陈哥', null, null, true),
+    ('demo-public-05-f57a9138', 'demo-public-05@blys.local', 'Nina', null, null, true)
   ON CONFLICT (token) DO UPDATE
     SET nickname = EXCLUDED.nickname,
         vip_started_at = EXCLUDED.vip_started_at,
         vip_expire = EXCLUDED.vip_expire,
         is_demo_account = true;
+
+  UPDATE public.messages m
+     SET user_nickname = p.nickname
+    FROM public.profiles p
+   WHERE p.is_demo_account = true
+     AND lower(p.email) = lower(m.user_email)
+     AND m.user_nickname IS DISTINCT FROM p.nickname;
 END;
 $$;
 
