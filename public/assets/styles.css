@@ -1602,6 +1602,14 @@ html.blys-native-app body.chat-body .chat-notif-float {
   box-shadow:0 0 0 3px rgba(245,158,11,.25), 0 7px 16px rgba(194,65,12,.27);
   position:relative;
 }
+
+/* 每日复盘在窄屏上优先给正文留出可读宽度，避免多层卡片留白叠加。 */
+@media (max-width:560px) {
+  #reviewRoot.section { padding-left: 6px; padding-right: 6px; }
+  #reviewRoot .rpt-card { border-radius: 12px; }
+  #reviewRoot .rpt { padding: 10px 8px; }
+  #reviewRoot .rpt-chapter { margin: 12px 0; padding: 12px 10px; }
+}
 .chat-msg-admin .chat-msg-avatar::after {
   content:'';
   position:absolute; right:-3px; bottom:-3px; width:11px; height:11px;
