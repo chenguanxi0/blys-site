@@ -377,7 +377,7 @@
         totalAmount += amount;
         return `<tr><td>${month}</td><td>${item.newCount}</td><td>${item.renewCount}</td><td>${item.lapsedCount}</td><td>${count}</td><td>${fmtMoney(amount)}</td></tr>`;
       }).join('');
-      box.innerHTML = '<table class="admin-table"><tr><th>月份</th><th>新开</th><th>续费</th><th>中断（到期未续）</th><th>合计</th><th>金额</th></tr>' +
+      box.innerHTML = '<table class="admin-table"><tr><th>月份</th><th>新开</th><th>续费</th><th>中断</th><th>合计</th><th>金额</th></tr>' +
         rows +
         `<tr class="monthly-stat-total"><td>汇总</td><td id="monthlyStatTotalNew">${totalNew}</td><td id="monthlyStatTotalRenew">${totalRenew}</td><td>${totalLapsed}</td><td id="monthlyStatTotalCount">${totalNew + totalRenew}</td><td id="monthlyStatTotalAmount">${fmtMoney(totalAmount)}</td></tr>` +
         '</table>';
