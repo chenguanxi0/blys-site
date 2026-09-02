@@ -18,6 +18,12 @@ CREATE INDEX IF NOT EXISTS vip_membership_events_occurred_at_idx
 CREATE INDEX IF NOT EXISTS vip_membership_events_email_idx
   ON public.vip_membership_events (lower(user_email), occurred_at DESC);
 
+ALTER TABLE public.vip_membership_events
+  DROP CONSTRAINT IF EXISTS vip_membership_events_event_type_check;
+ALTER TABLE public.vip_membership_events
+  ADD CONSTRAINT vip_membership_events_event_type_check
+  CHECK (event_type IN ('new', 'renew'));
+
 -- 仅回填 2026-08 起可确认的首次开通记录，不把未知的历史续费臆测为新开。
 INSERT INTO public.vip_membership_events
   (user_email, event_type, days, occurred_at, expire_before, expire_after, source)
@@ -25,6 +31,7 @@ SELECT p.email, 'new', 30, p.vip_started_at, NULL, p.vip_expire, 'historical_bac
 FROM public.profiles p
 WHERE p.vip_started_at >= timestamptz '2026-08-01 00:00:00+08'
   AND p.vip_expire IS NOT NULL
+  AND NOT coalesce(p.is_demo_account, false)
   AND NOT EXISTS (
     SELECT 1 FROM public.vip_membership_events e
     WHERE e.source = 'historical_backfill'
@@ -39,6 +46,7 @@ WITH membership_duration AS (
   FROM public.profiles p
   WHERE p.vip_started_at >= timestamptz '2026-08-01 00:00:00+08'
     AND p.vip_expire IS NOT NULL
+    AND NOT coalesce(p.is_demo_account, false)
 ), inferred AS (
   SELECT d.email,
          d.vip_expire - ((d.renew_count - g.n + 1) * interval '31 days') AS occurred_at
@@ -91,19 +99,49 @@ BEGIN
     RETURN jsonb_build_object('ok', false, 'msg', '无权限');
   END IF;
 
-  SELECT coalesce(jsonb_object_agg(month_key, counts), '{}'::jsonb) INTO v_stats
-  FROM (
-    SELECT to_char(date_trunc('month', occurred_at AT TIME ZONE 'Asia/Shanghai'), 'YYYY-MM') AS month_key,
-           jsonb_build_object(
-             'new', count(*) FILTER (WHERE event_type = 'new'),
-             'renew', count(*) FILTER (WHERE event_type = 'renew')
-           ) AS counts
+  WITH real_events AS (
+    SELECT e.*
     FROM public.vip_membership_events e
     JOIN public.profiles p ON lower(p.email) = lower(e.user_email)
-    WHERE e.occurred_at >= timestamptz '2026-08-01 00:00:00+08'
-      AND NOT coalesce(p.is_admin, false)
+    WHERE NOT coalesce(p.is_admin, false)
+      AND NOT coalesce(p.is_demo_account, false)
+  ), monthly AS (
+    SELECT to_char(date_trunc('month', occurred_at AT TIME ZONE 'Asia/Shanghai'), 'YYYY-MM') AS month_key,
+           count(*) FILTER (WHERE event_type = 'new')::integer AS new_count,
+           count(*) FILTER (WHERE event_type = 'renew')::integer AS renew_count,
+           0::integer AS lapsed_count
+    FROM real_events
+    WHERE occurred_at >= timestamptz '2026-08-01 00:00:00+08'
     GROUP BY 1
-  ) monthly;
+    UNION ALL
+    SELECT to_char(date_trunc('month', e.expire_after AT TIME ZONE 'Asia/Shanghai'), 'YYYY-MM') AS month_key,
+           0::integer, 0::integer,
+           count(DISTINCT lower(e.user_email))::integer AS lapsed_count
+    FROM real_events e
+    WHERE e.expire_after >= timestamptz '2026-08-01 00:00:00+08'
+      AND e.expire_after <= now()
+      AND NOT EXISTS (
+        SELECT 1 FROM real_events next_event
+        WHERE lower(next_event.user_email) = lower(e.user_email)
+          AND next_event.occurred_at > e.occurred_at
+          AND next_event.occurred_at <= e.expire_after
+      )
+    GROUP BY 1
+  ), monthly_totals AS (
+    SELECT month_key,
+           sum(new_count)::integer AS new_count,
+           sum(renew_count)::integer AS renew_count,
+           sum(lapsed_count)::integer AS lapsed_count
+    FROM monthly
+    GROUP BY month_key
+  )
+  SELECT coalesce(jsonb_object_agg(month_key, jsonb_build_object(
+    'new', new_count,
+    'renew', renew_count,
+    'lapsed', lapsed_count
+  )), '{}'::jsonb)
+  INTO v_stats
+  FROM monthly_totals;
 
   RETURN jsonb_build_object('ok', true, 'stats', coalesce(v_stats, '{}'::jsonb));
 END;

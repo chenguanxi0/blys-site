@@ -80,7 +80,7 @@
 
       <div class="panel">
         <div class="admin-form-actions" style="justify-content:space-between;margin-bottom:14px;">
-          <h2 style="margin:0;">月度会员开通 / 续费统计（自动计算）</h2>
+          <h2 style="margin:0;">月度会员开通 / 续费 / 中断统计（自动计算）</h2>
           <div class="admin-form-actions" style="margin:0;">
             <button class="btn btn-secondary" id="monthlyMemberStatsToggle" onclick="toggleMonthlyMemberStats()">展开</button>
           </div>
@@ -349,7 +349,7 @@
     function monthlyCount(n){ return Math.max(0, Math.floor(Number(n) || 0)); }
     function monthlyRecord(month){
       const auto = monthlyVipActivity[month] || {};
-      return { newCount: monthlyCount(auto.new), renewCount: monthlyCount(auto.renew) };
+      return { newCount: monthlyCount(auto.new), renewCount: monthlyCount(auto.renew), lapsedCount: monthlyCount(auto.lapsed) };
     }
     function monthlyAmount(n){
       return monthlyCount(n) * 500;
@@ -365,6 +365,7 @@
       if(toggle) toggle.textContent = monthlyMemberStatsExpanded ? '收起' : '展开';
       let totalNew = 0;
       let totalRenew = 0;
+      let totalLapsed = 0;
       let totalAmount = 0;
       const rows = months.map(month => {
         const item = monthlyRecord(month);
@@ -372,12 +373,13 @@
         const amount = monthlyAmount(count);
         totalNew += item.newCount;
         totalRenew += item.renewCount;
+        totalLapsed += item.lapsedCount;
         totalAmount += amount;
-        return `<tr><td>${month}</td><td>${item.newCount}</td><td>${item.renewCount}</td><td>${count}</td><td>${fmtMoney(amount)}</td></tr>`;
+        return `<tr><td>${month}</td><td>${item.newCount}</td><td>${item.renewCount}</td><td>${item.lapsedCount}</td><td>${count}</td><td>${fmtMoney(amount)}</td></tr>`;
       }).join('');
-      box.innerHTML = '<table class="admin-table"><tr><th>月份</th><th>新开</th><th>续费</th><th>合计</th><th>金额</th></tr>' +
+      box.innerHTML = '<table class="admin-table"><tr><th>月份</th><th>新开</th><th>续费</th><th>中断（到期未续）</th><th>合计</th><th>金额</th></tr>' +
         rows +
-        `<tr class="monthly-stat-total"><td>汇总</td><td id="monthlyStatTotalNew">${totalNew}</td><td id="monthlyStatTotalRenew">${totalRenew}</td><td id="monthlyStatTotalCount">${totalNew + totalRenew}</td><td id="monthlyStatTotalAmount">${fmtMoney(totalAmount)}</td></tr>` +
+        `<tr class="monthly-stat-total"><td>汇总</td><td id="monthlyStatTotalNew">${totalNew}</td><td id="monthlyStatTotalRenew">${totalRenew}</td><td>${totalLapsed}</td><td id="monthlyStatTotalCount">${totalNew + totalRenew}</td><td id="monthlyStatTotalAmount">${fmtMoney(totalAmount)}</td></tr>` +
         '</table>';
     }
     function toggleMonthlyMemberStats(){
