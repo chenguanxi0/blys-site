@@ -1663,6 +1663,28 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
     }
 
+    // App WebView 在晚间网络波动时比浏览器更容易中断请求；只缓存最近成功读取的群消息，
+    // 让再次进入聊天室时先有可读内容，网络恢复后仍会用服务器数据刷新。
+    const CHAT_MESSAGE_CACHE_TTL = 24 * 60 * 60 * 1000;
+    function chatMessageCacheStorageKey(room){
+      const scoped = room === 'private' || room === 'vip' || room === 'vip_chat';
+      const identity = scoped ? ((__user && __user.token) || 'guest') : 'public';
+      return 'blys_chat_messages_v1:' + room + ':' + identity;
+    }
+    function readCachedChatMessages(room){
+      try {
+        const raw = JSON.parse(localStorage.getItem(chatMessageCacheStorageKey(room)) || 'null');
+        if(!raw || !Array.isArray(raw.list) || !raw.at || Date.now() - Number(raw.at) > CHAT_MESSAGE_CACHE_TTL) return [];
+        return raw.list.filter(item => item && item.id && item.created_at).slice(-30);
+      } catch(e) { return []; }
+    }
+    function saveCachedChatMessages(room, list){
+      if(room === 'private' || isVipPreviewMode(room) || !Array.isArray(list)) return;
+      try {
+        localStorage.setItem(chatMessageCacheStorageKey(room), JSON.stringify({ at: Date.now(), list: list.slice(-30) }));
+      } catch(e) {}
+    }
+
     async function loadChatMessages(room, opts) {
       if (room === 'private') return loadPrivateMessages(opts || {});
       opts = opts || {};
@@ -1674,6 +1696,11 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       const isFirst = opts.isFirst || box.querySelector('.chat-loading') != null;
       const previewMode = isVipPreviewMode(room);
       if (isFirst) box.innerHTML = '<div class="chat-loading">加载消息中…</div>';
+      const cachedList = isFirst && !previewMode ? readCachedChatMessages(room) : [];
+      if(cachedList.length){
+        renderChatMessages(sortMessagesAsc(cachedList), room, true);
+        box.dataset.chatCached = '1';
+      }
       // 首屏/失败自动重试：网络抖动或 Supabase 冷启动时，避免“进来没内容”
       const retryLater = () => {
         if (retry < 2) setTimeout(() => {
@@ -1697,7 +1724,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
           rpcParams.p_limit = (room === 'vip' || room === 'vip_chat') ? 20 : (isNativeApp ? 30 : 80);
           rpcParams.p_after = chatTsToIso(lastSeenTs[room]);
         }
-        const d = await sbRpc('list_messages', rpcParams, { timeoutMs: isFirst ? 18000 : 12000 });
+        const d = await sbRpc('list_messages', rpcParams, { timeoutMs: isFirst ? (isNativeApp ? 30000 : 18000) : 12000 });
         console.log('[chat] list_messages response', room, d);
         if ((!isHistory && loadSeq !== chatLoadSeq) || room !== currentRoom) return;
         // list_messages 返回表，直接是数组；也兼容返回 {ok:true, list:[]} 的情况
@@ -1728,6 +1755,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         } else if (isFirst) {
           // 首屏：按时间升序渲染，底部一定是最新消息
           renderChatMessages(sortMessagesAsc(list), room, true);
+          saveCachedChatMessages(room, list);
+          delete box.dataset.chatCached;
           if (previewMode) applyVipPreviewOverlay(room);
           setTimeout(() => hydrateChatImagePlaceholders((room === 'vip' || room === 'vip_chat') ? 4 : 6), 120);
           if (list.length) {
