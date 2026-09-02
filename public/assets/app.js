@@ -1577,7 +1577,7 @@ async function submitComment(article){
   // 基础人数：工作日白天高、夜间/周末低
   const h = new Date().getHours();
   const wd = [0,6].indexOf(new Date().getDay()) === -1; // 工作日
-  let base = wd ? (h >= 9 && h <= 21 ? 45 : 18) : (h >= 10 && h <= 22 ? 28 : 12);
+  let base = wd ? (h >= 9 && h <= 21 ? 55 : 28) : (h >= 10 && h <= 22 ? 38 : 22);
   // 从 localStorage 取偏移量（同设备稳定）
   const key = "blys_visit_seed";
   let seed = parseFloat(localStorage.getItem(key) || "0");

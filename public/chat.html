@@ -235,7 +235,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026082713"></script>
+  <script src="assets/app.js?v=2026090217"></script>
   <script src="assets/mobile-app.js?v=2026082445"></script>
   <script>
     // 聊天室页面初始化
@@ -367,7 +367,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       const daySeed = Math.floor(now.getTime() / 86400000);
       const hour = now.getHours();
       const isVipRoom = room === 'vip';
-      const totalMin = isVipRoom ? 30 : 96;
+      const totalMin = isVipRoom ? 40 : 106;
       const totalRange = isVipRoom ? 6 : 13;
       const total = totalMin + Math.floor(seededChatRand(daySeed + (isVipRoom ? 37 : 11)) * totalRange);
       const siteOnline = Number(window.BLYS_SITE_ONLINE_COUNT);
@@ -380,7 +380,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       const jitter = (seededChatRand(minuteBucket + (isVipRoom ? 73 : 29)) - 0.5) * (isVipRoom ? 0.18 : 0.12);
       const online = !isVipRoom && Number.isFinite(siteOnline) && siteOnline > 0
         ? Math.max(1, Math.round(siteOnline))
-        : Math.max(3, Math.min(total - 1, Math.round(total * (ratio + jitter))));
+        : Math.max(3, Math.min(total - 1, Math.round(total * (ratio + jitter)) + 10));
       return { total, online };
     }
     function updateChatLiveStats() {
