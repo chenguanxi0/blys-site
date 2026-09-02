@@ -12,10 +12,13 @@
     .admin .sub { color:var(--muted); margin-bottom:24px; }
     .login-box { background:#fff; padding:24px; border-radius:12px; max-width:360px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
     .login-box input { width:100%; padding:10px; margin:10px 0; border:1px solid #d1d5db; border-radius:8px; }
-    .stat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:24px; }
+    .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin-bottom:24px; }
     .stat-card { background:#fff; border-radius:12px; padding:20px; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,.06); }
     .stat-card .num { font-size:30px; font-weight:700; color:var(--brand); }
     .stat-card .lbl { color:var(--muted); font-size:13px; margin-top:4px; }
+    .stat-card .delta { min-height:18px; margin-top:7px; font-size:12px; color:#64748b; }
+    .stat-card .delta.up { color:#16a34a; }
+    .stat-card .delta.down { color:#dc2626; }
     .panel { background:#fff; border-radius:12px; padding:20px; margin-bottom:24px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
     .panel h2 { font-size:18px; margin-top:0; margin-bottom:14px; }
     .table-wrap { overflow-x: auto; border-radius:8px; border:1px solid #e5e7eb; }
@@ -76,6 +79,8 @@
         <div class="stat-card"><div class="num" id="statUsers">-</div><div class="lbl">注册用户</div></div>
         <div class="stat-card"><div class="num" id="statVip">-</div><div class="lbl">会员数</div></div>
         <div class="stat-card"><div class="num" id="statCmts">-</div><div class="lbl">评论数</div></div>
+        <div class="stat-card"><div class="num" id="statNewVip">-</div><div class="lbl">今日新增会员</div><div class="delta" id="statNewVipDelta">较昨日 —</div></div>
+        <div class="stat-card"><div class="num" id="statNewUsers">-</div><div class="lbl">今日新增注册</div><div class="delta" id="statNewUsersDelta">较昨日 —</div></div>
       </div>
 
       <div class="panel">
@@ -280,7 +285,20 @@
         document.getElementById('statUsers').textContent = d.users;
         document.getElementById('statVip').textContent = d.vip;
         document.getElementById('statCmts').textContent = d.comments;
+        setDailyStat('statNewVip', 'statNewVipDelta', d.new_vip_today, d.new_vip_yesterday);
+        setDailyStat('statNewUsers', 'statNewUsersDelta', d.new_users_today, d.new_users_yesterday);
       }
+    }
+    function setDailyStat(valueId, deltaId, today, yesterday){
+      const value = Math.max(0, Number(today) || 0);
+      const before = Math.max(0, Number(yesterday) || 0);
+      const delta = value - before;
+      const valueEl = document.getElementById(valueId);
+      const deltaEl = document.getElementById(deltaId);
+      if(valueEl) valueEl.textContent = value;
+      if(!deltaEl) return;
+      deltaEl.className = 'delta' + (delta > 0 ? ' up' : delta < 0 ? ' down' : '');
+      deltaEl.textContent = delta === 0 ? '较昨日持平' : ('较昨日 ' + (delta > 0 ? '+' : '') + delta);
     }
 
     function getLocalMonthlyMemberStats(){

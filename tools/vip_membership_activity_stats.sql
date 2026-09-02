@@ -274,16 +274,37 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public
 AS $function$
-DECLARE v_users int; v_vip int; v_cmts int;
+DECLARE
+  v_users int; v_vip int; v_cmts int;
+  v_new_users_today int; v_new_users_yesterday int;
+  v_new_vip_today int; v_new_vip_yesterday int;
+  v_today_start timestamptz := date_trunc('day', now() AT TIME ZONE 'Asia/Shanghai') AT TIME ZONE 'Asia/Shanghai';
 BEGIN
   IF length(coalesce(p_admin_token, '')) < 10 THEN
     RETURN json_build_object('ok', false, 'msg', '无权限');
   END IF;
-  SELECT count(*) INTO v_users FROM public.profiles;
+  SELECT count(*) INTO v_users FROM public.profiles WHERE NOT coalesce(is_demo_account, false);
   SELECT count(*) INTO v_vip FROM public.profiles
-  WHERE vip_expire > now() AND NOT coalesce(is_admin, false);
+   WHERE vip_expire > now() AND NOT coalesce(is_admin, false) AND NOT coalesce(is_demo_account, false);
   SELECT count(*) INTO v_cmts FROM public.comments;
-  RETURN json_build_object('ok', true, 'users', v_users, 'vip', v_vip, 'comments', v_cmts);
+  SELECT count(*) INTO v_new_users_today FROM public.profiles
+   WHERE created_at >= v_today_start AND NOT coalesce(is_demo_account, false);
+  SELECT count(*) INTO v_new_users_yesterday FROM public.profiles
+   WHERE created_at >= v_today_start - interval '1 day' AND created_at < v_today_start
+     AND NOT coalesce(is_demo_account, false);
+  SELECT count(*) INTO v_new_vip_today
+  FROM public.vip_membership_events e JOIN public.profiles p ON lower(p.email) = lower(e.user_email)
+   WHERE e.event_type = 'new' AND e.occurred_at >= v_today_start
+     AND NOT coalesce(p.is_admin, false) AND NOT coalesce(p.is_demo_account, false);
+  SELECT count(*) INTO v_new_vip_yesterday
+  FROM public.vip_membership_events e JOIN public.profiles p ON lower(p.email) = lower(e.user_email)
+   WHERE e.event_type = 'new' AND e.occurred_at >= v_today_start - interval '1 day' AND e.occurred_at < v_today_start
+     AND NOT coalesce(p.is_admin, false) AND NOT coalesce(p.is_demo_account, false);
+  RETURN json_build_object(
+    'ok', true, 'users', v_users, 'vip', v_vip, 'comments', v_cmts,
+    'new_users_today', v_new_users_today, 'new_users_yesterday', v_new_users_yesterday,
+    'new_vip_today', v_new_vip_today, 'new_vip_yesterday', v_new_vip_yesterday
+  );
 END;
 $function$;
 
