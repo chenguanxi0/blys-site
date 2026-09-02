@@ -3,6 +3,8 @@
 
 ALTER TABLE public.profiles
   ADD COLUMN IF NOT EXISTS is_demo_account boolean NOT NULL DEFAULT false;
+ALTER TABLE public.profiles
+  ADD COLUMN IF NOT EXISTS exclude_from_stats boolean NOT NULL DEFAULT false;
 
 CREATE OR REPLACE FUNCTION public._blys_is_admin_token(p_token text)
 RETURNS boolean
@@ -38,7 +40,12 @@ BEGIN
     SET nickname = EXCLUDED.nickname,
         vip_started_at = EXCLUDED.vip_started_at,
         vip_expire = EXCLUDED.vip_expire,
-        is_demo_account = true;
+        is_demo_account = true,
+        exclude_from_stats = true;
+
+  UPDATE public.profiles
+     SET exclude_from_stats = true
+   WHERE is_demo_account = true;
 
   UPDATE public.messages m
      SET user_nickname = p.nickname
@@ -130,14 +137,14 @@ BEGIN
   IF length(coalesce(p_admin_token, '')) < 10 THEN
     RETURN json_build_object('ok', false, 'msg', '无权限');
   END IF;
-  SELECT count(*) INTO v_users FROM public.profiles WHERE NOT coalesce(is_demo_account, false);
+  SELECT count(*) INTO v_users FROM public.profiles WHERE NOT coalesce(is_demo_account, false) AND NOT coalesce(exclude_from_stats, false);
   SELECT count(*) INTO v_vip FROM public.profiles
-   WHERE vip_expire > now() AND NOT coalesce(is_admin, false) AND NOT coalesce(is_demo_account, false);
+   WHERE vip_expire > now() AND NOT coalesce(is_admin, false) AND NOT coalesce(is_demo_account, false) AND NOT coalesce(exclude_from_stats, false);
   SELECT count(*) INTO v_cmts FROM public.comments;
-  SELECT count(*) INTO v_new_users_today FROM public.profiles WHERE created_at >= v_today_start AND NOT coalesce(is_demo_account, false);
-  SELECT count(*) INTO v_new_users_yesterday FROM public.profiles WHERE created_at >= v_today_start - interval '1 day' AND created_at < v_today_start AND NOT coalesce(is_demo_account, false);
-  SELECT count(*) INTO v_new_vip_today FROM public.vip_membership_events e JOIN public.profiles p ON lower(p.email) = lower(e.user_email) WHERE e.event_type = 'new' AND e.occurred_at >= v_today_start AND NOT coalesce(p.is_admin, false) AND NOT coalesce(p.is_demo_account, false);
-  SELECT count(*) INTO v_new_vip_yesterday FROM public.vip_membership_events e JOIN public.profiles p ON lower(p.email) = lower(e.user_email) WHERE e.event_type = 'new' AND e.occurred_at >= v_today_start - interval '1 day' AND e.occurred_at < v_today_start AND NOT coalesce(p.is_admin, false) AND NOT coalesce(p.is_demo_account, false);
+  SELECT count(*) INTO v_new_users_today FROM public.profiles WHERE created_at >= v_today_start AND NOT coalesce(is_demo_account, false) AND NOT coalesce(exclude_from_stats, false);
+  SELECT count(*) INTO v_new_users_yesterday FROM public.profiles WHERE created_at >= v_today_start - interval '1 day' AND created_at < v_today_start AND NOT coalesce(is_demo_account, false) AND NOT coalesce(exclude_from_stats, false);
+  SELECT count(*) INTO v_new_vip_today FROM public.vip_membership_events e JOIN public.profiles p ON lower(p.email) = lower(e.user_email) WHERE e.event_type = 'new' AND e.occurred_at >= v_today_start AND NOT coalesce(p.is_admin, false) AND NOT coalesce(p.is_demo_account, false) AND NOT coalesce(p.exclude_from_stats, false);
+  SELECT count(*) INTO v_new_vip_yesterday FROM public.vip_membership_events e JOIN public.profiles p ON lower(p.email) = lower(e.user_email) WHERE e.event_type = 'new' AND e.occurred_at >= v_today_start - interval '1 day' AND e.occurred_at < v_today_start AND NOT coalesce(p.is_admin, false) AND NOT coalesce(p.is_demo_account, false) AND NOT coalesce(p.exclude_from_stats, false);
   RETURN json_build_object('ok', true, 'users', v_users, 'vip', v_vip, 'comments', v_cmts, 'new_users_today', v_new_users_today, 'new_users_yesterday', v_new_users_yesterday, 'new_vip_today', v_new_vip_today, 'new_vip_yesterday', v_new_vip_yesterday);
 END;
 $function$;
