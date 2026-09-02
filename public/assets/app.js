@@ -758,8 +758,19 @@ function syncUserGlobals(){
 async function fetchUser(){
   const token = localStorage.getItem(USER_TOKEN_KEY);
   if (!token){ __user = { loggedIn: false }; syncUserGlobals(); renderUserStatus(); updateMemberDisciplineNav(); lockVipZones(); initReview(); initTutorialGate(); emitUserChange(); return; }
+  // App 网络不稳定时，先用上次已验证的资料立即绘制顶部导航，避免右上角长时间空白。
+  let cached = null;
+  try { cached = JSON.parse(localStorage.getItem(USER_PROFILE_CACHE_KEY) || 'null'); } catch(e) {}
+  if (cached && cached.token === token) {
+    __user = Object.assign({}, cached, { loggedIn: true, token, __cached: true });
+    syncUserGlobals();
+    renderUserStatus();
+    updateMemberDisciplineNav();
+    lockVipZones();
+    emitUserChange();
+  }
   try {
-    const d = await sbRpc("get_profile", { p_token: token });
+    const d = await sbRpc("get_profile", { p_token: token }, { timeoutMs: 9000 });
     if (d && d.ok){
       const isVip = !!(d.vip_expire && new Date(d.vip_expire) > new Date());
       __user = { loggedIn: true, token, isVip, isAdmin: d.is_admin, is_admin: d.is_admin, nickname: d.nickname, email: d.email, vipExpire: d.vip_expire };
@@ -770,8 +781,6 @@ async function fetchUser(){
       __user = { loggedIn: false };
     }
   } catch(e){
-    let cached = null;
-    try { cached = JSON.parse(localStorage.getItem(USER_PROFILE_CACHE_KEY) || 'null'); } catch(_e){}
     if (cached && cached.token === token) {
       __user = Object.assign({}, cached, { loggedIn: true, token, __cached: true });
     } else {
