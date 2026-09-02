@@ -40,10 +40,21 @@ WHERE p.vip_started_at >= timestamptz '2026-08-01 00:00:00+08'
   AND p.vip_expire IS NOT NULL
   AND NOT coalesce(p.is_demo_account, false)
   AND NOT EXISTS (
-    SELECT 1 FROM public.vip_membership_events e
-    WHERE e.source = 'historical_backfill'
-      AND lower(e.user_email) = lower(p.email)
+    SELECT 1
+    FROM public.vip_membership_events e
+    WHERE lower(e.user_email) = lower(p.email)
+      AND e.event_type = 'new'
+      AND e.occurred_at = p.vip_started_at
   );
+
+-- 删除早期补录造成的同一开通时间重复记录，保留真实操作流水。
+DELETE FROM public.vip_membership_events historical
+USING public.vip_membership_events actual
+WHERE historical.source = 'historical_backfill'
+  AND actual.source <> 'historical_backfill'
+  AND lower(historical.user_email) = lower(actual.user_email)
+  AND historical.event_type = actual.event_type
+  AND historical.occurred_at = actual.occurred_at;
 
 -- 根据持续会员总时长补推历史续费：现行周期为 31 天，早期的 30 天周期也会
 -- 落入同一续费次数。例如总时长 61 天 = 新开 1 次 + 续费 1 次。
@@ -107,12 +118,15 @@ BEGIN
   END IF;
 
   WITH real_events AS (
-    SELECT e.*
+    SELECT DISTINCT ON (lower(e.user_email), e.event_type, e.occurred_at) e.*
     FROM public.vip_membership_events e
     JOIN public.profiles p ON lower(p.email) = lower(e.user_email)
     WHERE NOT coalesce(p.is_admin, false)
       AND NOT coalesce(p.is_demo_account, false)
       AND NOT coalesce(p.exclude_from_stats, false)
+    ORDER BY lower(e.user_email), e.event_type, e.occurred_at,
+             CASE WHEN e.source = 'historical_backfill' THEN 1 ELSE 0 END,
+             e.id DESC
   ), monthly AS (
     SELECT to_char(date_trunc('month', occurred_at AT TIME ZONE 'Asia/Shanghai'), 'YYYY-MM') AS month_key,
            count(*) FILTER (WHERE event_type = 'new')::integer AS new_count,
@@ -263,7 +277,7 @@ BEGIN
   FROM (
     SELECT p.email, p.nickname, coalesce(p.is_admin, false) AS is_admin, (p.vip_expire > now()) AS is_vip,
            p.vip_started_at, p.vip_expire, p.created_at,
-           count(e.id) FILTER (WHERE e.event_type = 'renew')::integer AS vip_renew_count
+           count(DISTINCT e.occurred_at) FILTER (WHERE e.event_type = 'renew')::integer AS vip_renew_count
     FROM public.profiles p
     LEFT JOIN public.vip_membership_events e ON lower(e.user_email) = lower(p.email)
     GROUP BY p.email, p.nickname, p.is_admin, p.vip_started_at, p.vip_expire, p.created_at
@@ -300,11 +314,11 @@ BEGIN
   SELECT count(*) INTO v_new_users_yesterday FROM public.profiles
    WHERE created_at >= v_today_start - interval '1 day' AND created_at < v_today_start
      AND NOT coalesce(is_demo_account, false) AND NOT coalesce(exclude_from_stats, false);
-  SELECT count(*) INTO v_new_vip_today
+  SELECT count(DISTINCT lower(e.user_email)) INTO v_new_vip_today
   FROM public.vip_membership_events e JOIN public.profiles p ON lower(p.email) = lower(e.user_email)
    WHERE e.event_type = 'new' AND e.occurred_at >= v_today_start
      AND NOT coalesce(p.is_admin, false) AND NOT coalesce(p.is_demo_account, false) AND NOT coalesce(p.exclude_from_stats, false);
-  SELECT count(*) INTO v_new_vip_yesterday
+  SELECT count(DISTINCT lower(e.user_email)) INTO v_new_vip_yesterday
   FROM public.vip_membership_events e JOIN public.profiles p ON lower(p.email) = lower(e.user_email)
    WHERE e.event_type = 'new' AND e.occurred_at >= v_today_start - interval '1 day' AND e.occurred_at < v_today_start
      AND NOT coalesce(p.is_admin, false) AND NOT coalesce(p.is_demo_account, false) AND NOT coalesce(p.exclude_from_stats, false);
