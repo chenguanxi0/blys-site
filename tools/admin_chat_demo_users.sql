@@ -31,11 +31,21 @@ BEGIN
     ('demo-vip-03-9c13ea65', 'demo-vip-03@blys.local', 'K哥', now() - interval '20 days', now() + interval '3650 days', true),
     ('demo-vip-04-2b76d8f9', 'demo-vip-04@blys.local', 'Stock007', now() - interval '20 days', now() + interval '3650 days', true),
     ('demo-vip-05-84a1f0ce', 'demo-vip-05@blys.local', 'Momo', now() - interval '20 days', now() + interval '3650 days', true),
+    ('demo-vip-06-18cb5e2a', 'demo-vip-06@blys.local', 'Aiden', now() - interval '16 days', now() + interval '3650 days', true),
+    ('demo-vip-07-6d9af304', 'demo-vip-07@blys.local', '橙子', now() - interval '16 days', now() + interval '3650 days', true),
+    ('demo-vip-08-c4e17b96', 'demo-vip-08@blys.local', 'Trader_77', now() - interval '16 days', now() + interval '3650 days', true),
+    ('demo-vip-09-2fa83dc1', 'demo-vip-09@blys.local', 'Kevin L', now() - interval '16 days', now() + interval '3650 days', true),
+    ('demo-vip-10-b71e4f58', 'demo-vip-10@blys.local', '阿明', now() - interval '16 days', now() + interval '3650 days', true),
     ('demo-public-01-3d60a2f7', 'demo-public-01@blys.local', 'tommy', null, null, true),
     ('demo-public-02-8e74c5b1', 'demo-public-02@blys.local', '小8', null, null, true),
     ('demo-public-03-1af96d30', 'demo-public-03@blys.local', 'Lucky_09', null, null, true),
     ('demo-public-04-6c28be45', 'demo-public-04@blys.local', '陈哥', null, null, true),
-    ('demo-public-05-f57a9138', 'demo-public-05@blys.local', 'Nina', null, null, true)
+    ('demo-public-05-f57a9138', 'demo-public-05@blys.local', 'Nina', null, null, true),
+    ('demo-public-06-15fc8a32', 'demo-public-06@blys.local', 'Leo_06', null, null, true),
+    ('demo-public-07-8e2ab941', 'demo-public-07@blys.local', '可乐', null, null, true),
+    ('demo-public-08-3cf75d60', 'demo-public-08@blys.local', 'MiaX', null, null, true),
+    ('demo-public-09-a61e2b85', 'demo-public-09@blys.local', '老周', null, null, true),
+    ('demo-public-10-94bd5c37', 'demo-public-10@blys.local', 'Sky-9', null, null, true)
   ON CONFLICT (token) DO UPDATE
     SET nickname = EXCLUDED.nickname,
         vip_started_at = EXCLUDED.vip_started_at,
