@@ -612,6 +612,8 @@ function renderDiary(){
         <td class="hold-name">${nameCode(h)}${tags ? " "+tags : ""}</td>
         <td data-label="股数">${h.shares? h.shares.toLocaleString("zh-CN") : "<span class=\"muted\">已清</span>"}</td>
         <td data-label="市值">${h.mv? "¥"+h.mv.toLocaleString("zh-CN",{maximumFractionDigits:0}) : "—"}</td>
+        <td data-label="成本价">${h.cost != null && Number.isFinite(Number(h.cost)) ? "¥"+Number(h.cost).toFixed(3) : "—"}</td>
+        <td data-label="现价">${h.cur != null && Number.isFinite(Number(h.cur)) ? "¥"+Number(h.cur).toFixed(3) : "—"}</td>
         <td class="pnl-amt ${clsD(amt)}" data-label="盈亏金额">${yuan(amt)}</td>
         <td class="${clsD(h.pnlPct)}" data-label="盈亏%">${pct(h.pnlPct||0)}</td>
       </tr>`}).join("");
@@ -626,7 +628,7 @@ function renderDiary(){
         <span>当日盈亏 <b class="${clsD(dAmt)}">${yuan(dAmt)}</b></span>
       </div>
       ${holdRows? `<div class="diary-hold"><table class="hold-table">
-        <thead><tr><th>持仓(代码)</th><th>股数</th><th>市值</th><th>盈亏金额</th><th>盈亏%</th></tr></thead>
+        <thead><tr><th>持仓(代码)</th><th>股数</th><th>市值</th><th>成本价</th><th>现价</th><th>盈亏金额</th><th>盈亏%</th></tr></thead>
         <tbody>${holdRows}</tbody></table></div>` : ""}
       ${l.note? `<div class="diary-note">${l.note}</div>` : ""}
     </div>`;
