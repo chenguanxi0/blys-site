@@ -312,16 +312,31 @@
     function automationStatusColor(status){
       return ({ issue:'#dc2626', in_progress:'#2563eb', ready:'#d97706', archived:'#16a34a', repaired:'#7c3aed', completed_missing:'#64748b' })[status] || '#475569';
     }
+    let automationProjectItems = [];
+    let automationProjectsExpanded = false;
+    function renderAutomationProjects(){
+      const box = document.getElementById('automationProjects');
+      const items = automationProjectItems;
+      if(!box) return;
+      if(!items.length){ box.innerHTML = '<p style="padding:12px 0;color:#64748b;">暂无自动化项目</p>'; return; }
+      const visibleItems = automationProjectsExpanded ? items : items.slice(0, 10);
+      const rows = visibleItems.map(item => { const progress=Math.max(0,Math.min(100,Number(item.progress)||0)); return `<tr><td><strong>${esc(item.project||'')}</strong><div style="color:#64748b;font-size:12px;margin-top:4px;">${esc(item.source_file||'')}</div>${item.issue_note?`<div style="color:#dc2626;font-size:12px;margin-top:4px;">问题：${esc(item.issue_note)}</div>`:''}</td><td>${esc(item.owner||'—')}</td><td><span style="font-weight:700;color:${automationStatusColor(item.status)};">${automationStatusText(item.status)}</span></td><td><strong>${progress}%</strong></td><td>${item.submitted_at?fmt(item.submitted_at):'—'}</td><td>${item.updated_at?fmt(item.updated_at):'—'}</td></tr>`; }).join('');
+      const fold = items.length > 10 ? `<div style="padding:14px 0 2px;text-align:center;"><button class="btn btn-secondary" type="button" onclick="toggleAutomationProjects()">${automationProjectsExpanded ? '收起项目列表' : `展开全部 ${items.length} 条项目`}</button></div>` : '';
+      box.innerHTML = '<table class="admin-table"><tr><th>项目</th><th>负责人</th><th>状态</th><th>进度</th><th>提交时间</th><th>状态更新</th></tr>' + rows + '</table>' + fold;
+    }
+    function toggleAutomationProjects(){
+      automationProjectsExpanded = !automationProjectsExpanded;
+      renderAutomationProjects();
+    }
     async function loadAutomationProjects(){
       const box = document.getElementById('automationProjects');
       if(box) box.textContent = '加载中...';
       try {
         const d = await sbRpc('get_admin_automation_projects', { p_admin_token: getTok() });
         if(!d || !d.ok) throw new Error((d&&d.msg)||'加载失败');
-        const items = Array.isArray(d.items) ? d.items : [];
-        if(!items.length){ if(box) box.innerHTML = '<p style="padding:12px 0;color:#64748b;">暂无自动化项目</p>'; return; }
-        const rows = items.map(item => { const progress=Math.max(0,Math.min(100,Number(item.progress)||0)); return `<tr><td><strong>${esc(item.project||'')}</strong><div style="color:#64748b;font-size:12px;margin-top:4px;">${esc(item.source_file||'')}</div>${item.issue_note?`<div style="color:#dc2626;font-size:12px;margin-top:4px;">问题：${esc(item.issue_note)}</div>`:''}</td><td>${esc(item.owner||'—')}</td><td><span style="font-weight:700;color:${automationStatusColor(item.status)};">${automationStatusText(item.status)}</span></td><td><strong>${progress}%</strong></td><td>${item.submitted_at?fmt(item.submitted_at):'—'}</td><td>${item.updated_at?fmt(item.updated_at):'—'}</td></tr>`; }).join('');
-        if(box) box.innerHTML = '<table class="admin-table"><tr><th>项目</th><th>负责人</th><th>状态</th><th>进度</th><th>提交时间</th><th>状态更新</th></tr>' + rows + '</table>';
+        automationProjectItems = Array.isArray(d.items) ? d.items : [];
+        automationProjectsExpanded = false;
+        renderAutomationProjects();
       } catch(e) { if(box) box.innerHTML = '<p style="padding:12px 0;color:#dc2626;">项目状态加载失败</p>'; }
     }
     function getMonthlyMemberStats(){ return monthlyMemberStats || {}; }
