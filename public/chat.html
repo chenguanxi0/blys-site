@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026082810" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026090401" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -200,6 +200,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
               <div class="chat-input-tools">
                 <button class="chat-tool-btn" type="button" onclick="toggleEmojiPanel(event)" title="表情">😊</button>
                 <button class="chat-tool-btn" type="button" onclick="document.getElementById('chatImgInput').click()" title="发送图片" aria-label="发送图片"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M3 17l5-5 4 4 3-3 6 6"/></svg></button>
+                <button class="chat-tool-btn chat-library-btn" id="chatLibraryBtn" type="button" onclick="openChatImageLibrary()" title="图片库" aria-label="图片库" hidden>▦</button>
                 <input type="file" id="chatImgInput" accept="image/*" style="display:none;" onchange="onChatImageSelected(this)" />
               </div>
               <textarea id="chatInput" class="chat-input" placeholder="文明发言，禁止荐股与广告…" maxlength="500" autocomplete="off" rows="1"></textarea>
@@ -231,6 +232,14 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     <div class="chat-img-viewer-tip" id="chatImageViewerTip">点击空白处或按 Esc 关闭 · 双指捏合/双击图片可放大</div>
   </div>
 
+  <div class="chat-library-modal" id="chatLibraryModal" hidden role="dialog" aria-modal="true" aria-label="私聊图片库" onclick="closeChatImageLibrary(event)">
+    <div class="chat-library-dialog" onclick="event.stopPropagation()">
+      <div class="chat-library-head"><div><b>私聊图片库</b><span>选择图片后将发送给当前私聊对象</span></div><button type="button" onclick="closeChatImageLibrary()" aria-label="关闭">×</button></div>
+      <div class="chat-library-grid" id="chatLibraryGrid"><div class="chat-library-loading">正在加载图片库…</div></div>
+      <input type="file" id="chatLibraryUploadInput" accept="image/*" hidden onchange="onChatLibraryUpload(this)" />
+    </div>
+  </div>
+
   <footer class="footer" style="margin-top:0;">
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
@@ -250,6 +259,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     let chatMembersStatsTimer = null;
     let chatSuppressHistoryUntil = 0;
     let pendingChatImage = null;
+    let chatImageLibraryItems = [];
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
     const BLYS_CHAT_PUSH_VERSION = '2026083101';
@@ -1619,6 +1629,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       const mask = document.getElementById('chatLoginMask');
       const wrap = document.getElementById('chatInputWrap');
       if (!mask || !wrap) return;
+      const libraryBtn = document.getElementById('chatLibraryBtn');
+      if (libraryBtn) libraryBtn.hidden = !(currentRoom === 'private' && currentPrivateConversationId && isBlysAdminUser());
       const text = document.getElementById('chatLoginText');
       const btn = document.getElementById('chatLoginBtn');
       if (isVipPreviewMode(currentRoom)) {
@@ -2748,6 +2760,84 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       const file = input.files && input.files[0];
       if (!file) return;
       prepareChatImageFile(file).finally(() => { input.value = ''; });
+    }
+
+    async function openChatImageLibrary() {
+      if (!(currentRoom === 'private' && currentPrivateConversationId && isBlysAdminUser())) {
+        alert('请先以管理员身份进入一个私聊窗口');
+        return;
+      }
+      const modal = document.getElementById('chatLibraryModal');
+      if (!modal) return;
+      modal.hidden = false;
+      const grid = document.getElementById('chatLibraryGrid');
+      if (grid) grid.innerHTML = '<div class="chat-library-loading">正在加载图片库…</div>';
+      try {
+        const d = await sbRpc('admin_private_image_library_list', { p_token: __user.token }, { timeoutMs: 15000 });
+        if (!d || !d.ok) throw new Error((d && d.msg) || '加载失败');
+        chatImageLibraryItems = Array.isArray(d.list) ? d.list : [];
+        renderChatImageLibrary();
+      } catch (err) {
+        if (grid) grid.innerHTML = '<div class="chat-library-loading">图片库加载失败，请重试</div>';
+      }
+    }
+
+    function closeChatImageLibrary(event) {
+      const modal = document.getElementById('chatLibraryModal');
+      if (event && modal && event.target !== modal) return;
+      if (modal) modal.hidden = true;
+    }
+
+    function renderChatImageLibrary() {
+      const grid = document.getElementById('chatLibraryGrid');
+      if (!grid) return;
+      const cards = chatImageLibraryItems.map((item, index) =>
+        '<button type="button" class="chat-library-item" onclick="selectChatLibraryImage(' + index + ')" title="选择 ' + esc(item.file_name || '图片') + '">' +
+          '<img src="' + esc(item.image || '') + '" alt="' + esc(item.file_name || '图片') + '">' +
+          '<span>' + esc(item.file_name || '图片') + '</span>' +
+        '</button>'
+      ).join('');
+      grid.innerHTML = cards +
+        '<button type="button" class="chat-library-item chat-library-upload" onclick="document.getElementById(\'chatLibraryUploadInput\').click()">' +
+          '<i>＋</i><span>上传图片</span>' +
+        '</button>';
+    }
+
+    function selectChatLibraryImage(index) {
+      const item = chatImageLibraryItems[index];
+      if (!item || !item.image) return;
+      pendingChatImage = item.image;
+      const thumb = document.getElementById('chatImgPreviewThumb');
+      const preview = document.getElementById('chatImgPreview');
+      const nameEl = document.getElementById('chatImgPreviewName');
+      if (thumb) thumb.src = item.image;
+      if (nameEl) nameEl.textContent = item.file_name || '图库图片';
+      if (preview) preview.classList.add('active');
+      closeChatImageLibrary();
+      updateChatComposerState();
+    }
+
+    async function onChatLibraryUpload(input) {
+      const file = input && input.files && input.files[0];
+      if (!file) return;
+      try {
+        if (!file.type.startsWith('image/')) throw new Error('请选择图片文件');
+        if (file.size > 8 * 1024 * 1024) throw new Error('图片最大支持 8MB');
+        const prepared = await compressChatImageSmart(file);
+        if (Math.round(prepared.base64.length * 0.75) > 650 * 1024) throw new Error('图片压缩后仍超过 650KB，请截图裁剪后再发');
+        const d = await sbRpc('admin_private_image_library_add', {
+          p_token: __user.token,
+          p_file_name: prepared.name,
+          p_image: prepared.base64
+        }, { timeoutMs: 30000 });
+        if (!d || !d.ok || !d.item) throw new Error((d && d.msg) || '上传失败');
+        chatImageLibraryItems.unshift(d.item);
+        renderChatImageLibrary();
+      } catch (err) {
+        alert('图片上传失败：' + ((err && err.message) || '请稍后重试'));
+      } finally {
+        input.value = '';
+      }
     }
 
     function handleChatPaste(event) {
