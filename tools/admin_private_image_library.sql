@@ -60,7 +60,6 @@ BEGIN
   SELECT coalesce(jsonb_agg(jsonb_build_object(
     'id', id,
     'file_name', file_name,
-    'image', image,
     'created_at', created_at
   ) ORDER BY sort_order ASC, created_at DESC), '[]'::jsonb)
   INTO v_items
@@ -72,6 +71,28 @@ BEGIN
   ) t;
 
   RETURN jsonb_build_object('ok', true, 'list', v_items);
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.admin_private_image_library_get(
+  p_token text,
+  p_id uuid
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE v_image text;
+BEGIN
+  IF NOT public._blys_is_image_library_admin(p_token) THEN
+    RETURN jsonb_build_object('ok', false, 'msg', '无权限');
+  END IF;
+  SELECT image INTO v_image FROM public.admin_private_image_library WHERE id = p_id;
+  IF v_image IS NULL THEN
+    RETURN jsonb_build_object('ok', false, 'msg', '图片不存在');
+  END IF;
+  RETURN jsonb_build_object('ok', true, 'image', v_image);
 END;
 $$;
 
@@ -161,6 +182,7 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.admin_private_image_library_list(text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_private_image_library_get(text, uuid) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_private_image_library_add(text, text, text) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_private_image_library_delete(text, uuid) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_private_image_library_reorder(text, uuid[]) TO anon, authenticated;

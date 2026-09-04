@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026090402" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026090403" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -2777,6 +2777,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         if (!d || !d.ok) throw new Error((d && d.msg) || '加载失败');
         chatImageLibraryItems = Array.isArray(d.list) ? d.list : [];
         renderChatImageLibrary();
+        loadChatImageLibraryPreviews();
       } catch (err) {
         if (grid) grid.innerHTML = '<div class="chat-library-loading">图片库加载失败，请重试</div>';
       }
@@ -2791,10 +2792,12 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     function renderChatImageLibrary() {
       const grid = document.getElementById('chatLibraryGrid');
       if (!grid) return;
-      const cards = chatImageLibraryItems.map((item, index) =>
+      const cards = chatImageLibraryItems.map((item, index) => {
+        const hasImage = !!item.image;
+        return (
         '<div class="chat-library-item">' +
-          '<button type="button" class="chat-library-select" onclick="selectChatLibraryImage(' + index + ')" title="选择 ' + esc(item.file_name || '图片') + '">' +
-          '<img src="' + esc(item.image || '') + '" alt="' + esc(item.file_name || '图片') + '">' +
+          '<button type="button" class="chat-library-select" data-library-select="' + index + '" onclick="selectChatLibraryImage(' + index + ')" title="选择 ' + esc(item.file_name || '图片') + '"' + (hasImage ? '' : ' disabled') + '>' +
+          (hasImage ? '<img src="' + esc(item.image) + '" alt="' + esc(item.file_name || '图片') + '">' : '<i class="chat-library-placeholder" data-library-placeholder="' + index + '">加载中…</i>') +
           '<span>' + esc(item.file_name || '图片') + '</span>' +
           '</button>' +
           '<span class="chat-library-sort">' +
@@ -2803,11 +2806,38 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
           '</span>' +
           '<button type="button" class="chat-library-delete" onclick="deleteChatLibraryImage(' + index + ')" title="删除图片" aria-label="删除图片">×</button>' +
         '</div>'
-      ).join('');
+        );
+      }).join('');
       grid.innerHTML = cards +
         '<button type="button" class="chat-library-item chat-library-upload" onclick="document.getElementById(\'chatLibraryUploadInput\').click()">' +
           '<i>＋</i><span>上传图片</span>' +
         '</button>';
+    }
+
+    async function loadChatImageLibraryPreviews() {
+      const grid = document.getElementById('chatLibraryGrid');
+      if (!grid) return;
+      for (let index = 0; index < chatImageLibraryItems.length; index++) {
+        const item = chatImageLibraryItems[index];
+        if (!item || item.image || !item.id) continue;
+        try {
+          const d = await sbRpc('admin_private_image_library_get', { p_token: __user.token, p_id: item.id }, { timeoutMs: 30000 });
+          if (!d || !d.ok || !d.image) continue;
+          item.image = d.image;
+          const placeholder = grid.querySelector('[data-library-placeholder="' + index + '"]');
+          const selectBtn = grid.querySelector('[data-library-select="' + index + '"]');
+          if (placeholder) {
+            const img = document.createElement('img');
+            img.src = item.image;
+            img.alt = item.file_name || '图片';
+            placeholder.replaceWith(img);
+          }
+          if (selectBtn) selectBtn.disabled = false;
+        } catch (err) {
+          const placeholder = grid.querySelector('[data-library-placeholder="' + index + '"]');
+          if (placeholder) placeholder.textContent = '加载失败';
+        }
+      }
     }
 
     function selectChatLibraryImage(index) {
