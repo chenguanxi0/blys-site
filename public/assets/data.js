@@ -1804,5 +1804,71 @@ const DAILY_LOG = [
         "open": true
       }
     ]
+  },
+  {
+    "date": "2026-09-04",
+    "day": 30,
+    "total": 2041480.94,
+    "dayPnl": 0.69,
+    "pos": 10.4,
+    "floatPnl": -1341.66,
+    "cash": 1829480.94,
+    "holdings": [
+      {
+        "name": "远东股份",
+        "code": "601869",
+        "shares": 10000,
+        "avail": 10000,
+        "mv": 212000.00,
+        "pnlPct": 18.481,
+        "cost": 17.893,
+        "cur": 21.200
+      },
+      {
+        "name": "一鸣食品",
+        "code": "605179",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.00,
+        "pnlPct": -11.620,
+        "cost": 32.507,
+        "cur": 28.680
+      },
+      {
+        "name": "锦龙股份",
+        "code": "000712",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.00,
+        "pnlPct": -4.758,
+        "cost": 13.273,
+        "cur": 12.350
+      }
+    ],
+    "note": "平安证券**5362 持仓截图(15:33)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "一鸣食品",
+        "code": "605179",
+        "shares": 6000,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "锦龙股份",
+        "code": "000712",
+        "shares": 18600,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "远东股份",
+        "code": "601869",
+        "shares": 20000,
+        "close": false
+      }
+    ]
   }
 ]
