@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026090401" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026090402" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -2792,10 +2792,17 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       const grid = document.getElementById('chatLibraryGrid');
       if (!grid) return;
       const cards = chatImageLibraryItems.map((item, index) =>
-        '<button type="button" class="chat-library-item" onclick="selectChatLibraryImage(' + index + ')" title="选择 ' + esc(item.file_name || '图片') + '">' +
+        '<div class="chat-library-item">' +
+          '<button type="button" class="chat-library-select" onclick="selectChatLibraryImage(' + index + ')" title="选择 ' + esc(item.file_name || '图片') + '">' +
           '<img src="' + esc(item.image || '') + '" alt="' + esc(item.file_name || '图片') + '">' +
           '<span>' + esc(item.file_name || '图片') + '</span>' +
-        '</button>'
+          '</button>' +
+          '<span class="chat-library-sort">' +
+            '<button type="button" onclick="moveChatLibraryImage(' + index + ', -1)" title="上移" aria-label="上移"' + (index === 0 ? ' disabled' : '') + '>↑</button>' +
+            '<button type="button" onclick="moveChatLibraryImage(' + index + ', 1)" title="下移" aria-label="下移"' + (index === chatImageLibraryItems.length - 1 ? ' disabled' : '') + '>↓</button>' +
+          '</span>' +
+          '<button type="button" class="chat-library-delete" onclick="deleteChatLibraryImage(' + index + ')" title="删除图片" aria-label="删除图片">×</button>' +
+        '</div>'
       ).join('');
       grid.innerHTML = cards +
         '<button type="button" class="chat-library-item chat-library-upload" onclick="document.getElementById(\'chatLibraryUploadInput\').click()">' +
@@ -2815,6 +2822,43 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       if (preview) preview.classList.add('active');
       closeChatImageLibrary();
       updateChatComposerState();
+    }
+
+    async function deleteChatLibraryImage(index) {
+      const item = chatImageLibraryItems[index];
+      if (!item || !item.id) return;
+      if (!confirm('删除“' + (item.file_name || '这张图片') + '”？已发送到聊天记录中的图片不会受影响。')) return;
+      try {
+        const d = await sbRpc('admin_private_image_library_delete', {
+          p_token: __user.token,
+          p_id: item.id
+        }, { timeoutMs: 15000 });
+        if (!d || !d.ok) throw new Error((d && d.msg) || '删除失败');
+        chatImageLibraryItems.splice(index, 1);
+        renderChatImageLibrary();
+      } catch (err) {
+        alert('删除失败：' + ((err && err.message) || '请稍后重试'));
+      }
+    }
+
+    async function moveChatLibraryImage(index, direction) {
+      const target = index + direction;
+      if (target < 0 || target >= chatImageLibraryItems.length) return;
+      const before = chatImageLibraryItems.slice();
+      const moved = chatImageLibraryItems.splice(index, 1)[0];
+      chatImageLibraryItems.splice(target, 0, moved);
+      renderChatImageLibrary();
+      try {
+        const d = await sbRpc('admin_private_image_library_reorder', {
+          p_token: __user.token,
+          p_ids: chatImageLibraryItems.map(item => item.id)
+        }, { timeoutMs: 15000 });
+        if (!d || !d.ok) throw new Error((d && d.msg) || '排序保存失败');
+      } catch (err) {
+        chatImageLibraryItems = before;
+        renderChatImageLibrary();
+        alert('排序保存失败：' + ((err && err.message) || '请稍后重试'));
+      }
     }
 
     async function onChatLibraryUpload(input) {
