@@ -2307,9 +2307,11 @@ html.blys-native-app body.chat-body .chat-notif-float {
 .chat-members-list::-webkit-scrollbar { width:4px; }
 .chat-member-chip { min-width:0; display:inline-flex; align-items:center; gap:5px; padding:5px 7px; border:1px solid #e5e7eb; border-radius:999px; background:#f8fafc; color:#64748b; font-size:11px; }
 .chat-member-chip.online { background:#ecfdf5; border-color:#bbf7d0; color:#166534; }
+.chat-member-private-entry { cursor:pointer; transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
+.chat-member-private-entry:hover, .chat-member-private-entry:focus-visible { border-color:#f87171; box-shadow:0 4px 12px rgba(239,68,68,.15); outline:0; transform:translateY(-1px); }
 .chat-member-chip b { display:grid; place-items:center; width:22px; height:22px; border-radius:999px; background:#ef4444; color:#fff; font-style:normal; font-size:12px; }
 .chat-member-chip em { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-style:normal; }
-.chat-member-chip button { flex:0 0 auto; width:20px; height:20px; border:0; border-radius:999px; background:#fee2e2; color:#ef4444; line-height:1; font-size:14px; }
+.chat-member-chip button { flex:0 0 auto; width:20px; height:20px; border:0; border-radius:999px; background:#fee2e2; color:#ef4444; line-height:1; font-size:14px; cursor:pointer; }
 .chat-members-loading { color:#94a3b8; font-size:13px; }
 @media (max-width:560px) {
   .chat-members-admin { display:block; margin-top:8px; padding:10px; border:1px solid #fee2e2; border-radius:12px; background:#fff; box-shadow:0 8px 18px rgba(15,23,42,.05); overflow:hidden; }

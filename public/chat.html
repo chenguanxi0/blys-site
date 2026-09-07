@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026090403" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026090701" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -1242,9 +1242,9 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
           const email = esc(m.email || '');
           const nick = esc(m.nickname || m.email || '用户');
           const online = m.online ? ' online' : '';
-          return '<span class="chat-member-chip' + online + '" title="' + email + '">' +
+          return '<span class="chat-member-chip chat-member-private-entry' + online + '" title="点击 ' + email + ' 发起私聊" role="button" tabindex="0" onclick="openAdminPrivateChat(\'' + escJs(m.email || '') + '\',\'' + escJs(nick) + '\')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();openAdminPrivateChat(\'' + escJs(m.email || '') + '\',\'' + escJs(nick) + '\')}">' +
             '<span class="chat-member-dot"></span><b>' + nick.slice(0, 1) + '</b><em>' + nick + '</em>' +
-            '<button type="button" onclick="removeChatRoomMember(\'' + escJs(room) + '\',\'' + escJs(m.email || '') + '\',\'' + escJs(nick) + '\')" title="从统计列表移除">×</button>' +
+            '<button type="button" onclick="event.stopPropagation();removeChatRoomMember(\'' + escJs(room) + '\',\'' + escJs(m.email || '') + '\',\'' + escJs(nick) + '\')" title="从统计列表移除">×</button>' +
           '</span>';
         }).join('');
         if (chatMembersPanelOpen || options.forcePanel) {
@@ -1264,6 +1264,11 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         return;
       }
       loadChatMembersAdmin(currentRoom);
+    }
+
+    async function openAdminPrivateChat(email, nickname) {
+      if (!isBlysAdminUser() || !email) return;
+      await startPrivateChat(email, nickname, { silent: false });
     }
 
     function escJs(s) {
