@@ -1870,5 +1870,120 @@ const DAILY_LOG = [
         "close": false
       }
     ]
+  },
+  {
+    "date": "2026-09-07",
+    "day": 31,
+    "total": 2034934.96,
+    "dayPnl": -0.31,
+    "pos": 0,
+    "floatPnl": 26521.85,
+    "cash": 1829480.94,
+    "holdings": [
+      {
+        "name": "远东股份",
+        "code": "600869",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.00,
+        "pnlPct": 4.365,
+        "cost": 17.893,
+        "cur": 20.880
+      }
+    ],
+    "note": "平安证券**5362 持仓截图(15:37)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "远东股份",
+        "code": "600869",
+        "shares": 10000,
+        "close": true
+      }
+    ]
+  },
+  {
+    "date": "2026-09-08",
+    "day": 32,
+    "total": 2005679.20,
+    "dayPnl": -1.43,
+    "pos": 61.8,
+    "floatPnl": -29255.76,
+    "cash": 765921.20,
+    "holdings": [
+      {
+        "name": "行云科技",
+        "code": "300209",
+        "shares": 11100,
+        "avail": 0,
+        "mv": 394494.00,
+        "pnlPct": -3.022,
+        "cost": 36.647,
+        "cur": 35.540
+      },
+      {
+        "name": "利通电子",
+        "code": "603629",
+        "shares": 3600,
+        "avail": 0,
+        "mv": 392364.00,
+        "pnlPct": -2.114,
+        "cost": 111.343,
+        "cur": 108.990
+      },
+      {
+        "name": "神农种业",
+        "code": "300189",
+        "shares": 30000,
+        "avail": 0,
+        "mv": 230400.00,
+        "pnlPct": -2.185,
+        "cost": 7.852,
+        "cur": 7.680
+      },
+      {
+        "name": "楚天龙",
+        "code": "003040",
+        "shares": 10000,
+        "avail": 0,
+        "mv": 222500.00,
+        "pnlPct": -1.481,
+        "cost": 22.585,
+        "cur": 22.250
+      }
+    ],
+    "note": "平安证券**5362 持仓截图(15:37)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "行云科技",
+        "code": "300209",
+        "shares": 11100,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "利通电子",
+        "code": "603629",
+        "shares": 3600,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "神农种业",
+        "code": "300189",
+        "shares": 30000,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "楚天龙",
+        "code": "003040",
+        "shares": 10000,
+        "open": true
+      }
+    ]
   }
 ]
