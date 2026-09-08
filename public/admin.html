@@ -364,8 +364,19 @@
       const d = await sbRpc('get_admin_vip_monthly_activity', { p_admin_token: getTok() });
       monthlyVipActivity = d && d.ok && d.stats && typeof d.stats === 'object' ? d.stats : {};
     }
-    // 会员统计从 2026 年 8 月开始连续保留；切换月份不会隐藏或清除历史记录。
+    // 有数据的月份默认全部展示，避免跨月续费（如 93 天）被当前月份截断。
+    function monthlyDataMonthKeys(){
+      return Object.keys(monthlyVipActivity || {})
+        .filter(month => /^\d{4}-\d{2}$/.test(month))
+        .filter(month => {
+          const item = monthlyRecord(month);
+          return item.newCount > 0 || item.renewCount > 0 || item.lapsedCount > 0;
+        })
+        .sort();
+    }
+    // 展开时保留连续月份视图；默认仅显示确实有数据的月份。
     function membershipMonthKeys(){
+      if(!monthlyMemberStatsExpanded) return monthlyDataMonthKeys();
       const out = [];
       const d = new Date(2026, 7, 1);
       const end = new Date();
@@ -394,22 +405,27 @@
       const box = document.getElementById('monthlyMemberStats');
       if(!box) return;
       const months = membershipMonthKeys();
+      const summaryMonths = monthlyDataMonthKeys();
       const toggle = document.getElementById('monthlyMemberStatsToggle');
       if(toggle) toggle.textContent = monthlyMemberStatsExpanded ? '收起' : '展开';
       let totalNew = 0;
       let totalRenew = 0;
       let totalLapsed = 0;
       let totalAmount = 0;
-      const rows = months.map(month => {
+      const renderRow = month => {
         const item = monthlyRecord(month);
         const count = item.newCount + item.renewCount;
         const amount = monthlyAmount(count);
+        return `<tr><td>${month}</td><td>${item.newCount}</td><td>${item.renewCount}</td><td>${item.lapsedCount}</td><td>${count}</td><td>${fmtMoney(amount)}</td></tr>`;
+      };
+      const rows = months.map(renderRow).join('');
+      summaryMonths.forEach(month => {
+        const item = monthlyRecord(month);
         totalNew += item.newCount;
         totalRenew += item.renewCount;
         totalLapsed += item.lapsedCount;
-        totalAmount += amount;
-        return `<tr><td>${month}</td><td>${item.newCount}</td><td>${item.renewCount}</td><td>${item.lapsedCount}</td><td>${count}</td><td>${fmtMoney(amount)}</td></tr>`;
-      }).join('');
+        totalAmount += monthlyAmount(item.newCount + item.renewCount);
+      });
       box.innerHTML = '<table class="admin-table"><tr><th>月份</th><th>新开</th><th>续费</th><th>中断</th><th>合计</th><th>金额</th></tr>' +
         rows +
         `<tr class="monthly-stat-total"><td>汇总</td><td id="monthlyStatTotalNew">${totalNew}</td><td id="monthlyStatTotalRenew">${totalRenew}</td><td>${totalLapsed}</td><td id="monthlyStatTotalCount">${totalNew + totalRenew}</td><td id="monthlyStatTotalAmount">${fmtMoney(totalAmount)}</td></tr>` +
