@@ -130,10 +130,30 @@ BEGIN
   ), monthly AS (
     SELECT to_char(date_trunc('month', occurred_at AT TIME ZONE 'Asia/Shanghai'), 'YYYY-MM') AS month_key,
            count(*) FILTER (WHERE event_type = 'new')::integer AS new_count,
-           count(*) FILTER (WHERE event_type = 'renew')::integer AS renew_count,
+           0::integer AS renew_count,
            0::integer AS lapsed_count
     FROM real_events
-    WHERE occurred_at >= timestamptz '2026-08-01 00:00:00+08'
+    WHERE event_type = 'new'
+      AND occurred_at >= timestamptz '2026-08-01 00:00:00+08'
+    GROUP BY 1
+    UNION ALL
+    -- 续费按购买时长拆到连续月份：31 天计 1 个月，62 天计 2 个月，93 天计 3 个月。
+    -- 例如 9 月的 93 天续费，会在 9、10、11 月的“续费”各计 1 次。
+    SELECT to_char(
+             date_trunc('month', e.occurred_at AT TIME ZONE 'Asia/Shanghai')
+             + make_interval(months => offsets.month_offset),
+             'YYYY-MM'
+           ) AS month_key,
+           0::integer AS new_count,
+           count(*)::integer AS renew_count,
+           0::integer AS lapsed_count
+    FROM real_events e
+    CROSS JOIN LATERAL generate_series(
+      0,
+      greatest(0, ceil(e.days::numeric / 31)::integer - 1)
+    ) AS offsets(month_offset)
+    WHERE e.event_type = 'renew'
+      AND e.occurred_at >= timestamptz '2026-08-01 00:00:00+08'
     GROUP BY 1
     UNION ALL
     SELECT to_char(date_trunc('month', e.expire_after AT TIME ZONE 'Asia/Shanghai'), 'YYYY-MM') AS month_key,
