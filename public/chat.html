@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0" />
   <title>聊天室 · 白鹿原上-交易笔记</title>
   <meta name="description" content="白鹿原上交易笔记聊天室：注册用户群聊与会员专属群聊。blys.site" />
-  <link rel="stylesheet" href="assets/styles.css?v=2026090701" />
+  <link rel="stylesheet" href="assets/styles.css?v=2026090801" />
   <style>
     html.blys-native-app body.chat-body { --app-safe-top: max(30px, env(safe-area-inset-top)); }
     html.blys-native-app body.chat-body .risk-bar { display:none; }
@@ -240,6 +240,19 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     </div>
   </div>
 
+  <div class="chat-quick-renew-modal" id="chatQuickRenewModal" hidden role="dialog" aria-modal="true" aria-label="选择续费时长" onclick="closeQuickRenewVip(event)">
+    <div class="chat-quick-renew-dialog" onclick="event.stopPropagation()">
+      <button class="chat-quick-renew-close" type="button" onclick="closeQuickRenewVip()" aria-label="关闭">×</button>
+      <b>选择续费时长</b>
+      <p id="chatQuickRenewTarget">为会员续费</p>
+      <div class="chat-quick-renew-options">
+        <button type="button" onclick="confirmQuickRenewVip(31)"><strong>31 天</strong><span>续费 1 个月</span></button>
+        <button type="button" onclick="confirmQuickRenewVip(62)"><strong>62 天</strong><span>续费 2 个月</span></button>
+        <button type="button" onclick="confirmQuickRenewVip(93)"><strong>93 天</strong><span>续费 3 个月</span></button>
+      </div>
+    </div>
+  </div>
+
   <footer class="footer" style="margin-top:0;">
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
@@ -260,6 +273,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     let chatSuppressHistoryUntil = 0;
     let pendingChatImage = null;
     let chatImageLibraryItems = [];
+    let quickRenewVipTarget = null;
+    let quickRenewVipSaving = false;
     let pendingChatQuote = null;
     let chatMessageCache = new Map();
     const BLYS_CHAT_PUSH_VERSION = '2026083101';
@@ -2117,7 +2132,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       const avatarRenewAttrs = canQuickRenew
         ? ` data-quick-renew-email="${avatarEmail}" data-quick-renew-name="${avatarName}"`
         : '';
-      const avatarTitle = canQuickRenew ? '长按或右键续31天' : (isAdminMsg ? '群主' : (isMe ? '自己' : '发起私聊'));
+      const avatarTitle = canQuickRenew ? '长按或右键选择续费时长' : (isAdminMsg ? '群主' : (isMe ? '自己' : '发起私聊'));
       return `<div class="chat-msg ${isMe ? 'chat-msg-me' : 'chat-msg-other'}${isAdminMsg ? ' chat-msg-admin' : ''}${stateCls}" data-message-id="${esc(m.id || '')}" data-room="${esc(room)}">
         ${canRecall ? `<button class="chat-recall-btn" type="button" onclick="recallChatMessage('${esc(m.id)}')">撤回</button>` : ''}
         <button class="chat-msg-avatar${isPrivateVip ? ' chat-private-vip' : ''}" type="button" title="${avatarTitle}"${avatarRenewAttrs} onclick="startPrivateFromMessage('${avatarEmail}','${avatarName}')">${isAdminMsg ? '<span class="chat-owner-avatar-badge">群主</span>' : ''}${isPrivateVip ? '<span class="chat-private-vip-badge">会员</span>' : ''}${avatarLabel}</button>
@@ -2144,21 +2159,49 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       startPrivateChat(email, nickname);
     }
 
-    async function quickRenewVipFromPrivateAvatar(encodedEmail, encodedName) {
+    function quickRenewVipFromPrivateAvatar(encodedEmail, encodedName) {
       const email = decodeURIComponent(encodedEmail || '');
       const nickname = decodeURIComponent(encodedName || '');
       if (!email || !__user.loggedIn || !isBlysAdminUser()) return;
       const label = nickname && nickname !== email ? nickname + '（' + email + '）' : email;
-      if (!confirm('确认给 ' + label + ' 续 31 天会员？')) return;
+      quickRenewVipTarget = { email, nickname, label };
+      const modal = document.getElementById('chatQuickRenewModal');
+      const target = document.getElementById('chatQuickRenewTarget');
+      if (target) target.textContent = '为 ' + label + ' 选择续费时长';
+      if (modal) modal.hidden = false;
+    }
+
+    function closeQuickRenewVip(event) {
+      const modal = document.getElementById('chatQuickRenewModal');
+      if (!modal || quickRenewVipSaving || (event && event.target !== modal)) return;
+      modal.hidden = true;
+      quickRenewVipTarget = null;
+    }
+
+    async function confirmQuickRenewVip(days) {
+      const target = quickRenewVipTarget;
+      const duration = Number(days);
+      if (!target || quickRenewVipSaving || ![31, 62, 93].includes(duration) || !__user.loggedIn || !isBlysAdminUser()) return;
+      if (!confirm('确认给 ' + target.label + ' 续 ' + duration + ' 天会员？')) return;
+      quickRenewVipSaving = true;
+      const buttons = document.querySelectorAll('#chatQuickRenewModal .chat-quick-renew-options button');
+      buttons.forEach(button => { button.disabled = true; });
       try {
         const d = await sbRpc('admin_extend_vip', {
           p_admin_token: __user.token,
-          p_email: email,
-          p_days: 31
+          p_email: target.email,
+          p_days: duration
         }, { timeoutMs: 10000 });
-        alert(d && d.ok ? ('已续 31 天，到期：' + fmtDateTime(d.vip_expire)) : ('续费失败：' + ((d && d.msg) || '未知错误')));
+        if (d && d.ok) {
+          quickRenewVipSaving = false;
+          closeQuickRenewVip();
+        }
+        alert(d && d.ok ? ('已续 ' + duration + ' 天，到期：' + fmtDateTime(d.vip_expire)) : ('续费失败：' + ((d && d.msg) || '未知错误')));
       } catch (e) {
         alert('续费失败：' + (e && e.message ? e.message : '网络异常'));
+      } finally {
+        quickRenewVipSaving = false;
+        buttons.forEach(button => { button.disabled = false; });
       }
     }
 

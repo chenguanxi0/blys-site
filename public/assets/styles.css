@@ -2400,8 +2400,22 @@ html.blys-native-app body.chat-body .chat-messages {
 .chat-library-upload i { font-style:normal; font-size:30px; line-height:1; }
 .chat-library-upload span { position:static; padding:0; color:inherit; background:none; font-size:12px; }
 .chat-library-loading { grid-column:1 / -1; padding:34px 12px; color:var(--muted); text-align:center; font-size:13px; }
+.chat-quick-renew-modal[hidden] { display:none !important; }
+.chat-quick-renew-modal { position:fixed; inset:0; z-index:190; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(15,23,42,.48); backdrop-filter:blur(3px); }
+.chat-quick-renew-dialog { position:relative; width:min(390px, 100%); padding:22px; border:1px solid #fee2e2; border-radius:18px; background:#fff; box-shadow:0 22px 64px rgba(15,23,42,.28); }
+.chat-quick-renew-dialog > b { display:block; color:#1e293b; font-size:18px; }
+.chat-quick-renew-dialog > p { margin:7px 28px 18px 0; color:#64748b; font-size:13px; line-height:1.5; word-break:break-all; }
+.chat-quick-renew-close { position:absolute; top:14px; right:14px; width:30px; height:30px; border:0; border-radius:50%; background:#f1f5f9; color:#64748b; cursor:pointer; font-size:22px; line-height:1; }
+.chat-quick-renew-options { display:grid; grid-template-columns:repeat(3, 1fr); gap:9px; }
+.chat-quick-renew-options button { display:flex; min-height:82px; flex-direction:column; align-items:center; justify-content:center; gap:5px; border:1px solid #fecdd3; border-radius:13px; background:#fff7f7; color:#be123c; cursor:pointer; font-family:inherit; transition:transform .15s, box-shadow .15s, border-color .15s; }
+.chat-quick-renew-options button:hover { border-color:#f43f5e; box-shadow:0 7px 16px rgba(225,29,72,.15); transform:translateY(-2px); }
+.chat-quick-renew-options button:disabled { cursor:wait; opacity:.6; transform:none; }
+.chat-quick-renew-options strong { font-size:17px; }
+.chat-quick-renew-options span { color:#9f1239; font-size:11px; }
 @media (max-width:560px) {
   .chat-library-modal { align-items:flex-end; padding:8px; }
   .chat-library-dialog { width:100%; max-height:78vh; padding:14px; border-radius:16px; }
   .chat-library-grid { grid-template-columns:repeat(3, minmax(0, 1fr)); gap:8px; }
+  .chat-quick-renew-modal { align-items:flex-end; padding:8px; }
+  .chat-quick-renew-dialog { width:100%; padding:18px 14px; border-radius:16px; }
 }
