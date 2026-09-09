@@ -1985,5 +1985,111 @@ const DAILY_LOG = [
         "open": true
       }
     ]
-  }
+  },
+
+  "date": "2026-09-09",
+  "day": 33,
+  "total": 2013409.41,
+  "dayPnl": 0.43,
+  "pos": 40.2,
+  "floatPnl": -21525.55,
+  "cash": 1204273.41,
+  "holdings": [
+    {
+      "name": "杭电股份",
+      "code": "603618",
+      "shares": 10000,
+      "avail": 0,
+      "mv": 415800.0,
+      "pnlPct": 1.147,
+      "cost": 41.109,
+      "cur": 41.58
+    },
+    {
+      "name": "利通电子",
+      "code": "603629",
+      "shares": 3600,
+      "avail": 1800,
+      "mv": 393336.0,
+      "pnlPct": -0.118,
+      "cost": 109.39,
+      "cur": 109.26
+    },
+    {
+      "name": "行云科技",
+      "code": "300209",
+      "shares": 0,
+      "avail": 0,
+      "mv": 0.0,
+      "pnlPct": -0.829,
+      "cost": 37.086,
+      "cur": 37.69
+    },
+    {
+      "name": "楚天龙",
+      "code": "003040",
+      "shares": 0,
+      "avail": 0,
+      "mv": 0.0,
+      "pnlPct": -6.506,
+      "cost": 22.585,
+      "cur": 21.0
+    },
+    {
+      "name": "神农种业",
+      "code": "300189",
+      "shares": 0,
+      "avail": 0,
+      "mv": 0.0,
+      "pnlPct": -3.272,
+      "cost": 7.852,
+      "cur": 7.78
+    }
+  ],
+  "note": "平安证券**5362 持仓截图(15:07)",
+  "valid": true,
+  "trades": [
+    {
+      "action": "buy",
+      "name": "杭电股份",
+      "code": "603618",
+      "shares": 10000,
+      "open": true
+    },
+    {
+      "action": "sell",
+      "name": "行云科技",
+      "code": "300209",
+      "shares": 11100,
+      "close": true
+    },
+    {
+      "action": "sell",
+      "name": "楚天龙",
+      "code": "003040",
+      "shares": 10000,
+      "close": true
+    },
+    {
+      "action": "sell",
+      "name": "神农种业",
+      "code": "300189",
+      "shares": 30000,
+      "close": true
+    },
+    {
+      "action": "sell",
+      "name": "利通电子",
+      "code": "603629",
+      "shares": 1800,
+      "t": true
+    },
+    {
+      "action": "buy",
+      "name": "利通电子",
+      "code": "603629",
+      "shares": 1800,
+      "t": true
+    }
+  ]
 ]
