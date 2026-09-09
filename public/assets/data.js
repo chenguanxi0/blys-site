@@ -1986,9 +1986,9 @@ const DAILY_LOG = [
       }
     ]
   },
-
-  "date": "2026-09-09",
-  "day": 33,
+  {
+    "date": "2026-09-09",
+    "day": 33,
   "total": 2013409.41,
   "dayPnl": 0.43,
   "pos": 40.2,
@@ -2092,4 +2092,5 @@ const DAILY_LOG = [
       "t": true
     }
   ]
+}
 ]
