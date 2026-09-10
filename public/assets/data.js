@@ -2094,8 +2094,8 @@ const DAILY_LOG = [
   ]
 },
   {
-    "date": "2026-09-10",
-    "day": 34,
+  "date": "2026-09-10",
+  "day": 34,
   "total": 1989787.07,
   "dayPnl": -1.13,
   "pos": 70.0,
@@ -2133,7 +2133,7 @@ const DAILY_LOG = [
       "cur": 106.38
     }
   ],
-  "note": "平安证券**5362 持仓截图(15:28)",
+  "note": "做T: 杭电+5000 利通+1555 (合计+6555) | 平安证券**5362 持仓截图(15:28)",
   "valid": true,
   "trades": [
     {
@@ -2148,7 +2148,8 @@ const DAILY_LOG = [
       "name": "杭电股份",
       "code": "603618",
       "shares": 10000,
-      "t": true
+      "t": true,
+      "pnl": 5000.0
     },
     {
       "action": "buy",
@@ -2162,7 +2163,8 @@ const DAILY_LOG = [
       "name": "利通电子",
       "code": "603629",
       "shares": 1800,
-      "t": true
+      "t": true,
+      "pnl": 1555.2
     },
     {
       "action": "buy",
@@ -2171,7 +2173,8 @@ const DAILY_LOG = [
       "shares": 1800,
       "t": true
     }
-  ]
+  ],
+  "tPnl": 6555.2
 }
 
 ]
