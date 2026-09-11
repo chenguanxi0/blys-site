@@ -2173,5 +2173,79 @@ const DAILY_LOG = [
       }
     ],
     "tPnl": 6555.2
+  },
+  {
+    "date": "2026-09-11",
+    "day": 35,
+    "total": 1994428.67,
+    "dayPnl": 0.27,
+    "pos": 30.4,
+    "floatPnl": -14733.59,
+    "cash": 1388578.67,
+    "holdings": [
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 3600,
+        "avail": 3600,
+        "mv": 402300.0,
+        "pnlPct": 2.18,
+        "cost": 109.366,
+        "cur": 111.75
+      },
+      {
+        "name": "杭电股份",
+        "code": "603618",
+        "shares": 5000,
+        "avail": 0,
+        "mv": 203550.0,
+        "pnlPct": 0.216,
+        "cost": 40.622,
+        "cur": 40.71
+      },
+      {
+        "name": "利通电子",
+        "code": "603629",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": -5.927,
+        "cost": 108.526,
+        "cur": 105.28
+      }
+    ],
+    "note": "做T: 杭电-65 (合计-65) | 平安证券**5362 持仓截图(15:00)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 2000
+      },
+      {
+        "action": "sell",
+        "name": "杭电股份",
+        "code": "603618",
+        "shares": 10000,
+        "t": true,
+        "pnl": -65.0
+      },
+      {
+        "action": "buy",
+        "name": "杭电股份",
+        "code": "603618",
+        "shares": 5000,
+        "t": true
+      },
+      {
+        "action": "sell",
+        "name": "利通电子",
+        "code": "603629",
+        "shares": 3600,
+        "close": true
+      }
+    ],
+    "tPnl": -65.0
   }
 ]
