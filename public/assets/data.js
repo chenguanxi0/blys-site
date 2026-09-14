@@ -2201,7 +2201,8 @@ const DAILY_LOG = [
         "mv": 203550.0,
         "pnlPct": 0.216,
         "cost": 40.622,
-        "cur": 40.71
+        "cur": 40.71,
+        "tpnl": 700.0
       },
       {
         "name": "利通电子",
@@ -2214,7 +2215,7 @@ const DAILY_LOG = [
         "cur": 105.28
       }
     ],
-    "note": "做T: 杭电-65 (合计-65) | 平安证券**5362 持仓截图(15:00)",
+    "note": "做T: 杭电+700 (合计+700) | 平安证券**5362 持仓截图(15:00)",
     "valid": true,
     "trades": [
       {
@@ -2225,27 +2226,107 @@ const DAILY_LOG = [
       },
       {
         "action": "sell",
-        "name": "杭电股份",
-        "code": "603618",
-        "shares": 10000,
-        "t": true,
-        "pnl": -65.0
+        "name": "利通电子",
+        "code": "603629",
+        "shares": 3600,
+        "close": true
       },
       {
         "action": "buy",
         "name": "杭电股份",
         "code": "603618",
         "shares": 5000,
+        "price": 39.3,
         "t": true
       },
       {
         "action": "sell",
-        "name": "利通电子",
-        "code": "603629",
-        "shares": 3600,
-        "close": true
+        "name": "杭电股份",
+        "code": "603618",
+        "shares": 5000,
+        "price": 39.68,
+        "t": true
+      },
+      {
+        "action": "sell",
+        "name": "杭电股份",
+        "code": "603618",
+        "shares": 5000,
+        "price": 40.47,
+        "t": true
       }
     ],
-    "tPnl": -65.0
+    "tPnl": 700.0
+  },
+  {
+    "date": "2026-09-14",
+    "day": 36,
+    "total": 1988353.09,
+    "dayPnl": -0.3,
+    "pos": 71.1,
+    "floatPnl": 2946.5,
+    "cash": 575536.09,
+    "holdings": [
+      {
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 5000,
+        "avail": 0,
+        "mv": 412500,
+        "pnlPct": 0.59,
+        "cost": 82.016,
+        "cur": 82.5
+      },
+      {
+        "name": "德福科技",
+        "code": "301511",
+        "shares": 3700,
+        "avail": 0,
+        "mv": 403411,
+        "pnlPct": 0.112,
+        "cost": 108.908,
+        "cur": 109.03
+      },
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 3600,
+        "avail": 3600,
+        "mv": 389556,
+        "pnlPct": -1.057,
+        "cost": 109.366,
+        "cur": 108.21
+      },
+      {
+        "name": "杭电股份",
+        "code": "603618",
+        "shares": 5000,
+        "avail": 5000,
+        "mv": 207350,
+        "pnlPct": 2.087,
+        "cost": 40.622,
+        "cur": 41.47
+      }
+    ],
+    "note": "平安证券**5362 持仓截图(15:00)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 5000,
+        "price": 82.016,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "德福科技",
+        "code": "301511",
+        "shares": 3700,
+        "price": 108.908,
+        "open": true
+      }
+    ]
   }
-]
+];
