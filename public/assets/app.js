@@ -738,6 +738,39 @@ async function sbRpc(fn, params, options){
 }
 window.sbRpc = sbRpc;
 
+// 更新提示只需要最新一条的日期/标题，不必每分钟下载全部思路正文。
+// 仅合并同时进行的请求，不保留结果，不改变检查频率或消息/推送接口。
+let latestIdeaRequest = null;
+function fetchLatestDailyIdea(){
+  if (latestIdeaRequest) return latestIdeaRequest;
+  const request = (async () => {
+    let timer;
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    if (controller) timer = setTimeout(() => controller.abort(), 5000);
+    try {
+      const r = await fetch(SUPABASE_URL + '/rest/v1/daily_ideas?select=id,idea_date,title,updated_at&order=idea_date.desc&limit=1', {
+        headers: { apikey: SUPABASE_ANON, Authorization: 'Bearer ' + SUPABASE_ANON },
+        cache: 'no-store',
+        signal: controller ? controller.signal : undefined
+      });
+      if (!r.ok) throw new Error('Latest idea metadata unavailable');
+      const list = await r.json();
+      if (!Array.isArray(list)) throw new Error('Invalid latest idea metadata');
+      return { ok: true, list };
+    } catch (_) {
+      // 兼容尚未开放表读取的环境，原接口保持可用。
+      return sbRpc('list_daily_ideas', {}, { timeoutMs: 5000 });
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
+  })();
+  latestIdeaRequest = request;
+  const cleanup = () => { if (latestIdeaRequest === request) latestIdeaRequest = null; };
+  request.then(cleanup, cleanup);
+  return request;
+}
+window.fetchLatestDailyIdea = fetchLatestDailyIdea;
+
 // 调用 Supabase Edge Function（发邮件走这里，数据库出站被挡，改用 Edge Function）
 async function callEdge(fn, body){
   const r = await fetch(`${SUPABASE_URL}/functions/v1/${fn}`, {
@@ -1191,7 +1224,7 @@ async function refreshContentUpdateNotices(){
     }
   } catch(e){}
   try {
-    const d = await sbRpc("list_daily_ideas", {}, { timeoutMs: 5000 });
+    const d = await fetchLatestDailyIdea();
     const latestIdea = d && d.ok && Array.isArray(d.list) && d.list.length ? d.list[0] : null;
     if (latestIdea && latestIdea.idea_date) {
       notices.push({

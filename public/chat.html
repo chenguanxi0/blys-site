@@ -257,7 +257,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     <p>&copy; 2026 白鹿原上-交易笔记 · blys.site</p>
   </footer>
 
-  <script src="assets/app.js?v=2026091618"></script>
+  <script src="assets/app.js?v=2026091619"></script>
+  <script async fetchpriority="low" src="assets/chat-media-cache.js?v=2026091619"></script>
   <script src="assets/mobile-app.js?v=2026082445"></script>
   <script>
     // 聊天室页面初始化
@@ -909,7 +910,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         console.warn('[chat] load review notice failed', e);
       }
       try {
-        const d = await sbRpc('list_daily_ideas', {}, { timeoutMs: 5000 });
+        const d = await fetchLatestDailyIdea();
         const latestIdea = d && d.ok && Array.isArray(d.list) && d.list.length ? d.list[0] : null;
         if (latestIdea && latestIdea.idea_date) {
           notices.push({
@@ -1715,6 +1716,56 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       } catch(e) {}
     }
 
+    // 只缓存图片字节。必须先通过本轮服务器消息/图库列表验证，才可复用磁盘图片。
+    // 本地历史占位不授予图片访问权限，首次读取仍走原有鉴权及图片查看回执接口。
+    let chatMediaCache = null;
+    let chatMediaScopeValue = null;
+    let chatLibraryLoadVersion = 0;
+    function getChatMediaScope(){
+      if (!__user || !__user.loggedIn || !__user.token) return '';
+      return JSON.stringify([__user.token, __user.email, !!__user.isVip, !!(__user.isAdmin || __user.is_admin), __user.vipExpire || '']);
+    }
+    function getChatMediaCache(){
+      const scope = getChatMediaScope();
+      if (chatMediaScopeValue !== scope) {
+        if (chatMediaScopeValue !== null) {
+          chatLibraryLoadVersion++;
+          chatImageLibraryItems = [];
+          closeChatImageLibrary();
+          closeChatImageViewer();
+          const grid = document.getElementById('chatLibraryGrid');
+          if (grid) grid.innerHTML = '';
+        }
+        chatMediaScopeValue = scope;
+      }
+      try {
+        if (!chatMediaCache && window.BlysMediaCache) {
+          chatMediaCache = window.BlysMediaCache.create({ storage: window.BlysMediaCache.createStorage() });
+        }
+        if (chatMediaCache) chatMediaCache.setScope(scope);
+      } catch (_) { chatMediaCache = null; } // 缓存不可用时不影响收消息，走原图片接口。
+      return chatMediaCache;
+    }
+    window.addEventListener('blys:user:change', getChatMediaCache);
+    function approveChatMediaList(room, list, scope){
+      if (!scope || scope !== getChatMediaScope() || isVipPreviewMode(room)) return;
+      const cache = getChatMediaCache();
+      if (!cache) return;
+      list.forEach(m => {
+        if (!m || !m.id) return;
+        const key = room + ':' + m.id;
+        if (m.recalled_at) cache.invalidate(key);
+        else cache.approve(key);
+      });
+    }
+    function loadChatMessageImage(messageId, room){
+      const token = __user.token;
+      const fetchImage = () => sbRpc(room === 'private' ? 'get_private_message_image' : 'get_chat_message_image',
+        { p_token: token, p_message_id: messageId }, { timeoutMs: 15000 });
+      const cache = getChatMediaCache();
+      return cache ? cache.load(room + ':' + messageId, fetchImage) : fetchImage();
+    }
+
     async function loadChatMessages(room, opts) {
       if (room === 'private') return loadPrivateMessages(opts || {});
       opts = opts || {};
@@ -1754,6 +1805,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
           rpcParams.p_limit = (room === 'vip' || room === 'vip_chat') ? 20 : (isNativeApp ? 30 : 80);
           rpcParams.p_after = chatTsToIso(lastSeenTs[room]);
         }
+        const imageScope = getChatMediaScope();
         const d = await sbRpc('list_messages', rpcParams, {
           timeoutMs: isFirst ? (isNativeApp ? 30000 : 18000) : 12000,
           noStore: isNativeApp
@@ -1774,6 +1826,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
           return;
         }
 
+        approveChatMediaList(room, list, imageScope);
         const myEmail = (__user && __user.email) || '';
         if (previewMode && isFirst && !list.length) {
           box.innerHTML = renderVipPreviewFallback();
@@ -1872,6 +1925,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
           rpcParams.p_after = chatTsToIso(lastSeenTs.private);
         }
         const isNativeApp = isNativeNotificationApp();
+        const imageScope = getChatMediaScope();
         const d = await sbRpc('list_private_messages', rpcParams, {
           timeoutMs: isFirst ? (isNativeApp ? 30000 : 18000) : 12000,
           noStore: isNativeApp
@@ -1883,6 +1937,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
           if (isFirst) box.innerHTML = renderChatLoadFailed('private', '私聊接口返回异常');
           return;
         }
+        approveChatMediaList('private', list, imageScope);
         if (isHistory) {
           prependChatHistory(list, 'private');
           setTimeout(() => hydrateChatImagePlaceholders(4), 80);
@@ -1961,7 +2016,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     async function refreshPrivateImageSeenStatuses() {
       if (currentRoom !== 'private' || !currentPrivateConversationId || !__user.loggedIn || !__user.token) return;
       const box = document.getElementById('chatMessages');
-      if (!box || !box.querySelector('.chat-image-seen-status')) return;
+      if (!box || !box.querySelector('.chat-image-seen-status:not(.seen)')) return;
       try {
         const d = await sbRpc('list_private_image_receipts', {
           p_token: __user.token,
@@ -2009,15 +2064,19 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       if (!messageId) return;
       if (!__user || !__user.loggedIn || !__user.token) { openAuthModal(); return; }
       room = normalizeChatRoom(room || currentRoom);
+      const scope = getChatMediaScope();
+      const conversation = currentPrivateConversationId;
       try {
-        const fn = room === 'private' ? 'get_private_message_image' : 'get_chat_message_image';
-        const d = await sbRpc(fn, { p_token: __user.token, p_message_id: messageId }, { timeoutMs: 15000 });
+        const d = await loadChatMessageImage(messageId, room);
+        if (scope !== getChatMediaScope() || room !== currentRoom || (room === 'private' && conversation !== currentPrivateConversationId)) return;
+        if ((chatMessageCache.get(room + ':' + messageId) || {}).recalled_at) return;
         if (!d || !d.ok || !d.image) {
           alert((d && d.msg) || '图片加载失败');
           return;
         }
         openChatImageViewer(d.image);
       } catch (e) {
+        if (scope !== getChatMediaScope() || (e && e.code === 'MEDIA_STALE')) return;
         alert('图片加载失败：' + (e && e.message ? e.message : '网络异常'));
       }
     }
@@ -2026,14 +2085,17 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       const box = document.getElementById('chatMessages');
       if (!box || !__user || !__user.loggedIn || !__user.token) return;
       const nodes = Array.from(box.querySelectorAll('.chat-msg-img-placeholder:not([data-loading]):not([data-loaded])')).slice(0, limit || 6);
+      const scope = getChatMediaScope();
       for (const node of nodes) {
+        if (scope !== getChatMediaScope()) return;
+        if (!node.isConnected || node.hasAttribute('data-loading')) continue;
         const messageId = node.getAttribute('data-message-id');
         const room = normalizeChatRoom(node.getAttribute('data-room') || currentRoom);
         if (!messageId) continue;
         node.setAttribute('data-loading', '1');
         try {
-          const fn = room === 'private' ? 'get_private_message_image' : 'get_chat_message_image';
-          const d = await sbRpc(fn, { p_token: __user.token, p_message_id: messageId }, { timeoutMs: 15000 });
+          const d = await loadChatMessageImage(messageId, room);
+          if (!node.isConnected || scope !== getChatMediaScope()) continue;
           if (d && d.ok && d.image) {
             const img = document.createElement('img');
             img.className = 'chat-msg-img';
@@ -2124,6 +2186,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       const recalled = !!m.recalled_at;
       const stateCls = pending ? ' chat-msg-pending' : (failed ? ' chat-msg-failed' : '');
       if (recalled) {
+        const cache = getChatMediaCache();
+        if (cache) cache.invalidate(room + ':' + m.id);
         const recalledName = isMe ? '你' : name;
         return `<div class="chat-msg chat-msg-recalled" data-message-id="${esc(m.id || '')}" data-room="${esc(room)}"><span class="chat-recalled">${recalledName} 撤回了一条消息</span></div>`;
       }
@@ -2820,18 +2884,29 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         alert('请先以管理员身份进入一个私聊窗口');
         return;
       }
+      const cache = getChatMediaCache();
+      const scope = getChatMediaScope();
+      const token = __user.token;
+      const version = ++chatLibraryLoadVersion;
       const modal = document.getElementById('chatLibraryModal');
       if (!modal) return;
       modal.hidden = false;
       const grid = document.getElementById('chatLibraryGrid');
       if (grid) grid.innerHTML = '<div class="chat-library-loading">正在加载图片库…</div>';
       try {
-        const d = await sbRpc('admin_private_image_library_list', { p_token: __user.token }, { timeoutMs: 15000 });
+        const d = await sbRpc('admin_private_image_library_list', { p_token: token }, { timeoutMs: 15000 });
+        if (version !== chatLibraryLoadVersion || scope !== getChatMediaScope()) return;
         if (!d || !d.ok) throw new Error((d && d.msg) || '加载失败');
-        chatImageLibraryItems = Array.isArray(d.list) ? d.list : [];
+        const previous = new Map(chatImageLibraryItems.map(item => [String(item.id), item]));
+        chatImageLibraryItems = (Array.isArray(d.list) ? d.list : []).map(item => {
+          const old = previous.get(String(item.id));
+          return Object.assign({}, item, { image: old && old.image || '' });
+        });
+        if (cache) cache.reconcile('library:', chatImageLibraryItems.map(item => 'library:' + item.id));
         renderChatImageLibrary();
         loadChatImageLibraryPreviews();
       } catch (err) {
+        if (version !== chatLibraryLoadVersion || scope !== getChatMediaScope()) return;
         if (grid) grid.innerHTML = '<div class="chat-library-loading">图片库加载失败，请重试</div>';
       }
     }
@@ -2839,6 +2914,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     function closeChatImageLibrary(event) {
       const modal = document.getElementById('chatLibraryModal');
       if (event && modal && event.target !== modal) return;
+      chatLibraryLoadVersion++;
       if (modal) modal.hidden = true;
     }
 
@@ -2870,23 +2946,34 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     async function loadChatImageLibraryPreviews() {
       const grid = document.getElementById('chatLibraryGrid');
       if (!grid) return;
-      for (let index = 0; index < chatImageLibraryItems.length; index++) {
-        const item = chatImageLibraryItems[index];
+      const cache = getChatMediaCache();
+      const scope = getChatMediaScope();
+      const token = __user.token;
+      const version = chatLibraryLoadVersion;
+      for (const item of chatImageLibraryItems.slice()) {
+        if (version !== chatLibraryLoadVersion || scope !== getChatMediaScope()) return;
         if (!item || item.image || !item.id) continue;
         try {
-          const d = await sbRpc('admin_private_image_library_get', { p_token: __user.token, p_id: item.id }, { timeoutMs: 30000 });
+          const fetchImage = () => sbRpc('admin_private_image_library_get', { p_token: token, p_id: item.id }, { timeoutMs: 30000 });
+          const d = await (cache ? cache.load('library:' + item.id, fetchImage) : fetchImage());
+          if (version !== chatLibraryLoadVersion || scope !== getChatMediaScope()) return;
           if (!d || !d.ok || !d.image) continue;
-          item.image = d.image;
+          // 上传/删除/排序会改变下标，返回的图片始终按 ID 找回当前卡片。
+          const index = chatImageLibraryItems.findIndex(current => current.id === item.id);
+          if (index < 0) continue;
+          chatImageLibraryItems[index].image = d.image;
           const placeholder = grid.querySelector('[data-library-placeholder="' + index + '"]');
           const selectBtn = grid.querySelector('[data-library-select="' + index + '"]');
           if (placeholder) {
             const img = document.createElement('img');
-            img.src = item.image;
+            img.src = d.image;
             img.alt = item.file_name || '图片';
             placeholder.replaceWith(img);
           }
           if (selectBtn) selectBtn.disabled = false;
         } catch (err) {
+          if (version !== chatLibraryLoadVersion || scope !== getChatMediaScope()) return;
+          const index = chatImageLibraryItems.findIndex(current => current.id === item.id);
           const placeholder = grid.querySelector('[data-library-placeholder="' + index + '"]');
           if (placeholder) placeholder.textContent = '加载失败';
         }
@@ -2911,15 +2998,22 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       const item = chatImageLibraryItems[index];
       if (!item || !item.id) return;
       if (!confirm('删除“' + (item.file_name || '这张图片') + '”？已发送到聊天记录中的图片不会受影响。')) return;
+      const scope = getChatMediaScope();
       try {
         const d = await sbRpc('admin_private_image_library_delete', {
           p_token: __user.token,
           p_id: item.id
         }, { timeoutMs: 15000 });
+        if (scope !== getChatMediaScope()) return;
         if (!d || !d.ok) throw new Error((d && d.msg) || '删除失败');
-        chatImageLibraryItems.splice(index, 1);
+        const cache = getChatMediaCache();
+        if (cache) cache.invalidate('library:' + item.id);
+        chatLibraryLoadVersion++;
+        chatImageLibraryItems = chatImageLibraryItems.filter(current => current.id !== item.id);
         renderChatImageLibrary();
+        loadChatImageLibraryPreviews();
       } catch (err) {
+        if (scope !== getChatMediaScope()) return;
         alert('删除失败：' + ((err && err.message) || '请稍后重试'));
       }
     }
@@ -2927,6 +3021,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     async function moveChatLibraryImage(index, direction) {
       const target = index + direction;
       if (target < 0 || target >= chatImageLibraryItems.length) return;
+      const scope = getChatMediaScope();
       const before = chatImageLibraryItems.slice();
       const moved = chatImageLibraryItems.splice(index, 1)[0];
       chatImageLibraryItems.splice(target, 0, moved);
@@ -2936,8 +3031,10 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
           p_token: __user.token,
           p_ids: chatImageLibraryItems.map(item => item.id)
         }, { timeoutMs: 15000 });
+        if (scope !== getChatMediaScope()) return;
         if (!d || !d.ok) throw new Error((d && d.msg) || '排序保存失败');
       } catch (err) {
+        if (scope !== getChatMediaScope()) return;
         chatImageLibraryItems = before;
         renderChatImageLibrary();
         alert('排序保存失败：' + ((err && err.message) || '请稍后重试'));
@@ -2947,20 +3044,29 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
     async function onChatLibraryUpload(input) {
       const file = input && input.files && input.files[0];
       if (!file) return;
+      const scope = getChatMediaScope();
+      const token = __user.token;
       try {
         if (!file.type.startsWith('image/')) throw new Error('请选择图片文件');
         if (file.size > 8 * 1024 * 1024) throw new Error('图片最大支持 8MB');
         const prepared = await compressChatImageSmart(file);
+        if (scope !== getChatMediaScope()) return;
         if (Math.round(prepared.base64.length * 0.75) > 650 * 1024) throw new Error('图片压缩后仍超过 650KB，请截图裁剪后再发');
         const d = await sbRpc('admin_private_image_library_add', {
-          p_token: __user.token,
+          p_token: token,
           p_file_name: prepared.name,
           p_image: prepared.base64
         }, { timeoutMs: 30000 });
+        if (scope !== getChatMediaScope()) return;
         if (!d || !d.ok || !d.item) throw new Error((d && d.msg) || '上传失败');
+        const cache = getChatMediaCache();
+        if (cache && d.item.image) cache.seed('library:' + d.item.id, { ok: true, image: d.item.image });
+        chatLibraryLoadVersion++;
         chatImageLibraryItems.unshift(d.item);
         renderChatImageLibrary();
+        loadChatImageLibraryPreviews();
       } catch (err) {
+        if (scope !== getChatMediaScope()) return;
         alert('图片上传失败：' + ((err && err.message) || '请稍后重试'));
       } finally {
         input.value = '';
