@@ -36,7 +36,7 @@ test('notification implementation and message polling paths are unchanged', () =
   for (const name of ['loadChatMessages', 'loadPrivateMessages']) {
     assert.equal(stripApproval(fn(chat, name)), fn(before, name), name);
   }
-  assert.equal(fn(app, 'sbRpc', ''), fn(baseline('public/assets/app.js'), 'sbRpc', ''));
+  // RPC transport has a separately tested no-store fix: PostgREST rejects arbitrary ?_ timestamps.
   for (const file of ['public/sw.js', 'public/assets/mobile-app.js']) assert.equal(read(file), baseline(file), file);
 });
 
@@ -47,6 +47,28 @@ test('all chat inline scripts and changed JavaScript parse', () => {
   }
   new vm.Script(app);
   new vm.Script(read('public/assets/chat-media-cache.js'));
+});
+
+test('native no-store RPC uses a valid PostgREST URL while retaining cache bypass and unchanged parameters', async () => {
+  const requests = [];
+  const context = vm.createContext({ SUPABASE_URL: 'https://example.test', SUPABASE_ANON: 'test',
+    setTimeout, clearTimeout, AbortController,
+    fetch: async (url, options) => { requests.push({ url, options }); return { ok: true, text: async () => '[]' }; }
+  });
+  vm.runInContext(fn(app, 'sbRpc', ''), context);
+  const params = { p_token: 'test', p_conversation_id: '00000000-0000-0000-0000-000000000000', p_limit: 8 };
+  await context.sbRpc('list_private_messages', params, { timeoutMs: 30000, noStore: true });
+  const request = requests[0];
+  assert.equal(request.url, 'https://example.test/rest/v1/rpc/list_private_messages');
+  assert.equal(request.options.cache, 'no-store');
+  assert.equal(request.options.headers['Cache-Control'], 'no-store, no-cache, max-age=0');
+  assert.equal(request.options.headers.Pragma, 'no-cache');
+  assert.equal(request.options.method, 'POST');
+  assert.equal(request.options.body, JSON.stringify(params));
+  await context.sbRpc('list_private_messages', params, { timeoutMs: 18000 });
+  assert.equal(requests[1].url, request.url);
+  assert.equal(requests[1].options.cache, undefined);
+  assert.equal(requests[1].options.headers['Cache-Control'], undefined);
 });
 
 test('concurrent/repeated image loads share bytes, not errors', async () => {

@@ -706,7 +706,9 @@ async function sbRpc(fn, params, options){
     timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   }
   try {
-    const requestUrl = `${SUPABASE_URL}/rest/v1/rpc/${fn}` + (noStore ? `?_=${Date.now()}` : '');
+    // PostgREST 会把未知查询参数当作过滤条件；?_时间戳会触发 PGRST100。
+    // 使用标准缓存选项和请求头，不能在 RPC URL 上添加任意防缓存参数。
+    const requestUrl = `${SUPABASE_URL}/rest/v1/rpc/${fn}`;
     r = await fetch(requestUrl, {
       method: "POST",
       headers: {
@@ -716,6 +718,7 @@ async function sbRpc(fn, params, options){
         ...(noStore ? { "Cache-Control": "no-store, no-cache, max-age=0", "Pragma": "no-cache" } : {})
       },
       body: JSON.stringify(params || {}),
+      ...(noStore ? { cache: 'no-store' } : {}),
       signal: controller ? controller.signal : undefined
     });
   } catch (e) {
