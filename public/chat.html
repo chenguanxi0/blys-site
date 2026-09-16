@@ -538,7 +538,6 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       // 注册通知（新消息手机弹窗提醒）
       initChatNotification();
       scheduleBrowserNotificationAutoReset('init');
-      scheduleNativeNotificationAutoReset('init');
       // 监听登录状态变化
       window.addEventListener('blys:user:change', () => {
         setChatLoginLoading(false);
@@ -557,7 +556,6 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         startPrivateUnreadPolling();
         refreshChatPushSubscription();
         scheduleBrowserNotificationAutoReset('user-change');
-        scheduleNativeNotificationAutoReset('user-change');
       });
       // 兜底：再延迟刷新一次，避免某些浏览器事件时机问题
       setTimeout(() => {
