@@ -696,6 +696,9 @@ const ADMIN_TOKEN_KEY = "blys_admin_token";
 async function sbRpc(fn, params, options){
   let r;
   const timeoutMs = options && options.timeoutMs ? Number(options.timeoutMs) : 0;
+  // Android WebView 在少数设备上会把恢复后的请求错误复用为旧响应。
+  // 对聊天这种实时数据可显式要求绕过缓存；其余 RPC 保持原有行为。
+  const noStore = !!(options && options.noStore);
   let controller = null;
   let timeoutId = null;
   if (timeoutMs > 0 && typeof AbortController !== "undefined") {
@@ -703,9 +706,15 @@ async function sbRpc(fn, params, options){
     timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   }
   try {
-    r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fn}`, {
+    const requestUrl = `${SUPABASE_URL}/rest/v1/rpc/${fn}` + (noStore ? `?_=${Date.now()}` : '');
+    r = await fetch(requestUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON, "Authorization": "Bearer " + SUPABASE_ANON },
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_ANON,
+        "Authorization": "Bearer " + SUPABASE_ANON,
+        ...(noStore ? { "Cache-Control": "no-store, no-cache, max-age=0", "Pragma": "no-cache" } : {})
+      },
       body: JSON.stringify(params || {}),
       signal: controller ? controller.signal : undefined
     });

@@ -1754,7 +1754,10 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
           rpcParams.p_limit = (room === 'vip' || room === 'vip_chat') ? 20 : (isNativeApp ? 30 : 80);
           rpcParams.p_after = chatTsToIso(lastSeenTs[room]);
         }
-        const d = await sbRpc('list_messages', rpcParams, { timeoutMs: isFirst ? (isNativeApp ? 30000 : 18000) : 12000 });
+        const d = await sbRpc('list_messages', rpcParams, {
+          timeoutMs: isFirst ? (isNativeApp ? 30000 : 18000) : 12000,
+          noStore: isNativeApp
+        });
         console.log('[chat] list_messages response', room, d);
         if ((!isHistory && loadSeq !== chatLoadSeq) || room !== currentRoom) return;
         // list_messages 返回表，直接是数组；也兼容返回 {ok:true, list:[]} 的情况
@@ -1868,7 +1871,11 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
           rpcParams.p_limit = isNativeNotificationApp() ? 20 : 40;
           rpcParams.p_after = chatTsToIso(lastSeenTs.private);
         }
-        const d = await sbRpc('list_private_messages', rpcParams, { timeoutMs: isFirst ? 18000 : 12000 });
+        const isNativeApp = isNativeNotificationApp();
+        const d = await sbRpc('list_private_messages', rpcParams, {
+          timeoutMs: isFirst ? (isNativeApp ? 30000 : 18000) : 12000,
+          noStore: isNativeApp
+        });
         if ((!isHistory && loadSeq !== chatLoadSeq) || currentRoom !== 'private') return;
         const list = Array.isArray(d) ? d : (d && d.list);
         if (!Array.isArray(list)) {
