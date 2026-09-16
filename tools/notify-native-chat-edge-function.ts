@@ -100,10 +100,10 @@ async function postGetuiPush(token: string, requestBody: Record<string, unknown>
     },
     body: JSON.stringify(requestBody),
   });
-
-  if (res.ok) return { ok: true };
-
   const text = await res.text();
+  let data: Record<string, unknown> = {};
+  try { data = JSON.parse(text); } catch (_) {}
+  if (res.ok && Number(data.code) === 0) return { ok: true, status: res.status, text };
   return { ok: false, status: res.status, text };
 }
 
@@ -115,6 +115,7 @@ async function sendGetuiCid(token: string, cid: string, title: string, body: str
     },
     settings: {
       ttl: 3600000,
+      strategy: { default: 3 },
     },
     push_message: {
       notification: {
@@ -144,7 +145,10 @@ async function sendGetuiCid(token: string, cid: string, title: string, body: str
     },
   };
 
-  return await postGetuiPush(token, transmitBody);
+  const primary = await postGetuiPush(token, transmitBody);
+  if (primary.ok) return primary;
+  const fallback = { ...transmitBody, settings: { ttl: 3600000 } };
+  return await postGetuiPush(token, fallback);
 }
 
 async function handler(req: Request) {

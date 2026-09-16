@@ -111,10 +111,12 @@ async function postGetuiPush(token: string, requestBody: Record<string, unknown>
     },
     body: JSON.stringify(requestBody),
   });
-
-  if (res.ok) return { ok: true };
-
   const text = await res.text();
+  let data: Record<string, unknown> = {};
+  try { data = JSON.parse(text); } catch (_) {}
+  // 个推会在 HTTP 200 中返回业务失败码；此前这里把它误记成“已发送”，
+  // 排障时无法区分真实下发和被厂商通道拒绝。
+  if (res.ok && Number(data.code) === 0) return { ok: true, status: res.status, text };
   return { ok: false, status: res.status, text };
 }
 
@@ -141,6 +143,9 @@ async function sendGetuiCid(token: string, cid: string, title: string, body: str
     },
     settings: {
       ttl: 3600000,
+      // App 只是退到后台时，优先继续使用个推长连接，避免默认策略把
+      // 消息交给未绑定的厂商离线通道而等到 App 再次打开才送达。
+      strategy: { default: 3 },
     },
     push_message: {
       notification: {
@@ -170,7 +175,13 @@ async function sendGetuiCid(token: string, cid: string, title: string, body: str
     },
   };
 
-  return await postGetuiPush(token, transmitBody);
+  const primary = await postGetuiPush(token, transmitBody);
+  if (primary.ok) return primary;
+
+  // strategy 是个推增值能力；未开通的账号会直接返回业务错误。此时回退
+  // 到原有策略，保证不会因为策略配置本身让正常推送也失败。
+  const fallback = { ...transmitBody, settings: { ttl: 3600000 } };
+  return await postGetuiPush(token, fallback);
 }
 
 async function handler(req: Request) {
