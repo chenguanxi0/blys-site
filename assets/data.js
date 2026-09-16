@@ -2328,5 +2328,205 @@ const DAILY_LOG = [
         "open": true
       }
     ]
+  },
+  {
+    "date": "2026-09-15",
+    "day": 37,
+    "total": 1997894.55,
+    "dayPnl": 0.53,
+    "pos": 29.6,
+    "floatPnl": 12487.96,
+    "cash": 1405890.55,
+    "holdings": [
+      {
+        "name": "太极实业",
+        "code": "600667",
+        "shares": 11000,
+        "avail": 0,
+        "mv": 208010.0,
+        "pnlPct": -1.94,
+        "cost": 19.284,
+        "cur": 18.91
+      },
+      {
+        "name": "江丰电子",
+        "code": "300666",
+        "shares": 800,
+        "avail": 0,
+        "mv": 195768.0,
+        "pnlPct": 0.271,
+        "cost": 244.049,
+        "cur": 244.71
+      },
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 1800,
+        "avail": 1800,
+        "mv": 188226.0,
+        "pnlPct": -8.461,
+        "cost": 114.235,
+        "cur": 104.57
+      },
+      {
+        "name": "杭电股份",
+        "code": "603618",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": 1.056,
+        "cost": 40.622,
+        "cur": 41.04
+      },
+      {
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": 1.342,
+        "cost": 80.541,
+        "cur": 83.99
+      },
+      {
+        "name": "德福科技",
+        "code": "301511",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": 5.864,
+        "cost": 99.062,
+        "cur": 112.1
+      }
+    ],
+    "note": "平安证券**5362 持仓截图(15:03)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "太极实业",
+        "code": "600667",
+        "shares": 11000,
+        "price": 19.284,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "江丰电子",
+        "code": "300666",
+        "shares": 800,
+        "price": 244.049,
+        "open": true
+      },
+      {
+        "action": "sell",
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 1800
+      },
+      {
+        "action": "sell",
+        "name": "杭电股份",
+        "code": "603618",
+        "shares": 5000,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 5000,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "德福科技",
+        "code": "301511",
+        "shares": 3700,
+        "close": true
+      }
+    ]
+  },
+  {
+    "date": "2026-09-16",
+    "day": 38,
+    "total": 2018875.05,
+    "dayPnl": 1.07,
+    "pos": 21.6,
+    "floatPnl": -2.71,
+    "cash": 1582071.05,
+    "holdings": [
+      {
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 2600,
+        "avail": 0,
+        "mv": 214292.0,
+        "pnlPct": 0.923,
+        "cost": 81.666,
+        "cur": 82.42
+      },
+      {
+        "name": "太极实业",
+        "code": "600667",
+        "shares": 6000,
+        "avail": 6000,
+        "mv": 121380.0,
+        "pnlPct": 5.968,
+        "cost": 19.091,
+        "cur": 20.23
+      },
+      {
+        "name": "江丰电子",
+        "code": "300666",
+        "shares": 400,
+        "avail": 400,
+        "mv": 101132.0,
+        "pnlPct": 7.116,
+        "cost": 236.034,
+        "cur": 252.83
+      },
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": -2.525,
+        "cost": 114.235,
+        "cur": 106.41
+      }
+    ],
+    "note": "平安证券**5362 持仓截图(15:46)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 2600,
+        "price": 81.666,
+        "open": true
+      },
+      {
+        "action": "sell",
+        "name": "太极实业",
+        "code": "600667",
+        "shares": 5000
+      },
+      {
+        "action": "sell",
+        "name": "江丰电子",
+        "code": "300666",
+        "shares": 400
+      },
+      {
+        "action": "sell",
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 1800,
+        "close": true
+      }
+    ]
   }
 ];
