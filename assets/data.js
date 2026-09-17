@@ -2528,5 +2528,75 @@ const DAILY_LOG = [
         "close": true
       }
     ]
+  },
+  {
+    "date": "2026-09-17",
+    "day": 39,
+    "total": 1976145.65,
+    "dayPnl": -2.11,
+    "pos": 70.6,
+    "floatPnl": -27215.41,
+    "cash": 580384.65,
+    "holdings": [
+      {
+        "name": "有研新材",
+        "code": "600206",
+        "shares": 15500,
+        "avail": 0,
+        "mv": 783525.0,
+        "pnlPct": -3.451,
+        "cost": 52.357,
+        "cur": 50.55
+      },
+      {
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 4900,
+        "avail": 2600,
+        "mv": 389060.0,
+        "pnlPct": -3.336,
+        "cost": 82.141,
+        "cur": 79.4
+      },
+      {
+        "name": "太极实业",
+        "code": "600667",
+        "shares": 6000,
+        "avail": 6000,
+        "mv": 123420.0,
+        "pnlPct": 7.749,
+        "cost": 19.091,
+        "cur": 20.57
+      },
+      {
+        "name": "江丰电子",
+        "code": "300666",
+        "shares": 400,
+        "avail": 400,
+        "mv": 99756.0,
+        "pnlPct": 5.658,
+        "cost": 236.034,
+        "cur": 249.39
+      }
+    ],
+    "note": "平安证券**5362 持仓截图(15:00)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "有研新材",
+        "code": "600206",
+        "shares": 15500,
+        "price": 52.357,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 2300,
+        "price": 82.141
+      }
+    ]
   }
 ];
