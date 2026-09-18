@@ -2598,5 +2598,104 @@ const DAILY_LOG = [
         "price": 82.141
       }
     ]
+  },
+  {
+    "date": "2026-09-18",
+    "day": 40,
+    "total": 2001025.05,
+    "dayPnl": 1.3,
+    "pos": 39.2,
+    "floatPnl": -2336.01,
+    "cash": 1216885.05,
+    "holdings": [
+      {
+        "name": "光智科技",
+        "code": "300489",
+        "shares": 1800,
+        "avail": 0,
+        "mv": 404316.0,
+        "pnlPct": 0.746,
+        "cost": 222.956,
+        "cur": 224.62
+      },
+      {
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 2400,
+        "avail": 2400,
+        "mv": 194064.0,
+        "pnlPct": -3.99,
+        "cost": 84.22,
+        "cur": 80.86
+      },
+      {
+        "name": "有研新材",
+        "code": "600206",
+        "shares": 3600,
+        "avail": 3600,
+        "mv": 185760.0,
+        "pnlPct": -7.485,
+        "cost": 55.775,
+        "cur": 51.6
+      },
+      {
+        "name": "太极实业",
+        "code": "600667",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": 4.228,
+        "cost": 19.091,
+        "cur": 20.46
+      },
+      {
+        "name": "江丰电子",
+        "code": "300666",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": 4.504,
+        "cost": 236.034,
+        "cur": 260.44
+      }
+    ],
+    "note": "平安证券**5362 持仓截图(15:03)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "光智科技",
+        "code": "300489",
+        "shares": 1800,
+        "price": 222.956,
+        "open": true
+      },
+      {
+        "action": "sell",
+        "name": "有研新材",
+        "code": "600206",
+        "shares": 11900
+      },
+      {
+        "action": "sell",
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 2500
+      },
+      {
+        "action": "sell",
+        "name": "太极实业",
+        "code": "600667",
+        "shares": 6000,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "江丰电子",
+        "code": "300666",
+        "shares": 400,
+        "close": true
+      }
+    ]
   }
 ];
