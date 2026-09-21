@@ -2698,4 +2698,71 @@ const DAILY_LOG = [
       }
     ]
   }
+,
+  {
+    "date": "2026-09-21",
+    "day": 41,
+    "total": 2007513.37,
+    "dayPnl": 0.35,
+    "pos": 0,
+    "floatPnl": -13610.08,
+    "cash": 2007513.37,
+    "holdings": [
+      {
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": -1.781,
+        "cost": 84.22,
+        "cur": 81.38
+      },
+      {
+        "name": "有研新材",
+        "code": "600206",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": -1.855,
+        "cost": 55.775,
+        "cur": 51.32
+      },
+      {
+        "name": "光智科技",
+        "code": "300489",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": 2.146,
+        "cost": 222.956,
+        "cur": 238.81
+      }
+    ],
+    "note": "平安证券**5362 持仓截图(15:10)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 2400,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "有研新材",
+        "code": "600206",
+        "shares": 3600,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "光智科技",
+        "code": "300489",
+        "shares": 1800,
+        "close": true
+      }
+    ]
+  }
 ];
