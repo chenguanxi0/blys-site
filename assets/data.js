@@ -2765,4 +2765,58 @@ const DAILY_LOG = [
       }
     ]
   }
+,
+{
+  "date": "2026-09-22",
+  "day": 42,
+  "total": 2007188.6,
+  "dayPnl": -0.01,
+  "pos": 14.6,
+  "floatPnl": -324.77,
+  "cash": 1713212.6,
+  "holdings": [
+    {
+      "name": "景旺电子",
+      "code": "603228",
+      "shares": 1800,
+      "avail": 0,
+      "mv": 191016.0,
+      "pnlPct": -0.331,
+      "cost": 106.472,
+      "cur": 106.12,
+      "open": true
+    },
+    {
+      "name": "西陇科学",
+      "code": "002584",
+      "shares": 11000,
+      "avail": 0,
+      "mv": 102960.0,
+      "pnlPct": 0.301,
+      "cost": 9.332,
+      "cur": 9.36,
+      "open": true
+    }
+  ],
+  "note": "平安证券**5362 持仓截图(15:03)",
+  "valid": true,
+  "trades": [
+    {
+      "action": "buy",
+      "name": "景旺电子",
+      "code": "603228",
+      "shares": 1800,
+      "price": 106.472,
+      "open": true
+    },
+    {
+      "action": "buy",
+      "name": "西陇科学",
+      "code": "002584",
+      "shares": 11000,
+      "price": 9.332,
+      "open": true
+    }
+  ]
+}
 ];
