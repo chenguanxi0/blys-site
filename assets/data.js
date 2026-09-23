@@ -2697,8 +2697,7 @@ const DAILY_LOG = [
         "close": true
       }
     ]
-  }
-,
+  },
   {
     "date": "2026-09-21",
     "day": 41,
@@ -2764,59 +2763,126 @@ const DAILY_LOG = [
         "close": true
       }
     ]
+  },
+  {
+    "date": "2026-09-22",
+    "day": 42,
+    "total": 2007188.6,
+    "dayPnl": -0.01,
+    "pos": 14.6,
+    "floatPnl": -324.77,
+    "cash": 1713212.6,
+    "holdings": [
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 1800,
+        "avail": 0,
+        "mv": 191016.0,
+        "pnlPct": -0.331,
+        "cost": 106.472,
+        "cur": 106.12,
+        "open": true
+      },
+      {
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 11000,
+        "avail": 0,
+        "mv": 102960.0,
+        "pnlPct": 0.301,
+        "cost": 9.332,
+        "cur": 9.36,
+        "open": true
+      }
+    ],
+    "note": "平安证券**5362 持仓截图(15:03)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 1800,
+        "price": 106.472,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 11000,
+        "price": 9.332,
+        "open": true
+      }
+    ]
+  },
+  {
+    "date": "2026-09-23",
+    "day": 43,
+    "total": 2005637.43,
+    "dayPnl": -0.07,
+    "pos": 24.3,
+    "floatPnl": -1875.94,
+    "cash": 1517567.43,
+    "holdings": [
+      {
+        "name": "胜宏科技",
+        "code": "300476",
+        "shares": 800,
+        "avail": 0,
+        "mv": 195440.0,
+        "pnlPct": -0.63,
+        "cost": 245.849,
+        "cur": 244.3,
+        "open": true
+      },
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 1800,
+        "avail": 900,
+        "mv": 193410.0,
+        "pnlPct": 1.466,
+        "cost": 105.898,
+        "cur": 107.45
+      },
+      {
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 11000,
+        "avail": 11000,
+        "mv": 99220.0,
+        "pnlPct": -3.342,
+        "cost": 9.332,
+        "cur": 9.02
+      }
+    ],
+    "note": "做T: 景旺电子 | 平安证券**5362 持仓截图(15:02)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "胜宏科技",
+        "code": "300476",
+        "shares": 800,
+        "price": 245.849,
+        "open": true
+      },
+      {
+        "action": "sell",
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 900,
+        "t": true
+      },
+      {
+        "action": "buy",
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 900,
+        "t": true
+      }
+    ]
   }
-,
-{
-  "date": "2026-09-22",
-  "day": 42,
-  "total": 2007188.6,
-  "dayPnl": -0.01,
-  "pos": 14.6,
-  "floatPnl": -324.77,
-  "cash": 1713212.6,
-  "holdings": [
-    {
-      "name": "景旺电子",
-      "code": "603228",
-      "shares": 1800,
-      "avail": 0,
-      "mv": 191016.0,
-      "pnlPct": -0.331,
-      "cost": 106.472,
-      "cur": 106.12,
-      "open": true
-    },
-    {
-      "name": "西陇科学",
-      "code": "002584",
-      "shares": 11000,
-      "avail": 0,
-      "mv": 102960.0,
-      "pnlPct": 0.301,
-      "cost": 9.332,
-      "cur": 9.36,
-      "open": true
-    }
-  ],
-  "note": "平安证券**5362 持仓截图(15:03)",
-  "valid": true,
-  "trades": [
-    {
-      "action": "buy",
-      "name": "景旺电子",
-      "code": "603228",
-      "shares": 1800,
-      "price": 106.472,
-      "open": true
-    },
-    {
-      "action": "buy",
-      "name": "西陇科学",
-      "code": "002584",
-      "shares": 11000,
-      "price": 9.332,
-      "open": true
-    }
-  ]
-}
 ];
