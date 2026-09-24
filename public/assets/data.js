@@ -2884,5 +2884,76 @@ const DAILY_LOG = [
         "t": true
       }
     ]
+  },
+  {
+    "date": "2026-09-24",
+    "day": 44,
+    "total": 1988586.09,
+    "dayPnl": -0.84,
+    "pos": 24.3,
+    "floatPnl": -18927.28,
+    "cash": 1505306.09,
+    "holdings": [
+      {
+        "name": "中成股份",
+        "code": "000151",
+        "shares": 20000,
+        "avail": 0,
+        "mv": 200200.0,
+        "pnlPct": -0.911,
+        "cost": 10.102,
+        "cur": 10.01,
+        "open": true
+      },
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 1800,
+        "avail": 1800,
+        "mv": 186390.0,
+        "pnlPct": -2.217,
+        "cost": 105.898,
+        "cur": 103.55
+      },
+      {
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 11000,
+        "avail": 11000,
+        "mv": 96690.0,
+        "pnlPct": -5.807,
+        "cost": 9.332,
+        "cur": 8.79
+      },
+      {
+        "name": "胜宏科技",
+        "code": "300476",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0,
+        "pnlPct": -3.508,
+        "cost": 245.849,
+        "cur": 232.69
+      }
+    ],
+    "note": "平安证券**5362 持仓截图(15:07)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "中成股份",
+        "code": "000151",
+        "shares": 20000,
+        "price": 10.102,
+        "open": true
+      },
+      {
+        "action": "sell",
+        "name": "胜宏科技",
+        "code": "300476",
+        "shares": 800,
+        "close": true
+      }
+    ]
   }
 ];
