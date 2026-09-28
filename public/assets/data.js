@@ -2955,5 +2955,90 @@ const DAILY_LOG = [
         "close": true
       }
     ]
+  },
+  {
+    "date": "2026-09-28",
+    "day": 45,
+    "total": 1961881.06,
+    "dayPnl": -1.33,
+    "pos": 40.2,
+    "floatPnl": -38732.04,
+    "cash": 1173504.06,
+    "holdings": [
+      {
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 2600,
+        "avail": 0,
+        "mv": 206180.0,
+        "pnlPct": -1.204,
+        "cost": 80.266,
+        "cur": 79.3,
+        "open": true
+      },
+      {
+        "name": "中成股份",
+        "code": "000151",
+        "shares": 20000,
+        "avail": 20000,
+        "mv": 202800.0,
+        "pnlPct": 0.376,
+        "cost": 10.102,
+        "cur": 10.14
+      },
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 2000,
+        "avail": 0,
+        "mv": 190000.0,
+        "pnlPct": -12.69,
+        "cost": 108.808,
+        "cur": 95.0
+      },
+      {
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 22100,
+        "avail": 11000,
+        "mv": 189397.0,
+        "pnlPct": -4.712,
+        "cost": 8.994,
+        "cur": 8.57
+      }
+    ],
+    "note": "做T: 景旺电子 | 平安证券**5362 持仓截图(15:39)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 2600,
+        "price": 80.266,
+        "open": true
+      },
+      {
+        "action": "sell",
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 1800,
+        "t": true
+      },
+      {
+        "action": "buy",
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 2000,
+        "price": 108.808,
+        "t": true
+      },
+      {
+        "action": "buy",
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 11100
+      }
+    ]
   }
 ];
