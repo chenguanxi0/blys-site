@@ -3262,7 +3262,12 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         markChatPushEnabled('系统弹窗提醒已开启');
       } catch (e) {
         notifEnabled = false;
-        setNotifDiag(getNotifErrorText(e));
+        if (isChatPushTimeoutError(e)) {
+          setNotifDiag('Chrome 推送订阅超时，已开启页内提醒；后台会自动重试。');
+          scheduleChatPushBackgroundRetry();
+        } else {
+          setNotifDiag(getNotifErrorText(e));
+        }
         console.warn('[chat] refresh push subscription failed', e);
         updateNotifBtn();
       }

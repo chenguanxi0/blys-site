@@ -3655,7 +3655,12 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         updateNotifBtn();
       } catch (e) {
         notifEnabled = false;
-        setNotifDiag(getNotifErrorText(e));
+        if (isChatPushTimeoutError(e)) {
+          setNotifDiag('Chrome 推送订阅超时，已开启页内提醒；后台会自动重试。');
+          scheduleChatPushBackgroundRetry();
+        } else {
+          setNotifDiag(getNotifErrorText(e));
+        }
         console.warn('[chat] refresh push subscription failed', e);
         updateNotifBtn();
       }
@@ -3810,7 +3815,8 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         } else if (isChatPushTimeoutError(e)) {
           // Chrome 已在内部做指数退避重试；网页再并发调用 subscribe 会生成多条
           // 注册请求，反而延长恢复时间。保留当前请求，等待 Chrome 自己完成即可。
-          setNotifDiag('Chrome 正在后台登记浏览器订阅，暂时使用页内提醒。请保持页面打开约 8 分钟，不要重复点击；随后刷新页面即可完成绑定。');
+          setNotifDiag('Chrome 推送订阅超时，已开启页内提醒；后台会自动重试。');
+          scheduleChatPushBackgroundRetry();
         } else {
           setNotifDiag(getNotifErrorText(e));
         }
