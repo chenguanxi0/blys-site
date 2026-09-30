@@ -3380,7 +3380,7 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         }
         return;
       }
-      if (notifEnabled || inAppNotifOn) {
+      if (notifEnabled) {
         // 关闭提醒
         if (btn) {
           btn.textContent = '正在关闭...';
@@ -3401,14 +3401,16 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
         return;
       }
 
-      // 开启：优先尝试系统 Web Push，失败再退回页内提醒
+      // 开启或恢复：页内提醒状态再次点击时，优先重新申请系统 Web Push。
+      // 这样浏览器临时丢失订阅后，用户不必先关掉提醒再重新开启。
+      const isRecoveringSystemPush = inAppNotifOn;
       inAppNotifOn = true;
       localStorage.setItem('blys_notif_inapp', 'on');
       if (btn) {
-        btn.textContent = '正在开启...';
+        btn.textContent = isRecoveringSystemPush ? '正在恢复弹窗...' : '正在开启...';
         btn.disabled = true;
       }
-      setNotifDiag('正在开启浏览器提醒...');
+      setNotifDiag(isRecoveringSystemPush ? '正在恢复浏览器弹窗...' : '正在开启浏览器提醒...');
       try {
         await chatWithTimeout(repairAndSubscribeChatPush(), 45000, 'subscribe push');
         markChatPushEnabled('系统弹窗提醒已开启');

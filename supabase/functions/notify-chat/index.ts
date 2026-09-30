@@ -136,8 +136,13 @@ async function handler(req: Request) {
         await logDelivery(sub.endpoint, token, room, true);
       } catch (e) {
         const code = Number((e as { statusCode?: number }).statusCode || 0);
-        await logDelivery(sub.endpoint, token, room, false, code, (e as Error).message || String(e));
-        if (code === 404 || code === 410) {
+        const errorMessage = (e as Error).message || String(e);
+        await logDelivery(sub.endpoint, token, room, false, code, errorMessage);
+        // FCM returns 400 / "target user is invalid" for expired Chrome subscriptions.
+        // Keeping them causes every later push to fail against the same dead endpoint.
+        const expiredSubscription = code === 404 || code === 410
+          || (code === 400 && /target user is invalid/i.test(errorMessage));
+        if (expiredSubscription) {
           removed++;
           await dbDeleteEndpoint(sub.endpoint);
         }
