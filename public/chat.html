@@ -771,8 +771,10 @@ html.blys-native-app body.chat-body .chat-messages { padding-bottom:128px; }
       updateVipDisciplineEntry(room);
       updateVipRenewInline(room);
       updateChatAnnouncement(room);
-      // 进入 VIP 群前必须刷新真实会员状态，避免本地缓存过期导致非会员看到会员群。
-      if ((room === 'vip' || room === 'vip_chat') && !options.skipUserRefresh && typeof fetchUser === 'function' && localStorage.getItem(USER_TOKEN_KEY) && !vipRefreshing) {
+      // 服务端 list_messages 仍会逐次校验会员权限；这里只避免用户刚登录后每次切群都再等一次
+      // 相同的资料请求。超过 10 分钟才在切换时重新校验本地会员展示状态。
+      const profileIsFresh = __user && Number(__user.profileFetchedAt) > 0 && (Date.now() - Number(__user.profileFetchedAt) < 10 * 60 * 1000);
+      if ((room === 'vip' || room === 'vip_chat') && !options.skipUserRefresh && !profileIsFresh && typeof fetchUser === 'function' && localStorage.getItem(USER_TOKEN_KEY) && !vipRefreshing) {
         vipRefreshing = true;
         await fetchUser().catch(e => console.warn('[chat] refresh VIP user failed', e)).finally(() => { vipRefreshing = false; });
       }
