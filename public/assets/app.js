@@ -948,7 +948,7 @@ function renderUserStatus(){
     let html = `<button class="vip-open checkin-btn" id="checkinBtn" onclick="doCheckin()" title="每日签到领积分">📅 签到</button>
     <div class="user-menu">
       <button class="user-menu-trigger" id="userMenuTrigger" type="button" onclick="toggleUserMenu(event)" aria-expanded="false" aria-haspopup="true">
-        <span class="user-menu-name">${esc(__user.nickname || __user.email || "用户")}</span><span class="user-menu-chevron" aria-hidden="true"></span>
+        <span class="user-menu-avatar" aria-hidden="true">${esc(String(__user.nickname || __user.email || "用户").trim().charAt(0).toUpperCase())}</span><span class="user-menu-name">${esc(__user.nickname || __user.email || "用户")}</span><span class="user-menu-chevron" aria-hidden="true"></span>
       </button>
       <div class="user-menu-dropdown" id="userMenuDropdown">
         <div class="user-menu-status">${tag}</div>
