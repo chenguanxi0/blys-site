@@ -809,9 +809,9 @@ function initToolTabs(){
 
 // ============ 用户体系 v3（邮箱验证码注册/登录 + 会员 + 评论 + 管理后台） ============
 // 全部逻辑走 Supabase RPC（安全写在数据库函数里，前端不持有密钥）
-const SUPABASE_URL = "https://ojioiglffglyuellvcex.supabase.co";     // 你的 Supabase 项目地址
+const SUPABASE_URL = "/api/supabase"; // 由 blys.site 的 Cloudflare Worker 同域转发，避免浏览器直连 Supabase
 const SUPABASE_ANON = "sb_publishable_rGCr3ILVWQpvpURhctuYQg_K_jC-WHV";  // publishable key（前端公开，安全靠 RLS + RPC）
-const USE_SUPABASE = /^https?:\/\//.test(SUPABASE_URL) && SUPABASE_ANON.length > 0;
+const USE_SUPABASE = SUPABASE_ANON.length > 0;
 
 const USER_TOKEN_KEY = "blys_user_token";
 const ADMIN_TOKEN_KEY = "blys_admin_token";
