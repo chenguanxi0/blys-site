@@ -1,5 +1,6 @@
--- 将续费按购买时长分配到连续月份：31/62/93 天分别计入 1/2/3 个月。
--- 此函数读取流水动态计算，执行后历史与刚完成的 93 天续费都会立即反映在后台月度统计中。
+-- 将开通、续费都按购买时长分配到连续月份：约 31/62/93 天分别计入 1/2/3 次。
+-- 每个计次对应 ¥500；例如 9 月购买 93 天，会在 9、10、11 月各计 1 次。
+-- 中断仅按“会员到期后没有下一笔续费”的会员人数统计，不参与金额。
 
 CREATE OR REPLACE FUNCTION public.get_admin_vip_monthly_activity(p_admin_token text)
 RETURNS jsonb
@@ -23,24 +24,24 @@ BEGIN
     ORDER BY lower(e.user_email), e.event_type, e.occurred_at,
              CASE WHEN e.source = 'historical_backfill' THEN 1 ELSE 0 END,
              e.id DESC
+  ), duration_events AS (
+    SELECT e.*,
+           greatest(1, ceil(coalesce(e.days, 31)::numeric / 31)::integer) AS billing_units
+    FROM real_events e
+    WHERE e.event_type IN ('new', 'renew')
+      AND e.occurred_at >= timestamptz '2026-08-01 00:00:00+08'
   ), monthly AS (
-    SELECT to_char(date_trunc('month', occurred_at AT TIME ZONE 'Asia/Shanghai'), 'YYYY-MM') AS month_key,
-           count(*)::integer AS new_count, 0::integer AS renew_count, 0::integer AS lapsed_count
-    FROM real_events
-    WHERE event_type = 'new'
-      AND occurred_at >= timestamptz '2026-08-01 00:00:00+08'
-    GROUP BY 1
-    UNION ALL
+    -- 新开、续费均按天数拆分：31 天 1 次，62 天 2 次，93 天 3 次。
     SELECT to_char(
              date_trunc('month', e.occurred_at AT TIME ZONE 'Asia/Shanghai')
              + make_interval(months => offsets.month_offset),
              'YYYY-MM'
            ) AS month_key,
-           0::integer, count(*)::integer, 0::integer
-    FROM real_events e
-    CROSS JOIN LATERAL generate_series(0, greatest(0, ceil(e.days::numeric / 31)::integer - 1)) AS offsets(month_offset)
-    WHERE e.event_type = 'renew'
-      AND e.occurred_at >= timestamptz '2026-08-01 00:00:00+08'
+           count(*) FILTER (WHERE e.event_type = 'new')::integer AS new_count,
+           count(*) FILTER (WHERE e.event_type = 'renew')::integer AS renew_count,
+           0::integer AS lapsed_count
+    FROM duration_events e
+    CROSS JOIN LATERAL generate_series(0, e.billing_units - 1) AS offsets(month_offset)
     GROUP BY 1
     UNION ALL
     SELECT to_char(date_trunc('month', e.expire_after AT TIME ZONE 'Asia/Shanghai'), 'YYYY-MM') AS month_key,
