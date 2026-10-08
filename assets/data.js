@@ -3178,5 +3178,176 @@ const DAILY_LOG = [
     "note": "平安证券**5362 持仓截图(15:10)",
     "valid": true,
     "trades": []
+  },
+  {
+    "date": "2026-10-08",
+    "day": 48,
+    "total": 1966861.6,
+    "dayPnl": -0.23,
+    "pos": 60.7,
+    "floatPnl": -33751.5,
+    "cash": 772512.6,
+    "holdings": [
+      {
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 2600,
+        "avail": 1300,
+        "mv": 207038.0,
+        "pnlPct": -0.521,
+        "cost": 80.047,
+        "cur": 79.63
+      },
+      {
+        "name": "中成股份",
+        "code": "000151",
+        "shares": 20000,
+        "avail": 10000,
+        "mv": 203600.0,
+        "pnlPct": 1.227,
+        "cost": 10.057,
+        "cur": 10.18
+      },
+      {
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 22100,
+        "avail": 11000,
+        "mv": 198016.0,
+        "pnlPct": 0.083,
+        "cost": 8.953,
+        "cur": 8.96
+      },
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 2000,
+        "avail": 1000,
+        "mv": 195780.0,
+        "pnlPct": -9.702,
+        "cost": 108.408,
+        "cur": 97.89
+      },
+      {
+        "name": "科创半导体ETF华夏",
+        "code": "588170",
+        "shares": 220000,
+        "avail": 120000,
+        "mv": 192280.0,
+        "pnlPct": -6.541,
+        "cost": 0.935,
+        "cur": 0.874
+      },
+      {
+        "name": "东材科技",
+        "code": "601208",
+        "shares": 2000,
+        "avail": 0,
+        "mv": 101840.0,
+        "pnlPct": 0.018,
+        "cost": 50.911,
+        "cur": 50.92
+      },
+      {
+        "name": "吉鑫科技",
+        "code": "601218",
+        "shares": 16100,
+        "avail": 0,
+        "mv": 95795.0,
+        "pnlPct": -0.854,
+        "cost": 6.001,
+        "cur": 5.95
+      }
+    ],
+    "note": "做T: 金安国纪/中成股份/西陇科学/景旺电子/科创半导体ETF华夏 | 平安证券**5362 持仓截图(15:11)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 1300,
+        "t": true
+      },
+      {
+        "action": "buy",
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 1300,
+        "t": true
+      },
+      {
+        "action": "sell",
+        "name": "中成股份",
+        "code": "000151",
+        "shares": 10000,
+        "t": true
+      },
+      {
+        "action": "buy",
+        "name": "中成股份",
+        "code": "000151",
+        "shares": 10000,
+        "t": true
+      },
+      {
+        "action": "sell",
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 11100,
+        "t": true
+      },
+      {
+        "action": "buy",
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 11100,
+        "t": true
+      },
+      {
+        "action": "sell",
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 1000,
+        "t": true
+      },
+      {
+        "action": "buy",
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 1000,
+        "t": true
+      },
+      {
+        "action": "sell",
+        "name": "科创半导体ETF华夏",
+        "code": "588170",
+        "shares": 100000,
+        "t": true
+      },
+      {
+        "action": "buy",
+        "name": "科创半导体ETF华夏",
+        "code": "588170",
+        "shares": 100000,
+        "t": true
+      },
+      {
+        "action": "buy",
+        "name": "东材科技",
+        "code": "601208",
+        "shares": 2000,
+        "price": 50.911,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "吉鑫科技",
+        "code": "601218",
+        "shares": 16100,
+        "price": 6.001,
+        "open": true
+      }
+    ]
   }
 ];
