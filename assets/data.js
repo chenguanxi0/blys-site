@@ -3349,5 +3349,126 @@ const DAILY_LOG = [
         "open": true
       }
     ]
+  },
+  {
+    "date": "2026-10-09",
+    "day": 49,
+    "total": 1936301.24,
+    "dayPnl": -1.55,
+    "pos": 75.1,
+    "floatPnl": -64311.86,
+    "cash": 482074.24,
+    "note": "平安证券**5362 持仓截图(15:03)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 2500
+      },
+      {
+        "action": "buy",
+        "name": "吉鑫科技",
+        "code": "601218",
+        "shares": 16000
+      },
+      {
+        "action": "buy",
+        "name": "有研新材",
+        "code": "600206",
+        "shares": 2500,
+        "open": true
+      },
+      {
+        "action": "sell",
+        "name": "东材科技",
+        "code": "601208",
+        "shares": 2000
+      }
+    ],
+    "holdings": [
+      {
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 5100,
+        "avail": 2600,
+        "mv": 365517.0,
+        "pnlPct": -5.632,
+        "cost": 75.948,
+        "cur": 71.67
+      },
+      {
+        "name": "中成股份",
+        "code": "000151",
+        "shares": 20000,
+        "avail": 20000,
+        "mv": 204800.0,
+        "pnlPct": 1.824,
+        "cost": 10.057,
+        "cur": 10.24
+      },
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 2000,
+        "avail": 2000,
+        "mv": 193960.0,
+        "pnlPct": -10.541,
+        "cost": 108.408,
+        "cur": 96.98
+      },
+      {
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 22100,
+        "avail": 22100,
+        "mv": 193375.0,
+        "pnlPct": -2.263,
+        "cost": 8.953,
+        "cur": 8.75
+      },
+      {
+        "name": "科创半导体ETF华夏",
+        "code": "588170",
+        "shares": 220000,
+        "avail": 220000,
+        "mv": 190520.0,
+        "pnlPct": -7.397,
+        "cost": 0.935,
+        "cur": 0.866
+      },
+      {
+        "name": "吉鑫科技",
+        "code": "601218",
+        "shares": 32100,
+        "avail": 16100,
+        "mv": 186180.0,
+        "pnlPct": 0.573,
+        "cost": 5.767,
+        "cur": 5.8
+      },
+      {
+        "name": "有研新材",
+        "code": "600206",
+        "shares": 2500,
+        "avail": 0,
+        "mv": 119875.0,
+        "pnlPct": 0.23,
+        "cost": 47.84,
+        "cur": 47.95,
+        "open": true
+      },
+      {
+        "name": "东材科技",
+        "code": "601208",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0,
+        "pnlPct": -4.862,
+        "cost": 50.911,
+        "cur": 48.47
+      }
+    ]
   }
 ];
