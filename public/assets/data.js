@@ -7,57 +7,3895 @@
 // ============================================================
 
 const DAILY_LOG = [
-{"date": "2026-07-27", "day": 1, "total": 500488.29, "dayPnl": 0.11, "pos": 76.7, "floatPnl": 488.29, "cash": 116393.29, "holdings": [{"name": "江波龙", "shares": 500, "mv": 186950.0, "pnlPct": 0.283, "cost": 372.845, "cur": 373.9, "code": "301308"}, {"name": "雅克科技", "shares": 600, "mv": 101610.0, "pnlPct": -0.02, "cost": 169.384, "cur": 169.35, "code": "002409"}, {"name": "金安国纪", "shares": 1500, "mv": 95535.0, "pnlPct": -0.02, "cost": 63.703, "cur": 63.69, "code": "002636"}], "note": "建仓前/预备日，持仓3只（江波龙、雅克科技、金安国纪），仓位76.7%。总资产数值部分被遮挡，根据可用资金+持仓市值估算。", "valid": true, "trades": []},
-{"date": "2026-07-28", "day": 2, "total": 490578.05, "dayPnl": -1.92, "pos": 19.4, "floatPnl": -9421.95, "cash": 395560.05, "holdings": [{"name": "风华高科", "shares": 2200, "mv": 95018.0, "pnlPct": -2.415, "cost": 44.259, "cur": 43.19, "code": "000636"}, {"name": "金安国纪", "shares": 0, "mv": 0.0, "pnlPct": -3.29, "cost": 63.703, "cur": 57.32, "code": "002636"}, {"name": "江波龙", "shares": 0, "mv": 0.0, "pnlPct": -3.714, "cost": 372.845, "cur": 330.0, "code": "301308"}, {"name": "雅克科技", "shares": 0, "mv": 0.0, "pnlPct": 2.948, "cost": 169.384, "cur": 166.43, "code": "002409"}], "note": "实盘第1天，大幅减仓至19.4%，仅风华高科持有中(2200股)，其余3只已清仓但保留盈亏记录。当日亏损-1.92%。另含国泰海通证券账户截图（非平安证券主账户）。", "valid": true, "trades": [{"action": "buy", "name": "风华高科", "code": "000636", "shares": 2200, "open": true, "close": false}, {"action": "sell", "name": "金安国纪", "code": "002636", "shares": 1500, "close": true}, {"action": "sell", "name": "江波龙", "code": "301308", "shares": 500, "close": true}, {"action": "sell", "name": "雅克科技", "code": "002409", "shares": 600, "close": true}]},
-{"date": "2026-07-29", "day": 3, "total": 507716.52, "dayPnl": 3.51, "pos": 85.0, "floatPnl": 14787.0, "cash": 76358.62, "holdings": [{"name": "通信ETF富国", "shares": 152700, "mv": 227064.9, "pnlPct": 2.673, "cost": 1.448, "cur": 1.487, "code": "159583"}, {"name": "风华高科", "shares": 4300, "mv": 204293.0, "pnlPct": 4.542, "cost": 45.446, "cur": 47.51, "code": "000636"}], "note": "加仓至85%仓位！新买入通信ETF富国152700股+加仓风华高科至4300股(可用2200股)。当日大赚+3.51%。另含国泰海通证券账户截图。", "valid": true, "trades": [{"action": "buy", "name": "通信ETF富国", "code": "159583", "shares": 152700, "open": true, "close": false}, {"action": "buy", "name": "风华高科", "code": "000636", "shares": 2100, "open": false, "close": false}]},
-{"date": "2026-07-30", "day": 4, "total": 514591.41, "dayPnl": 1.4, "pos": 40.6, "floatPnl": 21661.89, "cash": 305551.41, "holdings": [{"name": "风华高科", "shares": 4000, "mv": 209040.0, "pnlPct": 13.275, "cost": 46.135, "cur": 52.26, "code": "000636"}, {"name": "通信ETF富国", "shares": 0, "mv": 0.0, "pnlPct": -1.283, "cost": 1.448, "cur": 1.411, "code": "159583"}], "note": "减仓至40.6%！风华高科涨停(+10%)继续持有4000股，通信ETF已清仓。风华高科累计盈利+13.28%。", "valid": true, "trades": [{"action": "sell", "name": "风华高科", "code": "000636", "shares": 300, "close": false}, {"action": "sell", "name": "通信ETF富国", "code": "159583", "shares": 152700, "close": true}]},
-{"date": "2026-07-31", "day": 5, "total": 511985.74, "dayPnl": 1.46, "pos": 40.6, "floatPnl": 21892.71, "cash": 303901.74, "holdings": [{"name": "贤丰控股", "shares": 20000, "mv": 112400.0, "pnlPct": 2.722, "cost": 5.471, "cur": 5.62, "code": "002141"}, {"name": "恒尚节能", "shares": 3800, "mv": 95684.0, "pnlPct": -11.2, "cost": 28.356, "cur": 25.18, "code": "603137"}, {"name": "风华高科", "shares": 0, "mv": 0.0, "pnlPct": 13.832, "cost": 46.135, "cur": 49.33, "code": "000636"}, {"name": "科创半导体设备ETF", "shares": 0, "mv": 0.0, "pnlPct": 4.595, "cost": 2.868, "cur": 2.855, "code": "588710"}], "note": "调仓换股！新买入贤丰控股20000股和恒尚节能3800股，风华高科和科创半导体ETF已清仓。恒尚节能亏损-11.2%需关注。文件夹含多张小红书评论截图（非持仓数据）。另含国泰海通证券账户截图。", "valid": true, "trades": [{"action": "buy", "name": "贤丰控股", "code": "002141", "shares": 20000, "open": true, "close": false}, {"action": "buy", "name": "恒尚节能", "code": "603137", "shares": 3800, "open": true, "close": false}, {"action": "sell", "name": "风华高科", "code": "000636", "shares": 4000, "close": true}]},
-{"date": "2026-08-03", "day": 6, "total": 852512.5, "dayPnl": 0.57, "pos": 41.8, "floatPnl": 154745.06, "cash": 496270.5, "holdings": [{"name": "长电科技", "shares": 4800, "mv": 84869.07, "pnlPct": 47.391, "cost": 37.309, "cur": 54.99, "code": "600584"}, {"name": "紫光股份", "shares": 2800, "mv": 69875.99, "pnlPct": 306.42, "cost": 8.144, "cur": 33.1, "code": "000938"}], "note": "主账户持仓截图；另有第二账户(**5362)截图：总资产约50.9万，浮亏-11599.29，当日盈亏-1238(-0.24%)，持仓中国卫星/贤丰控股(已清仓)/恒大新能(已清仓)", "valid": true, "trades": []},
-{"date": "2026-08-04", "day": 7, "total": 856416.5, "dayPnl": 0.41, "pos": 42.0, "floatPnl": 158209.06, "cash": 496270.5, "holdings": [{"name": "长电科技", "shares": 4800, "mv": 84917.07, "pnlPct": 47.418, "cost": 37.309, "cur": 55.0, "code": "600584"}, {"name": "紫光股份", "shares": 2800, "mv": 73291.99, "pnlPct": 321.4, "cost": 8.144, "cur": 34.32, "code": "000938"}], "note": "主账户持仓截图；另有第二账户截图：总资产516721.96，浮盈+9581.57，当日盈亏+7245(+1.42%)，仓位41.9%，仅持中国卫星3500股；含1张聊天截图(已跳过)", "valid": true, "trades": []},
-{"date": "2026-08-05", "day": 8, "total": 861125.92, "dayPnl": 0.64, "pos": 63.97, "floatPnl": 162968.48, "cash": 310133.92, "holdings": [{"name": "紫光股份", "shares": 10800, "mv": 398952.0, "pnlPct": 25.196, "cost": 29.506, "cur": 36.94, "code": "000938"}, {"name": "长鑫科技", "shares": 2800, "mv": 152040.0, "pnlPct": 119.201, "cost": 24.772, "cur": 54.3, "code": "688825"}], "note": "主账户(**3538)持仓截图；另有第二账户(**5362)截图：总资产524598.03，浮盈+17457.64，当日盈亏+7915(+1.53%)，可用105564.03，持仓中国卫星3500股/行云科技2700股/风华高科1700股", "valid": true, "trades": [{"action": "buy", "name": "紫光股份", "code": "000938", "shares": 8000, "open": false, "close": false}, {"action": "buy", "name": "长鑫科技", "code": "688825", "shares": 2800, "open": true, "close": false}, {"action": "sell", "name": "长电科技", "code": "600584", "shares": 4800, "close": true}]},
-{"date": "2026-08-06", "day": 9, "total": 865291.74, "dayPnl": 0.51, "pos": 25.4, "floatPnl": 167080.3, "cash": 645185.74, "holdings": [{"name": "紫光股份", "shares": 5800, "mv": 220252.0, "pnlPct": 66.967, "cost": 22.723, "cur": 37.94, "code": "000938"}, {"name": "长电科技", "shares": 0, "mv": 0.0, "pnlPct": 21.092, "cost": 24.772, "cur": 51.96, "code": "600584"}], "note": "主账户持仓截图(长电科技已清仓)；另有第二账户(**5362)截图：全部清仓(仓位0%)，总资产约53万，浮盈+21965.66，当日盈亏+4807(+0.92%)；含3张非持仓图(聊天截图x2+局部截图x1，已跳过)", "valid": true, "trades": [{"action": "sell", "name": "紫光股份", "code": "000938", "shares": 5000, "close": false}, {"action": "sell", "name": "长鑫科技", "code": "688825", "shares": 2800, "close": true}]},
-{"date": "2026-08-07", "day": 10, "total": 884811.98, "dayPnl": 2.26, "pos": 50.6, "floatPnl": 107732.71, "cash": 436761.98, "holdings": [{"name": "联瑞新材", "shares": 1500, "mv": 227550.0, "pnlPct": 9.177, "cost": 138.949, "cur": 151.7, "code": "688300"}, {"name": "紫光股份", "shares": 5800, "mv": 220400.0, "pnlPct": 67.231, "cost": 22.723, "cur": 38.0, "code": "000938"}], "note": "主账户(**3538)持仓截图(新增联瑞新材)；另有第二账户(**5362)截图：满仓99.7%，总资产约53.7万，浮盈+8284.46，当日盈亏+8392(+1.59%)，持仓云路诸业2100股/景嘉微2200股/风华高科2000股；含同花顺日历收益图和两张日历截图(辅助参考)", "valid": true, "trades": [{"action": "buy", "name": "联瑞新材", "code": "688300", "shares": 1500, "open": true, "close": false}]},
-{"date": "2026-08-10", "day": 11, "total": 552976.43, "dayPnl": 2.99, "pos": 99.98, "floatPnl": 23870.38, "cash": 98.03, "holdings": [{"name": "国瓷材料", "shares": 3000, "mv": 228330.0, "pnlPct": 3.026, "cost": 73.875, "cur": 76.11, "code": "300285"}, {"name": "科创半导体ETF华夏", "shares": 211600, "mv": 221968.4, "pnlPct": 1.467, "cost": 1.034, "cur": 1.049, "code": "588170"}, {"name": "云南锗业", "shares": 1000, "mv": 102580.0, "pnlPct": 11.117, "cost": 92.317, "cur": 102.58, "code": "002428"}, {"name": "风华高科", "shares": 0, "mv": 0.0, "pnlPct": 0.229, "cost": 56.331, "cur": 61.7, "code": "000636"}, {"name": "景旺电子", "shares": 0, "mv": 0.0, "pnlPct": 1.644, "cost": 94.97, "cur": 96.0, "code": "603228"}], "note": "含资产分析页（当日+2.99%）与持仓页。风华高科、景旺电子持仓为0，显示历史盈亏。仓位按总市值/总资产推算。", "valid": true, "trades": []},
-{"date": "2026-08-11", "day": 12, "total": 551038.04, "dayPnl": -0.29, "pos": 37.0, "floatPnl": 18238.38, "cash": 346974.04, "holdings": [{"name": "国瓷材料", "shares": 2800, "mv": 204064.0, "pnlPct": 4.992, "cost": 69.415, "cur": 72.88, "code": "300285"}, {"name": "云南锗业", "shares": 0, "mv": 0.0, "pnlPct": 3.846, "cost": 92.317, "cur": 100.28, "code": "002428"}, {"name": "科创半导体ETF华夏", "shares": 0, "mv": 0.0, "pnlPct": 0.285, "cost": 1.034, "cur": 1.018, "code": "588170"}], "note": "总资产、总市值数字被隐私码遮挡，已按持仓市值加总与可用资金反推。截图显示当日参考盈亏-1,609.20/-0.29%，资产分析页同日为-0.35%。", "valid": true, "trades": [{"action": "sell", "name": "国瓷材料", "code": "300285", "shares": 200, "close": false}, {"action": "sell", "name": "云南锗业", "code": "002428", "shares": 1000, "close": true}, {"action": "sell", "name": "科创半导体ETF华夏", "code": "588170", "shares": 211600, "close": true}]},
-{"date": "2026-08-12", "day": 13, "total": 558354.92, "dayPnl": 1.34, "pos": 99.8, "floatPnl": 17019.66, "cash": 1314.92, "holdings": [{"name": "国瓷材料", "shares": 2800, "mv": 207200.0, "pnlPct": 6.606, "cost": 69.415, "cur": 74.0, "code": "300285"}, {"name": "东山精密", "shares": 1000, "mv": 200190.0, "pnlPct": 1.091, "cost": 198.03, "cur": 200.19, "code": "002384"}, {"name": "行云科技", "shares": 4100, "mv": 149650.0, "pnlPct": 1.369, "cost": 36.007, "cur": 36.5, "code": "300209"}], "note": "总资产、总市值数字被隐私码遮挡，已按持仓市值加总与可用资金反推。", "valid": true, "trades": [{"action": "buy", "name": "东山精密", "code": "002384", "shares": 1000, "open": true, "close": false}, {"action": "buy", "name": "行云科技", "code": "300209", "shares": 4100, "open": true, "close": false}]},
-{"date": "2026-08-13", "day": 14, "total": 564895.65, "dayPnl": 1.25, "pos": 25.0, "floatPnl": 23560.39, "cash": 423535.65, "holdings": [{"name": "利欧股份", "shares": 15000, "mv": 83400.0, "pnlPct": -2.304, "cost": 5.691, "cur": 5.56, "code": "002131"}, {"name": "恒尚节能", "shares": 2000, "mv": 57960.0, "pnlPct": -10.019, "cost": 32.207, "cur": 28.98, "code": "603137"}, {"name": "国瓷材料", "shares": 0, "mv": 0.0, "pnlPct": 4.535, "cost": 64.282, "cur": 70.66, "code": "300285"}, {"name": "东山精密", "shares": 0, "mv": 0.0, "pnlPct": 5.183, "cost": 198.03, "cur": 202.11, "code": "002384"}, {"name": "行云科技", "shares": 0, "mv": 0.0, "pnlPct": 7.903, "cost": 36.007, "cur": 35.35, "code": "300209"}], "note": "总资产、总市值数字被隐私码遮挡，已按持仓市值加总与可用资金反推。国瓷材料、东山精密、行云科技持仓为0，显示历史盈亏。", "valid": true, "trades": [{"action": "buy", "name": "利欧股份", "code": "002131", "shares": 15000, "open": true, "close": false}, {"action": "buy", "name": "恒尚节能", "code": "603137", "shares": 2000, "open": true, "close": false}, {"action": "sell", "name": "国瓷材料", "code": "300285", "shares": 2800, "close": true}, {"action": "sell", "name": "东山精密", "code": "002384", "shares": 1000, "close": true}, {"action": "sell", "name": "行云科技", "code": "300209", "shares": 4100, "close": true}]},
-{"date": "2026-08-14", "day": 15, "total": 558520.54, "dayPnl": -1.11, "pos": 0.0, "floatPnl": -14795.7, "cash": 558520.54, "holdings": [{"name": "恒尚节能", "shares": 0, "mv": 0.0, "pnlPct": -14.706, "cost": 32.207, "cur": 26.08, "code": "603137"}, {"name": "利欧股份", "shares": 0, "mv": 0.0, "pnlPct": -6.236, "cost": 5.691, "cur": 5.33, "code": "002131"}], "note": "含持仓页（仓位0%，已全部清仓）与资产分析页（当日-1.11%）。", "valid": true, "trades": [{"action": "sell", "name": "恒尚节能", "code": "603137", "shares": 2000, "close": true}, {"action": "sell", "name": "利欧股份", "code": "002131", "shares": 15000, "close": true}]},
-{"date": "2026-08-17", "day": 16, "total": 559501.52, "dayPnl": 0.18, "pos": 24.3, "holdings": [{"name": "万邦医药", "code": "301520", "shares": 1600, "mv": 136096.0, "pnlPct": 0.726, "cost": 84.447, "cur": 85.06}], "note": "持仓截图(平安证券)，继续持仓万邦医药", "valid": true, "trades": []},
-{"date": "2026-08-18", "day": 17, "total": 556933.05, "dayPnl": -0.43, "pos": 79.8, "holdings": [{"name": "哈药股份", "code": "600664", "shares": 12500, "mv": 114000.0, "pnlPct": 0.53, "cost": 9.072, "cur": 9.12}, {"name": "京东方A", "code": "000725", "shares": 17500, "mv": 113225.0, "pnlPct": 1.709, "cost": 6.361, "cur": 6.47}, {"name": "药明康德", "code": "603259", "shares": 600, "avail": 0, "mv": 100308.0, "pnlPct": 1.116, "cost": 165.335, "cur": 167.18}, {"name": "士兰微", "code": "600460", "shares": 1900, "avail": 0, "mv": 66272.0, "pnlPct": 0.209, "cost": 34.807, "cur": 34.88}, {"name": "新洁能", "code": "605111", "shares": 800, "mv": 50000.0, "pnlPct": -0.257, "cost": 63.663, "cur": 63.5}, {"name": "万邦医药", "code": "301520", "shares": 0, "mv": 0.0, "pnlPct": -3.853, "cost": 84.447, "cur": 73.86}], "note": "持仓截图(平安证券)。清仓万邦医药，新买入哈药股份、京东方A、药明康德、士兰微、新洁能", "valid": true, "trades": [{"action": "sell", "name": "万邦医药", "code": "301520", "shares": 1600, "close": true}, {"action": "buy", "name": "哈药股份", "code": "600664", "shares": 12500, "open": true}, {"action": "buy", "name": "京东方A", "code": "000725", "shares": 17500, "open": true}, {"action": "buy", "name": "药明康德", "code": "603259", "shares": 600, "open": true}, {"action": "buy", "name": "士兰微", "code": "600460", "shares": 1900, "open": true}, {"action": "buy", "name": "新洁能", "code": "605111", "shares": 800, "open": true}]},
-{"date": "2026-08-19", "day": 18, "total": 550710.9, "dayPnl": -1.05, "pos": 35.9, "holdings": [{"name": "药明康德", "code": "603259", "shares": 600, "avail": 0, "mv": 98400.0, "pnlPct": -0.658, "cost": 165.086, "cur": 164.0}, {"name": "士兰微", "code": "600460", "shares": 1900, "avail": 0, "mv": 65531.0, "pnlPct": 4.388, "cost": 33.04, "cur": 34.49}, {"name": "风华高科", "code": "000636", "shares": 600, "avail": 0, "mv": 33666.0, "pnlPct": -3.311, "cost": 58.032, "cur": 56.11}], "note": "持仓截图(平安证券)。清仓哈药股份、京东方A、新洁能，买入风华高科，继续持有药明康德、士兰微", "valid": true, "trades": [{"action": "sell", "name": "哈药股份", "code": "600664", "shares": 12500, "close": true}, {"action": "sell", "name": "新洁能", "code": "605111", "shares": 800, "close": true}, {"action": "sell", "name": "京东方A", "code": "000725", "shares": 17500, "close": true}, {"action": "buy", "name": "风华高科", "code": "000636", "shares": 600, "open": true}]},
-{"date": "2026-08-20", "day": 19, "total": 550445.05, "dayPnl": -0.02, "pos": 20.9, "floatPnl": 684.56, "cash": 435358.05, "holdings": [{"name": "士兰微", "code": "600460", "shares": 1900, "avail": 0, "mv": 61997.0, "pnlPct": -0.125, "cost": 32.671, "cur": 32.63}, {"name": "风华高科", "code": "000636", "shares": 1000, "avail": 0, "mv": 53090.0, "pnlPct": -3.547, "cost": 55.042, "cur": 53.09}, {"name": "药明康德", "code": "603259", "shares": 0, "mv": 0.0, "pnlPct": 2.736, "cost": 165.086, "cur": 167.9}], "note": "持仓截图(平安证券 **5362)。当日参考盈亏 -102.00 / -0.02%，总市值 115,087.00，可用资金 435,358.05，仓位 20.9%。药明康德已清仓；风华高科做T（卖600股、买回1000股，净加400股，当日可用0即当天新买未解锁），保留历史盈亏记录。", "valid": true, "trades": [{"action": "sell", "name": "药明康德", "code": "603259", "shares": 600, "close": true}, {"action": "sell", "name": "风华高科", "code": "000636", "shares": 600, "close": false}, {"action": "buy", "name": "风华高科", "code": "000636", "shares": 1000, "open": false, "close": false}]},
-{"date": "2026-08-21", "day": 20, "total": 558219.05, "dayPnl": 1.41, "pos": 22.0, "floatPnl": 5744.17, "holdings": [{"name": "士兰微", "code": "600460", "shares": 1900, "avail": 1900, "mv": 68191.0, "pnlPct": 9.854, "cost": 32.671, "cur": 35.89}, {"name": "风华高科", "code": "000636", "shares": 1000, "avail": 1000, "mv": 54670.0, "pnlPct": -0.677, "cost": 55.042, "cur": 54.67}], "note": "持仓截图(平安证券 **5362)。当日参考盈亏 +7,774.00 / +1.41%，总市值 122,861.00，可用资金 435,358.05，仓位 22.0%。风华高科可用=持仓=1000股，当日未操作。", "valid": true, "trades": []},
-{"date": "2026-08-24", "day": 21, "total": 558041.94, "dayPnl": -0.01, "pos": 14.0, "floatPnl": 5567.06, "cash": 479641.94, "holdings": [{"name": "创新药ETF国泰", "code": "517110", "shares": 100000, "avail": 0, "mv": 78400.0, "pnlPct": -0.021, "cost": 0.784, "cur": 0.784}, {"name": "士兰微", "code": "600460", "shares": 0, "avail": 0, "mv": 0.0, "pnlPct": 12.448, "cost": 32.671, "cur": 35.56}, {"name": "风华高科", "code": "000636", "shares": 0, "avail": 0, "mv": 0.0, "pnlPct": -4.732, "cost": 55.042, "cur": 51.91}], "note": "持仓截图(平安证券 **5362)。当日参考盈亏 -74.00 / -0.01%，总市值 78,400.00，可用资金 479,641.94，仓位 14.0%。清仓士兰微、风华高科，买入创新药ETF国泰100000股；创新药ETF当日可用0（T+1新买未解锁）。", "valid": true, "trades": [{"action": "sell", "name": "士兰微", "code": "600460", "shares": 1900, "close": true}, {"action": "sell", "name": "风华高科", "code": "000636", "shares": 1000, "close": true}, {"action": "buy", "name": "创新药ETF国泰", "code": "517110", "shares": 100000, "open": true}]},
-{"date": "2026-08-25", "day": 22, "total": 561225.9, "dayPnl": 0.58, "pos": 40.0, "floatPnl": 3167.5, "cash": 336905.9, "holdings": [{"name": "中石科技", "code": "300684", "shares": 1100, "avail": 0, "mv": 94611.0, "pnlPct": 2.129, "cost": 84.217, "cur": 86.01}, {"name": "宝鼎科技", "code": "002552", "shares": 1300, "avail": 0, "mv": 72280.0, "pnlPct": 0.196, "cost": 55.491, "cur": 55.6}, {"name": "中钨高新", "code": "000657", "shares": 900, "avail": 0, "mv": 57429.0, "pnlPct": 0.326, "cost": 63.603, "cur": 63.81}, {"name": "创新药ETF国泰", "code": "517110", "shares": 0, "avail": 0, "mv": 0.0, "pnlPct": 1.105, "cost": 0.784, "cur": 0.804}], "note": "持仓截图(平安证券 **5362)。当日参考盈亏 +3,245.00 / +0.58%，总市值 224,320.00，可用资金 336,905.90，仓位 40.0%。清仓创新药ETF国泰，新买入中石科技、宝鼎科技、中钨高新；三只新股当日可用0（T+1未解锁）。", "valid": true, "trades": [{"action": "sell", "name": "创新药ETF国泰", "code": "517110", "shares": 100000, "close": true}, {"action": "buy", "name": "中石科技", "code": "300684", "shares": 1100, "open": true}, {"action": "buy", "name": "宝鼎科技", "code": "002552", "shares": 1300, "open": true}, {"action": "buy", "name": "中钨高新", "code": "000657", "shares": 900, "open": true}]},
-{"date": "2026-08-26", "day": 23, "total": 548900.73, "dayPnl": -2.17, "pos": 45.2, "floatPnl": -12174.0, "cash": 300581.73, "holdings": [{"name": "英维克", "code": "002837", "shares": 2000, "avail": 0, "mv": 124140.0, "pnlPct": 0.433, "cost": 61.802, "cur": 62.07}, {"name": "宝鼎科技", "code": "002552", "shares": 1300, "avail": 0, "mv": 67470.0, "pnlPct": -12.683, "cost": 59.439, "cur": 51.9}, {"name": "中钨高新", "code": "000657", "shares": 900, "avail": 900, "mv": 56709.0, "pnlPct": -0.932, "cost": 63.603, "cur": 63.01}, {"name": "中石科技", "code": "300684", "shares": 0, "avail": 0, "mv": 0.0, "pnlPct": -0.244, "cost": 84.217, "cur": 87.4}], "note": "持仓截图(平安证券 **5362)。当日参考盈亏 -12,174.00 / -2.17%，总市值 248,319.00，可用资金 300,581.73，仓位 45.2%。清仓中石科技1100股（亏226.26），新买入英维克2000股；宝鼎科技做反T——卖出1300股后于更高价买回1300股（全量T，avail归0印证），成本55.491→59.439，做T亏损约5132元；中钨高新未动、T+1已解锁。", "valid": true, "trades": [{"action": "sell", "name": "中石科技", "code": "300684", "shares": 1100, "close": true}, {"action": "buy", "name": "英维克", "code": "002837", "shares": 2000, "open": true}, {"action": "sell", "name": "宝鼎科技", "code": "002552", "shares": 1300, "close": false}, {"action": "buy", "name": "宝鼎科技", "code": "002552", "shares": 1300, "open": false}]},
-{"date": "2026-08-27", "day": 24, "total": 567709.05, "dayPnl": 3.44, "pos": 47.2, "floatPnl": 9010.02, "cash": 299851.05, "holdings": [{"name": "英维克", "code": "002837", "shares": 2000, "avail": 2000, "mv": 131940.0, "pnlPct": 6.743, "cost": 61.802, "cur": 65.97}, {"name": "利通电子", "code": "605189", "shares": 600, "avail": 0, "mv": 75132.0, "pnlPct": 0.315, "cost": 124.826, "cur": 125.22}, {"name": "中钨高新", "code": "000657", "shares": 900, "avail": 900, "mv": 60786.0, "pnlPct": 6.19, "cost": 63.603, "cur": 67.54}, {"name": "宝鼎科技", "code": "002552", "shares": 0, "avail": 0, "mv": 0.0, "pnlPct": -4.304, "cost": 59.439, "cur": 56.0}], "note": "持仓截图(平安证券 **5362)。当日参考盈亏 +18,876.00 / +3.44%，总市值 267,858.00，可用资金 299,851.05，仓位 47.2%。清仓宝鼎科技1300股（清仓累计浮亏 −3,105.08），新买入利通电子600股（成本124.826，T+1锁仓）；英维克 2000股可用=持仓=2000，T+1解锁且未做T，按新规则「只看持仓/可用」判定为没动；中钨高新 900股 可用=900，未动。三只持仓齐涨：英维克+6.74%、中钨高新+6.19%、利通电子+0.32%，组合当日大幅回升。", "valid": true, "trades": [{"action": "sell", "name": "宝鼎科技", "code": "002552", "shares": 1300, "close": true}, {"action": "buy", "name": "利通电子", "code": "605189", "shares": 600, "open": true}]},
-{"date": "2026-08-28", "day": 25, "total": 560540.73, "dayPnl": -1.24, "pos": 35.8, "floatPnl": 4946.78, "cash": 359610.73, "holdings": [{"name": "英维克", "code": "002837", "shares": 2000, "avail": 2000, "mv": 128960.0, "pnlPct": 4.333, "cost": 61.802, "cur": 64.48}, {"name": "利通电子", "code": "605189", "shares": 600, "avail": 0, "mv": 71970.0, "pnlPct": -4.29, "cost": 125.327, "cur": 119.95}, {"name": "中钨高新", "code": "000657", "shares": 0, "avail": 0, "mv": 0.0, "pnlPct": 4.922, "cost": 63.603, "cur": 66.76}], "note": "持仓截图(平安证券 **5362)。当日参考盈亏 -7,060.00 / -1.24%，总市值 200,930.00，可用资金 359,610.73，仓位 35.8%。按新规则「只看持仓/可用」判定：中钨高新昨日持有900股、今日持仓/可用均为0 → 清仓；利通电子昨日持有600股、今日600/0（持仓不变但可用为0）→ 做T；英维克2000/2000与昨日一致 → 未动。清仓中钨高新900股（浮盈2,817.48 / +4.92%）；利通电子做T（成本124.826→125.327，估算做T亏损约300.60元）。", "valid": true, "trades": [{"action": "sell", "name": "中钨高新", "code": "000657", "shares": 900, "close": true}, {"action": "sell", "name": "利通电子", "code": "605189", "shares": 600, "open": false}, {"action": "buy", "name": "利通电子", "code": "605189", "shares": 600, "open": false}]},
-{"date": "2026-08-31", "day": 26, "total": 569498.09, "dayPnl": 1.64, "pos": 58.7, "floatPnl": 11086.66, "cash": 235093.09, "holdings": [{"name": "金安国纪", "code": "002636", "shares": 1500, "avail": 0, "mv": 113625.0, "pnlPct": 2.622, "cost": 73.815, "cur": 75.75}, {"name": "中石科技", "code": "300684", "shares": 1200, "avail": 0, "mv": 113400.0, "pnlPct": 1.375, "cost": 93.219, "cur": 94.5}, {"name": "生益科技", "code": "600183", "shares": 700, "avail": 0, "mv": 107380.0, "pnlPct": 0.031, "cost": 153.352, "cur": 153.4}], "note": "平安证券 **5362 持仓截图。总资产569,498.09，当日参考盈亏+9,169.00/+1.64%，总市值334,405.00，可用资金235,093.09，仓位约58.7%，浮动盈亏+11,086.66。持仓明细：清仓英维克2000股(+8.787%)、利通电子600股(-5.672%)；新买入金安国纪1500股、中石科技1200股、生益科技700股。三只新股当日avail=0系T+1未解锁，因8/28未持有，按「只看持仓/可用」硬规则判定为开仓而非做T。", "valid": true, "trades": [{"action": "sell", "name": "英维克", "code": "002837", "shares": 2000, "close": true}, {"action": "sell", "name": "利通电子", "code": "605189", "shares": 600, "close": true}, {"action": "buy", "name": "金安国纪", "code": "002636", "shares": 1500, "open": true}, {"action": "buy", "name": "中石科技", "code": "300684", "shares": 1200, "open": true}, {"action": "buy", "name": "生益科技", "code": "600183", "shares": 700, "open": true}]},
-{"date": "2026-09-01", "day": 27, "total": 2060827.48, "dayPnl": -0.4, "pos": 26.9, "floatPnl": -4196.65, "cash": 1507423.48, "holdings": [{"name": "一鸣食品", "code": "605179", "shares": 6000, "avail": 0, "mv": 208020.0, "pnlPct": 6.655, "cost": 32.507, "cur": 34.67}, {"name": "生益科技", "code": "600183", "shares": 1200, "avail": 0, "mv": 173304.0, "pnlPct": -3.882, "cost": 150.253, "cur": 144.42}, {"name": "中国巨石", "code": "600176", "shares": 4000, "avail": 0, "mv": 172080.0, "pnlPct": -3.128, "cost": 44.409, "cur": 43.02}], "note": "平安证券 **5362 持仓截图(15:18)。总资产2,060,827.48，当日参考盈亏-8,331.00/-0.40%，总市值553,404.00，可用资金1,507,423.48，仓位26.9%，浮动盈亏-4,196.65。持仓明细：一鸣食品6000股(+6.655%，14:28封板涨停新开仓)、生益科技1200股(做T+加仓500股：卖700/买1200，成本153.352→150.253)、中国巨石4000股(新开仓-3.128%)；清仓金安国纪1500股(-2.121%)、中石科技1200股(-2.030%)。注：8/31 平安**5362 总资产569,498.09，9/1 跃至2,060,827.48（可用资金增加约127万），期间疑似有大额资金入金或转托管。", "valid": true, "trades": [{"action": "sell", "name": "金安国纪", "code": "002636", "shares": 1500, "close": true}, {"action": "sell", "name": "中石科技", "code": "300684", "shares": 1200, "close": true}, {"action": "sell", "name": "生益科技", "code": "600183", "shares": 700, "close": false}, {"action": "buy", "name": "生益科技", "code": "600183", "shares": 1200, "open": false}, {"action": "buy", "name": "一鸣食品", "code": "605179", "shares": 6000, "open": true}, {"action": "buy", "name": "中国巨石", "code": "600176", "shares": 4000, "open": true}]},
-{"date": "2026-09-02", "day": 28, "total": 2045119.48, "dayPnl": -0.76, "pos": 26.3, "floatPnl": -15285.46, "cash": 1507423.48, "holdings": [{"name": "一鸣食品", "code": "605179", "shares": 6000, "avail": 6000, "mv": 187200.0, "pnlPct": -4.02, "cost": 32.507, "cur": 31.2}, {"name": "中国巨石", "code": "600176", "shares": 4000, "avail": 4000, "mv": 176520.0, "pnlPct": -0.629, "cost": 44.409, "cur": 44.13}, {"name": "生益科技", "code": "600183", "shares": 1200, "avail": 1200, "mv": 173976.0, "pnlPct": -3.509, "cost": 150.253, "cur": 144.98}], "note": "平安证券 **5362 持仓截图(15:58)。总资产2,045,119.48，当日参考盈亏-15,708.00/-0.76%，总市值537,696.00，可用资金1,507,423.48（与9/1持平），仓位26.3%，浮动盈亏-15,285.46。持仓明细（今日三只均「可用=持仓」→ 按做T硬规则不算做T，成本与9/1完全一致亦证实未交易）：一鸣食品(605179) 6000股(-4.020%，成本32.507/现价31.200)、中国巨石(600176) 4000股(-0.629%，成本44.409/现价44.130)、生益科技(600183) 1200股(-3.509%，成本150.253/现价144.980)。当日净亏全部来自持仓静态涨跌：一鸣贡献-20,820（最大拖累：从9/1收盘+12,979/+6.66% 跌至9/2 -7,840/-4.02%，单日回撤2万+，与9/1 14:28封板次日溢价回吐一致）、中国巨石+4,440、生益科技+672，合计-15,708，与截图当日参考盈亏完全吻合。无新开仓、无清仓、无做T。总资产较9/1回落约15,708，纯市场波动。", "valid": true, "trades": []},
-{"date": "2026-09-03", "day": 29, "total": 2028180.71, "dayPnl": -0.81, "pos": 51.0, "floatPnl": -32224.23, "cash": 993282.71, "holdings": [{"name": "远东股份", "code": "601869", "shares": 30000, "avail": 0, "mv": 631500.0, "pnlPct": 3.929, "cost": 20.254, "cur": 21.05}, {"name": "锦龙股份", "code": "000712", "shares": 18600, "avail": 0, "mv": 234918.0, "pnlPct": -4.842, "cost": 13.273, "cur": 12.63}, {"name": "一鸣食品", "code": "605179", "shares": 6000, "avail": 6000, "mv": 168480.0, "pnlPct": -13.618, "cost": 32.507, "cur": 28.08}, {"name": "生益科技", "code": "600183", "shares": 0, "avail": 0, "mv": 0.0, "pnlPct": -5.302, "cost": 150.253, "cur": 143.19}, {"name": "中国巨石", "code": "600176", "shares": 0, "avail": 0, "mv": 0.0, "pnlPct": -4.525, "cost": 44.409, "cur": 42.63}], "note": "", "valid": true, "trades": [{"action": "sell", "name": "生益科技", "code": "600183", "shares": 1200, "close": true}, {"action": "sell", "name": "中国巨石", "code": "600176", "shares": 4000, "close": true}, {"action": "buy", "name": "远东股份", "code": "601869", "shares": 30000, "open": true}, {"action": "buy", "name": "锦龙股份", "code": "000712", "shares": 18600, "open": true}]},
-{"date": "2026-09-04", "day": 30, "total": 2041480.94, "dayPnl": 0.69, "pos": 10.4, "floatPnl": -1341.66, "cash": 1829480.94, "holdings": [{"name": "远东股份", "code": "601869", "shares": 10000, "avail": 10000, "mv": 212000.0, "pnlPct": 18.481, "cost": 17.893, "cur": 21.2}, {"name": "一鸣食品", "code": "605179", "shares": 0, "avail": 0, "mv": 0.0, "pnlPct": -11.62, "cost": 32.507, "cur": 28.68}, {"name": "锦龙股份", "code": "000712", "shares": 0, "avail": 0, "mv": 0.0, "pnlPct": -4.758, "cost": 13.273, "cur": 12.35}], "note": "平安证券**5362 持仓截图(15:33)", "valid": true, "trades": [{"action": "sell", "name": "一鸣食品", "code": "605179", "shares": 6000, "close": true}, {"action": "sell", "name": "锦龙股份", "code": "000712", "shares": 18600, "close": true}, {"action": "sell", "name": "远东股份", "code": "601869", "shares": 20000, "close": false}]},
-{"date": "2026-09-07", "day": 31, "total": 2034934.96, "dayPnl": -0.31, "pos": 0, "floatPnl": 26521.85, "cash": 1829480.94, "holdings": [{"name": "远东股份", "code": "600869", "shares": 0, "avail": 0, "mv": 0.0, "pnlPct": 4.365, "cost": 17.893, "cur": 20.88}], "note": "平安证券**5362 持仓截图(15:37)", "valid": true, "trades": [{"action": "sell", "name": "远东股份", "code": "600869", "shares": 10000, "close": true}]},
-{"date": "2026-09-08", "day": 32, "total": 2005679.2, "dayPnl": -1.43, "pos": 61.8, "floatPnl": -29255.76, "cash": 765921.2, "holdings": [{"name": "行云科技", "code": "300209", "shares": 11100, "avail": 0, "mv": 394494.0, "pnlPct": -3.022, "cost": 36.647, "cur": 35.54}, {"name": "利通电子", "code": "603629", "shares": 3600, "avail": 0, "mv": 392364.0, "pnlPct": -2.114, "cost": 111.343, "cur": 108.99}, {"name": "神农种业", "code": "300189", "shares": 30000, "avail": 0, "mv": 230400.0, "pnlPct": -2.185, "cost": 7.852, "cur": 7.68}, {"name": "楚天龙", "code": "003040", "shares": 10000, "avail": 0, "mv": 222500.0, "pnlPct": -1.481, "cost": 22.585, "cur": 22.25}], "note": "平安证券**5362 持仓截图(15:37)", "valid": true, "trades": [{"action": "buy", "name": "行云科技", "code": "300209", "shares": 11100, "open": true}, {"action": "buy", "name": "利通电子", "code": "603629", "shares": 3600, "open": true}, {"action": "buy", "name": "神农种业", "code": "300189", "shares": 30000, "open": true}, {"action": "buy", "name": "楚天龙", "code": "003040", "shares": 10000, "open": true}]},
-{"date": "2026-09-09", "day": 33, "total": 2013409.41, "dayPnl": 0.43, "pos": 40.2, "floatPnl": -21525.55, "cash": 1204273.41, "holdings": [{"name": "杭电股份", "code": "603618", "shares": 10000, "avail": 0, "mv": 415800.0, "pnlPct": 1.147, "cost": 41.109, "cur": 41.58}, {"name": "利通电子", "code": "603629", "shares": 3600, "avail": 1800, "mv": 393336.0, "pnlPct": -0.118, "cost": 109.39, "cur": 109.26}, {"name": "行云科技", "code": "300209", "shares": 0, "avail": 0, "mv": 0.0, "pnlPct": -0.829, "cost": 37.086, "cur": 37.69}, {"name": "楚天龙", "code": "003040", "shares": 0, "avail": 0, "mv": 0.0, "pnlPct": -6.506, "cost": 22.585, "cur": 21.0}, {"name": "神农种业", "code": "300189", "shares": 0, "avail": 0, "mv": 0.0, "pnlPct": -3.272, "cost": 7.852, "cur": 7.78}], "note": "平安证券**5362 持仓截图(15:07)", "valid": true, "trades": [{"action": "buy", "name": "杭电股份", "code": "603618", "shares": 10000, "open": true}, {"action": "sell", "name": "行云科技", "code": "300209", "shares": 11100, "close": true}, {"action": "sell", "name": "楚天龙", "code": "003040", "shares": 10000, "close": true}, {"action": "sell", "name": "神农种业", "code": "300189", "shares": 30000, "close": true}, {"action": "sell", "name": "利通电子", "code": "603629", "shares": 1800, "t": true}, {"action": "buy", "name": "利通电子", "code": "603629", "shares": 1800, "t": true}]},
-{"date": "2026-09-10", "day": 34, "total": 1989787.07, "dayPnl": -1.13, "pos": 70.0, "floatPnl": -19375.19, "cash": 597763.07, "holdings": [{"name": "景旺电子", "code": "603228", "shares": 5600, "avail": 0, "mv": 616056.0, "pnlPct": 0.234, "cost": 109.753, "cur": 110.01}, {"name": "杭电股份", "code": "603618", "shares": 10000, "avail": 0, "mv": 393000.0, "pnlPct": -3.222, "cost": 40.609, "cur": 39.3}, {"name": "利通电子", "code": "603629", "shares": 3600, "avail": 0, "mv": 382968.0, "pnlPct": -1.978, "cost": 108.526, "cur": 106.38}], "note": "做T: 杭电+5000 利通+1555 (合计+6555) | 平安证券**5362 持仓截图(15:28)", "valid": true, "trades": [{"action": "buy", "name": "景旺电子", "code": "603228", "shares": 5600, "open": true}, {"action": "sell", "name": "杭电股份", "code": "603618", "shares": 10000, "t": true, "pnl": 5000.0}, {"action": "buy", "name": "杭电股份", "code": "603618", "shares": 10000, "t": true}, {"action": "sell", "name": "利通电子", "code": "603629", "shares": 1800, "t": true, "pnl": 1555.2}, {"action": "buy", "name": "利通电子", "code": "603629", "shares": 1800, "t": true}], "tPnl": 6555.2},
-{"date": "2026-09-11", "day": 35, "total": 1994428.67, "dayPnl": 0.27, "pos": 30.4, "floatPnl": -14733.59, "cash": 1388578.67, "holdings": [{"name": "景旺电子", "code": "603228", "shares": 3600, "avail": 3600, "mv": 402300.0, "pnlPct": 2.18, "cost": 109.366, "cur": 111.75}, {"name": "杭电股份", "code": "603618", "shares": 5000, "avail": 0, "mv": 203550.0, "pnlPct": 0.216, "cost": 40.622, "cur": 40.71, "tpnl": 700.0}, {"name": "利通电子", "code": "603629", "shares": 0, "avail": 0, "mv": 0.0, "pnlPct": -5.927, "cost": 108.526, "cur": 105.28}], "note": "做T: 杭电+700 (合计+700) | 平安证券**5362 持仓截图(15:00)", "valid": true, "trades": [{"action": "sell", "name": "景旺电子", "code": "603228", "shares": 2000}, {"action": "sell", "name": "利通电子", "code": "603629", "shares": 3600, "close": true}, {"action": "buy", "name": "杭电股份", "code": "603618", "shares": 5000, "price": 39.3, "t": true}, {"action": "sell", "name": "杭电股份", "code": "603618", "shares": 5000, "price": 39.68, "t": true}, {"action": "sell", "name": "杭电股份", "code": "603618", "shares": 5000, "price": 40.47, "t": true}], "tPnl": 700.0},
-{"date": "2026-09-14", "day": 36, "total": 1988353.09, "dayPnl": -0.3, "pos": 71.1, "floatPnl": 2946.5, "cash": 575536.09, "holdings": [{"name": "金安国纪", "code": "002636", "shares": 5000, "avail": 0, "mv": 412500, "pnlPct": 0.59, "cost": 82.016, "cur": 82.5}, {"name": "德福科技", "code": "301511", "shares": 3700, "avail": 0, "mv": 403411, "pnlPct": 0.112, "cost": 108.908, "cur": 109.03}, {"name": "景旺电子", "code": "603228", "shares": 3600, "avail": 3600, "mv": 389556, "pnlPct": -1.057, "cost": 109.366, "cur": 108.21}, {"name": "杭电股份", "code": "603618", "shares": 5000, "avail": 5000, "mv": 207350, "pnlPct": 2.087, "cost": 40.622, "cur": 41.47}], "note": "平安证券**5362 持仓截图(15:00)", "valid": true, "trades": [{"action": "buy", "name": "金安国纪", "code": "002636", "shares": 5000, "price": 82.016, "open": true}, {"action": "buy", "name": "德福科技", "code": "301511", "shares": 3700, "price": 108.908, "open": true}]},
-{"date": "2026-09-15", "day": 37, "total": 1997894.55, "dayPnl": 0.53, "pos": 29.6, "floatPnl": 12487.96, "cash": 1405890.55, "holdings": [{"name": "太极实业", "code": "600667", "shares": 11000, "avail": 0, "mv": 208010.0, "pnlPct": -1.94, "cost": 19.284, "cur": 18.91}, {"name": "江丰电子", "code": "300666", "shares": 800, "avail": 0, "mv": 195768.0, "pnlPct": 0.271, "cost": 244.049, "cur": 244.71}, {"name": "景旺电子", "code": "603228", "shares": 1800, "avail": 1800, "mv": 188226.0, "pnlPct": -8.461, "cost": 114.235, "cur": 104.57}, {"name": "杭电股份", "code": "603618", "shares": 0, "avail": 0, "mv": 0.0, "pnlPct": 1.056, "cost": 40.622, "cur": 41.04}, {"name": "金安国纪", "code": "002636", "shares": 0, "avail": 0, "mv": 0.0, "pnlPct": 1.342, "cost": 80.541, "cur": 83.99}, {"name": "德福科技", "code": "301511", "shares": 0, "avail": 0, "mv": 0.0, "pnlPct": 5.864, "cost": 99.062, "cur": 112.1}], "note": "平安证券**5362 持仓截图(15:03)", "valid": true, "trades": [{"action": "buy", "name": "太极实业", "code": "600667", "shares": 11000, "price": 19.284, "open": true}, {"action": "buy", "name": "江丰电子", "code": "300666", "shares": 800, "price": 244.049, "open": true}, {"action": "sell", "name": "景旺电子", "code": "603228", "shares": 1800}, {"action": "sell", "name": "杭电股份", "code": "603618", "shares": 5000, "close": true}, {"action": "sell", "name": "金安国纪", "code": "002636", "shares": 5000, "close": true}, {"action": "sell", "name": "德福科技", "code": "301511", "shares": 3700, "close": true}]},
-{"date": "2026-09-16", "day": 38, "total": 2018875.05, "dayPnl": 1.07, "pos": 21.6, "floatPnl": -2.71, "cash": 1582071.05, "holdings": [{"name": "金安国纪", "code": "002636", "shares": 2600, "avail": 0, "mv": 214292.0, "pnlPct": 0.923, "cost": 81.666, "cur": 82.42}, {"name": "太极实业", "code": "600667", "shares": 6000, "avail": 6000, "mv": 121380.0, "pnlPct": 5.968, "cost": 19.091, "cur": 20.23}, {"name": "江丰电子", "code": "300666", "shares": 400, "avail": 400, "mv": 101132.0, "pnlPct": 7.116, "cost": 236.034, "cur": 252.83}, {"name": "景旺电子", "code": "603228", "shares": 0, "avail": 0, "mv": 0.0, "pnlPct": -2.525, "cost": 114.235, "cur": 106.41}], "note": "平安证券**5362 持仓截图(15:46)", "valid": true, "trades": [{"action": "buy", "name": "金安国纪", "code": "002636", "shares": 2600, "price": 81.666, "open": true}, {"action": "sell", "name": "太极实业", "code": "600667", "shares": 5000}, {"action": "sell", "name": "江丰电子", "code": "300666", "shares": 400}, {"action": "sell", "name": "景旺电子", "code": "603228", "shares": 1800, "close": true}]},
-{"date": "2026-09-17", "day": 39, "total": 1976145.65, "dayPnl": -2.11, "pos": 70.6, "floatPnl": -27215.41, "cash": 580384.65, "holdings": [{"name": "有研新材", "code": "600206", "shares": 15500, "avail": 0, "mv": 783525.0, "pnlPct": -3.451, "cost": 52.357, "cur": 50.55}, {"name": "金安国纪", "code": "002636", "shares": 4900, "avail": 2600, "mv": 389060.0, "pnlPct": -3.336, "cost": 82.141, "cur": 79.4}, {"name": "太极实业", "code": "600667", "shares": 6000, "avail": 6000, "mv": 123420.0, "pnlPct": 7.749, "cost": 19.091, "cur": 20.57}, {"name": "江丰电子", "code": "300666", "shares": 400, "avail": 400, "mv": 99756.0, "pnlPct": 5.658, "cost": 236.034, "cur": 249.39}], "note": "平安证券**5362 持仓截图(15:00)", "valid": true, "trades": [{"action": "buy", "name": "有研新材", "code": "600206", "shares": 15500, "price": 52.357, "open": true}, {"action": "buy", "name": "金安国纪", "code": "002636", "shares": 2300, "price": 82.141}]},
-{"date": "2026-09-18", "day": 40, "total": 2001025.05, "dayPnl": 1.3, "pos": 39.2, "floatPnl": -2336.01, "cash": 1216885.05, "holdings": [{"name": "光智科技", "code": "300489", "shares": 1800, "avail": 0, "mv": 404316.0, "pnlPct": 0.746, "cost": 222.956, "cur": 224.62}, {"name": "金安国纪", "code": "002636", "shares": 2400, "avail": 2400, "mv": 194064.0, "pnlPct": -3.99, "cost": 84.22, "cur": 80.86}, {"name": "有研新材", "code": "600206", "shares": 3600, "avail": 3600, "mv": 185760.0, "pnlPct": -7.485, "cost": 55.775, "cur": 51.6}, {"name": "太极实业", "code": "600667", "shares": 0, "avail": 0, "mv": 0.0, "pnlPct": 4.228, "cost": 19.091, "cur": 20.46}, {"name": "江丰电子", "code": "300666", "shares": 0, "avail": 0, "mv": 0.0, "pnlPct": 4.504, "cost": 236.034, "cur": 260.44}], "note": "平安证券**5362 持仓截图(15:03)", "valid": true, "trades": [{"action": "buy", "name": "光智科技", "code": "300489", "shares": 1800, "price": 222.956, "open": true}, {"action": "sell", "name": "有研新材", "code": "600206", "shares": 11900}, {"action": "sell", "name": "金安国纪", "code": "002636", "shares": 2500}, {"action": "sell", "name": "太极实业", "code": "600667", "shares": 6000, "close": true}, {"action": "sell", "name": "江丰电子", "code": "300666", "shares": 400, "close": true}]},
-{"date": "2026-09-21", "day": 41, "total": 2007513.37, "dayPnl": 0.35, "pos": 0, "floatPnl": -13610.08, "cash": 2007513.37, "holdings": [{"name": "金安国纪", "code": "002636", "shares": 0, "avail": 0, "mv": 0.0, "pnlPct": -1.781, "cost": 84.22, "cur": 81.38}, {"name": "有研新材", "code": "600206", "shares": 0, "avail": 0, "mv": 0.0, "pnlPct": -1.855, "cost": 55.775, "cur": 51.32}, {"name": "光智科技", "code": "300489", "shares": 0, "avail": 0, "mv": 0.0, "pnlPct": 2.146, "cost": 222.956, "cur": 238.81}], "note": "平安证券**5362 持仓截图(15:10)", "valid": true, "trades": [{"action": "sell", "name": "金安国纪", "code": "002636", "shares": 2400, "close": true}, {"action": "sell", "name": "有研新材", "code": "600206", "shares": 3600, "close": true}, {"action": "sell", "name": "光智科技", "code": "300489", "shares": 1800, "close": true}]},
-{"date": "2026-09-22", "day": 42, "total": 2007188.6, "dayPnl": -0.01, "pos": 14.6, "floatPnl": -324.77, "cash": 1713212.6, "holdings": [{"name": "景旺电子", "code": "603228", "shares": 1800, "avail": 0, "mv": 191016.0, "pnlPct": -0.331, "cost": 106.472, "cur": 106.12, "open": true}, {"name": "西陇科学", "code": "002584", "shares": 11000, "avail": 0, "mv": 102960.0, "pnlPct": 0.301, "cost": 9.332, "cur": 9.36, "open": true}], "note": "平安证券**5362 持仓截图(15:03)", "valid": true, "trades": [{"action": "buy", "name": "景旺电子", "code": "603228", "shares": 1800, "price": 106.472, "open": true}, {"action": "buy", "name": "西陇科学", "code": "002584", "shares": 11000, "price": 9.332, "open": true}]},
-{"date": "2026-09-23", "day": 43, "total": 2005637.43, "dayPnl": -0.07, "pos": 24.3, "floatPnl": -1875.94, "cash": 1517567.43, "holdings": [{"name": "胜宏科技", "code": "300476", "shares": 800, "avail": 0, "mv": 195440.0, "pnlPct": -0.63, "cost": 245.849, "cur": 244.3, "open": true}, {"name": "景旺电子", "code": "603228", "shares": 1800, "avail": 900, "mv": 193410.0, "pnlPct": 1.466, "cost": 105.898, "cur": 107.45}, {"name": "西陇科学", "code": "002584", "shares": 11000, "avail": 11000, "mv": 99220.0, "pnlPct": -3.342, "cost": 9.332, "cur": 9.02}], "note": "做T: 景旺电子 | 平安证券**5362 持仓截图(15:02)", "valid": true, "trades": [{"action": "buy", "name": "胜宏科技", "code": "300476", "shares": 800, "price": 245.849, "open": true}, {"action": "sell", "name": "景旺电子", "code": "603228", "shares": 900, "t": true}, {"action": "buy", "name": "景旺电子", "code": "603228", "shares": 900, "t": true}]},
-{"date": "2026-09-24", "day": 44, "total": 1988586.09, "dayPnl": -0.84, "pos": 24.3, "floatPnl": -18927.28, "cash": 1505306.09, "holdings": [{"name": "中成股份", "code": "000151", "shares": 20000, "avail": 0, "mv": 200200.0, "pnlPct": -0.911, "cost": 10.102, "cur": 10.01, "open": true}, {"name": "景旺电子", "code": "603228", "shares": 1800, "avail": 1800, "mv": 186390.0, "pnlPct": -2.217, "cost": 105.898, "cur": 103.55}, {"name": "西陇科学", "code": "002584", "shares": 11000, "avail": 11000, "mv": 96690.0, "pnlPct": -5.807, "cost": 9.332, "cur": 8.79}, {"name": "胜宏科技", "code": "300476", "shares": 0, "avail": 0, "mv": 0, "pnlPct": -3.508, "cost": 245.849, "cur": 232.69}], "note": "平安证券**5362 持仓截图(15:07)", "valid": true, "trades": [{"action": "buy", "name": "中成股份", "code": "000151", "shares": 20000, "price": 10.102, "open": true}, {"action": "sell", "name": "胜宏科技", "code": "300476", "shares": 800, "close": true}]},
-{"date": "2026-09-28", "day": 45, "total": 1961881.06, "dayPnl": -1.33, "pos": 40.2, "floatPnl": -38732.04, "cash": 1173504.06, "holdings": [{"name": "金安国纪", "code": "002636", "shares": 2600, "avail": 0, "mv": 206180.0, "pnlPct": -1.204, "cost": 80.266, "cur": 79.3, "open": true}, {"name": "中成股份", "code": "000151", "shares": 20000, "avail": 20000, "mv": 202800.0, "pnlPct": 0.376, "cost": 10.102, "cur": 10.14}, {"name": "景旺电子", "code": "603228", "shares": 2000, "avail": 0, "mv": 190000.0, "pnlPct": -12.69, "cost": 108.808, "cur": 95.0}, {"name": "西陇科学", "code": "002584", "shares": 22100, "avail": 11000, "mv": 189397.0, "pnlPct": -4.712, "cost": 8.994, "cur": 8.57}], "note": "做T: 景旺电子 | 平安证券**5362 持仓截图(15:39)", "valid": true, "trades": [{"action": "buy", "name": "金安国纪", "code": "002636", "shares": 2600, "price": 80.266, "open": true}, {"action": "sell", "name": "景旺电子", "code": "603228", "shares": 1800, "t": true}, {"action": "buy", "name": "景旺电子", "code": "603228", "shares": 2000, "price": 108.808, "t": true}, {"action": "buy", "name": "西陇科学", "code": "002584", "shares": 11100}]},
-{"date": "2026-09-29", "day": 46, "total": 1984086.73, "dayPnl": 1.13, "pos": 51.3, "floatPnl": -16526.37, "cash": 967100.73, "holdings": [{"name": "金安国纪", "code": "002636", "shares": 2600, "avail": 2600, "mv": 215878.0, "pnlPct": 3.443, "cost": 80.266, "cur": 83.03}, {"name": "科创半导体ETF华夏", "code": "588170", "shares": 220000, "avail": 0, "mv": 207020.0, "pnlPct": 0.299, "cost": 0.938, "cur": 0.941, "open": true}, {"name": "中成股份", "code": "000151", "shares": 20000, "avail": 20000, "mv": 201200.0, "pnlPct": -0.416, "cost": 10.102, "cur": 10.06}, {"name": "景旺电子", "code": "603228", "shares": 2000, "avail": 2000, "mv": 201060.0, "pnlPct": -7.608, "cost": 108.808, "cur": 100.53}, {"name": "西陇科学", "code": "002584", "shares": 22100, "avail": 22100, "mv": 191828.0, "pnlPct": -3.488, "cost": 8.994, "cur": 8.68}], "note": "平安证券**5362 持仓截图(15:00)", "valid": true, "trades": [{"action": "buy", "name": "科创半导体ETF华夏", "code": "588170", "shares": 220000, "price": 0.938, "open": true}]},
-{"date": "2026-09-30", "day": 47, "total": 1971749.73, "dayPnl": -0.62, "pos": 51.0, "floatPnl": -28863.37, "cash": 967100.73, "holdings": [{"name": "金安国纪", "code": "002636", "shares": 2600, "avail": 2600, "mv": 206570.0, "pnlPct": -1.017, "cost": 80.266, "cur": 79.45}, {"name": "景旺电子", "code": "603228", "shares": 2000, "avail": 2000, "mv": 202420.0, "pnlPct": -6.983, "cost": 108.808, "cur": 101.21}, {"name": "中成股份", "code": "000151", "shares": 20000, "avail": 20000, "mv": 201200.0, "pnlPct": -0.416, "cost": 10.102, "cur": 10.06}, {"name": "科创半导体ETF华夏", "code": "588170", "shares": 220000, "avail": 220000, "mv": 200200.0, "pnlPct": -3.005, "cost": 0.938, "cur": 0.91}, {"name": "西陇科学", "code": "002584", "shares": 22100, "avail": 22100, "mv": 194259.0, "pnlPct": -2.265, "cost": 8.994, "cur": 8.79}], "note": "平安证券**5362 持仓截图(15:10)", "valid": true, "trades": []},
-{"date": "2026-10-08", "day": 48, "total": 1966861.6, "dayPnl": -0.23, "pos": 60.7, "floatPnl": -33751.5, "cash": 772512.6, "holdings": [{"name": "金安国纪", "code": "002636", "shares": 2600, "avail": 1300, "mv": 207038.0, "pnlPct": -0.521, "cost": 80.047, "cur": 79.63}, {"name": "中成股份", "code": "000151", "shares": 20000, "avail": 10000, "mv": 203600.0, "pnlPct": 1.227, "cost": 10.057, "cur": 10.18}, {"name": "西陇科学", "code": "002584", "shares": 22100, "avail": 11000, "mv": 198016.0, "pnlPct": 0.083, "cost": 8.953, "cur": 8.96}, {"name": "景旺电子", "code": "603228", "shares": 2000, "avail": 1000, "mv": 195780.0, "pnlPct": -9.702, "cost": 108.408, "cur": 97.89}, {"name": "科创半导体ETF华夏", "code": "588170", "shares": 220000, "avail": 120000, "mv": 192280.0, "pnlPct": -6.541, "cost": 0.935, "cur": 0.874}, {"name": "东材科技", "code": "601208", "shares": 2000, "avail": 0, "mv": 101840.0, "pnlPct": 0.018, "cost": 50.911, "cur": 50.92}, {"name": "吉鑫科技", "code": "601218", "shares": 16100, "avail": 0, "mv": 95795.0, "pnlPct": -0.854, "cost": 6.001, "cur": 5.95}], "note": "做T: 金安国纪/中成股份/西陇科学/景旺电子/科创半导体ETF华夏 | 平安证券**5362 持仓截图(15:11)", "valid": true, "trades": [{"action": "sell", "name": "金安国纪", "code": "002636", "shares": 1300, "t": true}, {"action": "buy", "name": "金安国纪", "code": "002636", "shares": 1300, "t": true}, {"action": "sell", "name": "中成股份", "code": "000151", "shares": 10000, "t": true}, {"action": "buy", "name": "中成股份", "code": "000151", "shares": 10000, "t": true}, {"action": "sell", "name": "西陇科学", "code": "002584", "shares": 11100, "t": true}, {"action": "buy", "name": "西陇科学", "code": "002584", "shares": 11100, "t": true}, {"action": "sell", "name": "景旺电子", "code": "603228", "shares": 1000, "t": true}, {"action": "buy", "name": "景旺电子", "code": "603228", "shares": 1000, "t": true}, {"action": "sell", "name": "科创半导体ETF华夏", "code": "588170", "shares": 100000, "t": true}, {"action": "buy", "name": "科创半导体ETF华夏", "code": "588170", "shares": 100000, "t": true}, {"action": "buy", "name": "东材科技", "code": "601208", "shares": 2000, "price": 50.911, "open": true}, {"action": "buy", "name": "吉鑫科技", "code": "601218", "shares": 16100, "price": 6.001, "open": true}]},
-{"date": "2026-10-09", "day": 49, "total": 1936301.24, "dayPnl": -1.55, "pos": 75.1, "floatPnl": -64311.86, "cash": 482074.24, "note": "平安证券**5362 持仓截图(15:03)", "valid": true, "trades": [{"action": "buy", "name": "金安国纪", "code": "002636", "shares": 2500}, {"action": "buy", "name": "吉鑫科技", "code": "601218", "shares": 16000}, {"action": "buy", "name": "有研新材", "code": "600206", "shares": 2500, "open": true}, {"action": "sell", "name": "东材科技", "code": "601208", "shares": 2000}], "holdings": [{"name": "金安国纪", "code": "002636", "shares": 5100, "avail": 2600, "mv": 365517.0, "pnlPct": -5.632, "cost": 75.948, "cur": 71.67}, {"name": "中成股份", "code": "000151", "shares": 20000, "avail": 20000, "mv": 204800.0, "pnlPct": 1.824, "cost": 10.057, "cur": 10.24}, {"name": "景旺电子", "code": "603228", "shares": 2000, "avail": 2000, "mv": 193960.0, "pnlPct": -10.541, "cost": 108.408, "cur": 96.98}, {"name": "西陇科学", "code": "002584", "shares": 22100, "avail": 22100, "mv": 193375.0, "pnlPct": -2.263, "cost": 8.953, "cur": 8.75}, {"name": "科创半导体ETF华夏", "code": "588170", "shares": 220000, "avail": 220000, "mv": 190520.0, "pnlPct": -7.397, "cost": 0.935, "cur": 0.866}, {"name": "吉鑫科技", "code": "601218", "shares": 32100, "avail": 16100, "mv": 186180.0, "pnlPct": 0.573, "cost": 5.767, "cur": 5.8}, {"name": "有研新材", "code": "600206", "shares": 2500, "avail": 0, "mv": 119875.0, "pnlPct": 0.23, "cost": 47.84, "cur": 47.95, "open": true}, {"name": "东材科技", "code": "601208", "shares": 0, "avail": 0, "mv": 0, "pnlPct": -4.862, "cost": 50.911, "cur": 48.47}]},
-{"date": "2026-10-12", "day": 50, "total": 1894241.24, "dayPnl": -2.17, "pos": 74.5, "floatPnl": -101421.65, "cash": 482074.24, "note": "平安证券**5362 持仓截图(15:01)", "valid": true, "trades": [], "holdings": [{"name": "金安国纪", "code": "002636", "shares": 5100, "avail": 5100, "mv": 328950.0, "pnlPct": -15.073, "cost": 75.948, "cur": 64.5}, {"name": "中成股份", "code": "000151", "shares": 20000, "avail": 20000, "mv": 202800.0, "pnlPct": 0.829, "cost": 10.057, "cur": 10.14}, {"name": "景旺电子", "code": "603228", "shares": 2000, "avail": 2000, "mv": 192180.0, "pnlPct": -11.362, "cost": 108.408, "cur": 96.09}, {"name": "西陇科学", "code": "002584", "shares": 22100, "avail": 22100, "mv": 190723.0, "pnlPct": -3.603, "cost": 8.953, "cur": 8.63}, {"name": "科创半导体ETF华夏", "code": "588170", "shares": 220000, "avail": 220000, "mv": 190300.0, "pnlPct": -7.504, "cost": 0.935, "cur": 0.865}, {"name": "吉鑫科技", "code": "601218", "shares": 32100, "avail": 32100, "mv": 187464.0, "pnlPct": 1.267, "cost": 5.767, "cur": 5.84}, {"name": "有研新材", "code": "600206", "shares": 2500, "avail": 2500, "mv": 119750.0, "pnlPct": 0.125, "cost": 47.84, "cur": 47.9}]},
-{"date": "2026-10-13", "day": 51, "total": 1900444.24, "dayPnl": 0.33, "pos": 74.6, "floatPnl": -95218.65, "cash": 482074.24, "note": "平安证券**5362 持仓截图(15:00)", "valid": true, "trades": [], "holdings": [{"name": "金安国纪", "code": "002636", "shares": 5100, "avail": 5100, "mv": 342618.0, "pnlPct": -11.544, "cost": 75.948, "cur": 67.18}, {"name": "中成股份", "code": "000151", "shares": 20000, "avail": 20000, "mv": 203200.0, "pnlPct": 1.028, "cost": 10.057, "cur": 10.16}, {"name": "景旺电子", "code": "603228", "shares": 2000, "avail": 2000, "mv": 197020.0, "pnlPct": -9.13, "cost": 108.408, "cur": 98.51}, {"name": "西陇科学", "code": "002584", "shares": 22100, "avail": 22100, "mv": 193596.0, "pnlPct": -2.151, "cost": 8.953, "cur": 8.76}, {"name": "科创半导体ETF华夏", "code": "588170", "shares": 220000, "avail": 220000, "mv": 193160.0, "pnlPct": -6.114, "cost": 0.935, "cur": 0.878}, {"name": "吉鑫科技", "code": "601218", "shares": 32100, "avail": 32100, "mv": 178476.0, "pnlPct": -3.588, "cost": 5.767, "cur": 5.56}, {"name": "有研新材", "code": "600206", "shares": 2500, "avail": 2500, "mv": 110300.0, "pnlPct": -7.776, "cost": 47.84, "cur": 44.12}]},
-{"date": "2026-10-14", "day": 52, "total": 1851546.24, "dayPnl": -2.57, "pos": 74.0, "floatPnl": -144116.65, "cash": 482074.24, "note": "平安证券**5362 持仓截图(15:04)", "valid": true, "trades": [], "holdings": [{"name": "金安国纪", "code": "002636", "shares": 5100, "avail": 5100, "mv": 345780.0, "pnlPct": -10.728, "cost": 75.948, "cur": 67.8}, {"name": "中成股份", "code": "000151", "shares": 20000, "avail": 20000, "mv": 198000.0, "pnlPct": -1.557, "cost": 10.057, "cur": 9.9}, {"name": "景旺电子", "code": "603228", "shares": 2000, "avail": 2000, "mv": 189320.0, "pnlPct": -12.681, "cost": 108.408, "cur": 94.66}, {"name": "科创半导体ETF华夏", "code": "588170", "shares": 220000, "avail": 220000, "mv": 184800.0, "pnlPct": -10.177, "cost": 0.935, "cur": 0.84}, {"name": "西陇科学", "code": "002584", "shares": 22100, "avail": 22100, "mv": 184093.0, "pnlPct": -6.954, "cost": 8.953, "cur": 8.33}, {"name": "吉鑫科技", "code": "601218", "shares": 32100, "avail": 32100, "mv": 168204.0, "pnlPct": -9.137, "cost": 5.767, "cur": 5.24}, {"name": "有研新材", "code": "600206", "shares": 2500, "avail": 2500, "mv": 99275.0, "pnlPct": -16.994, "cost": 47.84, "cur": 39.71}]},
-{"date": "2026-10-15", "day": 53, "total": 1845325.24, "dayPnl": -0.34, "pos": 73.9, "floatPnl": -150337.65, "cash": 482074.24, "note": "平安证券**5362 持仓截图(15:00)", "valid": true, "trades": [], "holdings": [{"name": "金安国纪", "code": "002636", "shares": 5100, "avail": 5100, "mv": 362559.0, "pnlPct": -6.396, "cost": 75.948, "cur": 71.09}, {"name": "中成股份", "code": "000151", "shares": 20000, "avail": 20000, "mv": 193800.0, "pnlPct": -3.645, "cost": 10.057, "cur": 9.69}, {"name": "科创半导体ETF华夏", "code": "588170", "shares": 220000, "avail": 220000, "mv": 184360.0, "pnlPct": -10.391, "cost": 0.935, "cur": 0.838}, {"name": "西陇科学", "code": "002584", "shares": 22100, "avail": 22100, "mv": 180778.0, "pnlPct": -8.63, "cost": 8.953, "cur": 8.18}, {"name": "景旺电子", "code": "603228", "shares": 2000, "avail": 2000, "mv": 180420.0, "pnlPct": -16.786, "cost": 108.408, "cur": 90.21}, {"name": "吉鑫科技", "code": "601218", "shares": 32100, "avail": 32100, "mv": 161784.0, "pnlPct": -12.605, "cost": 5.767, "cur": 5.04}, {"name": "有研新材", "code": "600206", "shares": 2500, "avail": 2500, "mv": 99550.0, "pnlPct": -16.764, "cost": 47.84, "cur": 39.82}]}
+  {
+    "date": "2026-07-27",
+    "day": 1,
+    "total": 500488.29,
+    "dayPnl": 0.11,
+    "pos": 76.7,
+    "floatPnl": 488.29,
+    "cash": 116393.29,
+    "holdings": [
+      {
+        "name": "江波龙",
+        "shares": 500,
+        "mv": 186950.0,
+        "pnlPct": 0.283,
+        "cost": 372.845,
+        "cur": 373.9,
+        "code": "301308"
+      },
+      {
+        "name": "雅克科技",
+        "shares": 600,
+        "mv": 101610.0,
+        "pnlPct": -0.02,
+        "cost": 169.384,
+        "cur": 169.35,
+        "code": "002409"
+      },
+      {
+        "name": "金安国纪",
+        "shares": 1500,
+        "mv": 95535.0,
+        "pnlPct": -0.02,
+        "cost": 63.703,
+        "cur": 63.69,
+        "code": "002636"
+      }
+    ],
+    "note": "建仓前/预备日，持仓3只（江波龙、雅克科技、金安国纪），仓位76.7%。总资产数值部分被遮挡，根据可用资金+持仓市值估算。",
+    "valid": true,
+    "trades": []
+  },
+  {
+    "date": "2026-07-28",
+    "day": 2,
+    "total": 490578.05,
+    "dayPnl": -1.92,
+    "pos": 19.4,
+    "floatPnl": -9421.95,
+    "cash": 395560.05,
+    "holdings": [
+      {
+        "name": "风华高科",
+        "shares": 2200,
+        "mv": 95018.0,
+        "pnlPct": -2.415,
+        "cost": 44.259,
+        "cur": 43.19,
+        "code": "000636"
+      },
+      {
+        "name": "金安国纪",
+        "shares": 0,
+        "mv": 0.0,
+        "pnlPct": -3.29,
+        "cost": 63.703,
+        "cur": 57.32,
+        "code": "002636"
+      },
+      {
+        "name": "江波龙",
+        "shares": 0,
+        "mv": 0.0,
+        "pnlPct": -3.714,
+        "cost": 372.845,
+        "cur": 330.0,
+        "code": "301308"
+      },
+      {
+        "name": "雅克科技",
+        "shares": 0,
+        "mv": 0.0,
+        "pnlPct": 2.948,
+        "cost": 169.384,
+        "cur": 166.43,
+        "code": "002409"
+      }
+    ],
+    "note": "实盘第1天，大幅减仓至19.4%，仅风华高科持有中(2200股)，其余3只已清仓但保留盈亏记录。当日亏损-1.92%。另含国泰海通证券账户截图（非平安证券主账户）。",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "风华高科",
+        "code": "000636",
+        "shares": 2200,
+        "open": true,
+        "close": false
+      },
+      {
+        "action": "sell",
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 1500,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "江波龙",
+        "code": "301308",
+        "shares": 500,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "雅克科技",
+        "code": "002409",
+        "shares": 600,
+        "close": true
+      }
+    ]
+  },
+  {
+    "date": "2026-07-29",
+    "day": 3,
+    "total": 507716.52,
+    "dayPnl": 3.51,
+    "pos": 85.0,
+    "floatPnl": 14787.0,
+    "cash": 76358.62,
+    "holdings": [
+      {
+        "name": "通信ETF富国",
+        "shares": 152700,
+        "mv": 227064.9,
+        "pnlPct": 2.673,
+        "cost": 1.448,
+        "cur": 1.487,
+        "code": "159583"
+      },
+      {
+        "name": "风华高科",
+        "shares": 4300,
+        "mv": 204293.0,
+        "pnlPct": 4.542,
+        "cost": 45.446,
+        "cur": 47.51,
+        "code": "000636"
+      }
+    ],
+    "note": "加仓至85%仓位！新买入通信ETF富国152700股+加仓风华高科至4300股(可用2200股)。当日大赚+3.51%。另含国泰海通证券账户截图。",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "通信ETF富国",
+        "code": "159583",
+        "shares": 152700,
+        "open": true,
+        "close": false
+      },
+      {
+        "action": "buy",
+        "name": "风华高科",
+        "code": "000636",
+        "shares": 2100,
+        "open": false,
+        "close": false
+      }
+    ]
+  },
+  {
+    "date": "2026-07-30",
+    "day": 4,
+    "total": 514591.41,
+    "dayPnl": 1.4,
+    "pos": 40.6,
+    "floatPnl": 21661.89,
+    "cash": 305551.41,
+    "holdings": [
+      {
+        "name": "风华高科",
+        "shares": 4000,
+        "mv": 209040.0,
+        "pnlPct": 13.275,
+        "cost": 46.135,
+        "cur": 52.26,
+        "code": "000636"
+      },
+      {
+        "name": "通信ETF富国",
+        "shares": 0,
+        "mv": 0.0,
+        "pnlPct": -1.283,
+        "cost": 1.448,
+        "cur": 1.411,
+        "code": "159583"
+      }
+    ],
+    "note": "减仓至40.6%！风华高科涨停(+10%)继续持有4000股，通信ETF已清仓。风华高科累计盈利+13.28%。",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "风华高科",
+        "code": "000636",
+        "shares": 300,
+        "close": false
+      },
+      {
+        "action": "sell",
+        "name": "通信ETF富国",
+        "code": "159583",
+        "shares": 152700,
+        "close": true
+      }
+    ]
+  },
+  {
+    "date": "2026-07-31",
+    "day": 5,
+    "total": 511985.74,
+    "dayPnl": 1.46,
+    "pos": 40.6,
+    "floatPnl": 21892.71,
+    "cash": 303901.74,
+    "holdings": [
+      {
+        "name": "贤丰控股",
+        "shares": 20000,
+        "mv": 112400.0,
+        "pnlPct": 2.722,
+        "cost": 5.471,
+        "cur": 5.62,
+        "code": "002141"
+      },
+      {
+        "name": "恒尚节能",
+        "shares": 3800,
+        "mv": 95684.0,
+        "pnlPct": -11.2,
+        "cost": 28.356,
+        "cur": 25.18,
+        "code": "603137"
+      },
+      {
+        "name": "风华高科",
+        "shares": 0,
+        "mv": 0.0,
+        "pnlPct": 13.832,
+        "cost": 46.135,
+        "cur": 49.33,
+        "code": "000636"
+      },
+      {
+        "name": "科创半导体设备ETF",
+        "shares": 0,
+        "mv": 0.0,
+        "pnlPct": 4.595,
+        "cost": 2.868,
+        "cur": 2.855,
+        "code": "588710"
+      }
+    ],
+    "note": "调仓换股！新买入贤丰控股20000股和恒尚节能3800股，风华高科和科创半导体ETF已清仓。恒尚节能亏损-11.2%需关注。文件夹含多张小红书评论截图（非持仓数据）。另含国泰海通证券账户截图。",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "贤丰控股",
+        "code": "002141",
+        "shares": 20000,
+        "open": true,
+        "close": false
+      },
+      {
+        "action": "buy",
+        "name": "恒尚节能",
+        "code": "603137",
+        "shares": 3800,
+        "open": true,
+        "close": false
+      },
+      {
+        "action": "sell",
+        "name": "风华高科",
+        "code": "000636",
+        "shares": 4000,
+        "close": true
+      }
+    ]
+  },
+  {
+    "date": "2026-08-03",
+    "day": 6,
+    "total": 852512.5,
+    "dayPnl": 0.57,
+    "pos": 41.8,
+    "floatPnl": 154745.06,
+    "cash": 496270.5,
+    "holdings": [
+      {
+        "name": "长电科技",
+        "shares": 4800,
+        "mv": 84869.07,
+        "pnlPct": 47.391,
+        "cost": 37.309,
+        "cur": 54.99,
+        "code": "600584"
+      },
+      {
+        "name": "紫光股份",
+        "shares": 2800,
+        "mv": 69875.99,
+        "pnlPct": 306.42,
+        "cost": 8.144,
+        "cur": 33.1,
+        "code": "000938"
+      }
+    ],
+    "note": "主账户持仓截图；另有第二账户(**5362)截图：总资产约50.9万，浮亏-11599.29，当日盈亏-1238(-0.24%)，持仓中国卫星/贤丰控股(已清仓)/恒大新能(已清仓)",
+    "valid": true,
+    "trades": []
+  },
+  {
+    "date": "2026-08-04",
+    "day": 7,
+    "total": 856416.5,
+    "dayPnl": 0.41,
+    "pos": 42.0,
+    "floatPnl": 158209.06,
+    "cash": 496270.5,
+    "holdings": [
+      {
+        "name": "长电科技",
+        "shares": 4800,
+        "mv": 84917.07,
+        "pnlPct": 47.418,
+        "cost": 37.309,
+        "cur": 55.0,
+        "code": "600584"
+      },
+      {
+        "name": "紫光股份",
+        "shares": 2800,
+        "mv": 73291.99,
+        "pnlPct": 321.4,
+        "cost": 8.144,
+        "cur": 34.32,
+        "code": "000938"
+      }
+    ],
+    "note": "主账户持仓截图；另有第二账户截图：总资产516721.96，浮盈+9581.57，当日盈亏+7245(+1.42%)，仓位41.9%，仅持中国卫星3500股；含1张聊天截图(已跳过)",
+    "valid": true,
+    "trades": []
+  },
+  {
+    "date": "2026-08-05",
+    "day": 8,
+    "total": 861125.92,
+    "dayPnl": 0.64,
+    "pos": 63.97,
+    "floatPnl": 162968.48,
+    "cash": 310133.92,
+    "holdings": [
+      {
+        "name": "紫光股份",
+        "shares": 10800,
+        "mv": 398952.0,
+        "pnlPct": 25.196,
+        "cost": 29.506,
+        "cur": 36.94,
+        "code": "000938"
+      },
+      {
+        "name": "长鑫科技",
+        "shares": 2800,
+        "mv": 152040.0,
+        "pnlPct": 119.201,
+        "cost": 24.772,
+        "cur": 54.3,
+        "code": "688825"
+      }
+    ],
+    "note": "主账户(**3538)持仓截图；另有第二账户(**5362)截图：总资产524598.03，浮盈+17457.64，当日盈亏+7915(+1.53%)，可用105564.03，持仓中国卫星3500股/行云科技2700股/风华高科1700股",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "紫光股份",
+        "code": "000938",
+        "shares": 8000,
+        "open": false,
+        "close": false
+      },
+      {
+        "action": "buy",
+        "name": "长鑫科技",
+        "code": "688825",
+        "shares": 2800,
+        "open": true,
+        "close": false
+      },
+      {
+        "action": "sell",
+        "name": "长电科技",
+        "code": "600584",
+        "shares": 4800,
+        "close": true
+      }
+    ]
+  },
+  {
+    "date": "2026-08-06",
+    "day": 9,
+    "total": 865291.74,
+    "dayPnl": 0.51,
+    "pos": 25.4,
+    "floatPnl": 167080.3,
+    "cash": 645185.74,
+    "holdings": [
+      {
+        "name": "紫光股份",
+        "shares": 5800,
+        "mv": 220252.0,
+        "pnlPct": 66.967,
+        "cost": 22.723,
+        "cur": 37.94,
+        "code": "000938"
+      },
+      {
+        "name": "长电科技",
+        "shares": 0,
+        "mv": 0.0,
+        "pnlPct": 21.092,
+        "cost": 24.772,
+        "cur": 51.96,
+        "code": "600584"
+      }
+    ],
+    "note": "主账户持仓截图(长电科技已清仓)；另有第二账户(**5362)截图：全部清仓(仓位0%)，总资产约53万，浮盈+21965.66，当日盈亏+4807(+0.92%)；含3张非持仓图(聊天截图x2+局部截图x1，已跳过)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "紫光股份",
+        "code": "000938",
+        "shares": 5000,
+        "close": false
+      },
+      {
+        "action": "sell",
+        "name": "长鑫科技",
+        "code": "688825",
+        "shares": 2800,
+        "close": true
+      }
+    ]
+  },
+  {
+    "date": "2026-08-07",
+    "day": 10,
+    "total": 884811.98,
+    "dayPnl": 2.26,
+    "pos": 50.6,
+    "floatPnl": 107732.71,
+    "cash": 436761.98,
+    "holdings": [
+      {
+        "name": "联瑞新材",
+        "shares": 1500,
+        "mv": 227550.0,
+        "pnlPct": 9.177,
+        "cost": 138.949,
+        "cur": 151.7,
+        "code": "688300"
+      },
+      {
+        "name": "紫光股份",
+        "shares": 5800,
+        "mv": 220400.0,
+        "pnlPct": 67.231,
+        "cost": 22.723,
+        "cur": 38.0,
+        "code": "000938"
+      }
+    ],
+    "note": "主账户(**3538)持仓截图(新增联瑞新材)；另有第二账户(**5362)截图：满仓99.7%，总资产约53.7万，浮盈+8284.46，当日盈亏+8392(+1.59%)，持仓云路诸业2100股/景嘉微2200股/风华高科2000股；含同花顺日历收益图和两张日历截图(辅助参考)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "联瑞新材",
+        "code": "688300",
+        "shares": 1500,
+        "open": true,
+        "close": false
+      }
+    ]
+  },
+  {
+    "date": "2026-08-10",
+    "day": 11,
+    "total": 552976.43,
+    "dayPnl": 2.99,
+    "pos": 99.98,
+    "floatPnl": 23870.38,
+    "cash": 98.03,
+    "holdings": [
+      {
+        "name": "国瓷材料",
+        "shares": 3000,
+        "mv": 228330.0,
+        "pnlPct": 3.026,
+        "cost": 73.875,
+        "cur": 76.11,
+        "code": "300285"
+      },
+      {
+        "name": "科创半导体ETF华夏",
+        "shares": 211600,
+        "mv": 221968.4,
+        "pnlPct": 1.467,
+        "cost": 1.034,
+        "cur": 1.049,
+        "code": "588170"
+      },
+      {
+        "name": "云南锗业",
+        "shares": 1000,
+        "mv": 102580.0,
+        "pnlPct": 11.117,
+        "cost": 92.317,
+        "cur": 102.58,
+        "code": "002428"
+      },
+      {
+        "name": "风华高科",
+        "shares": 0,
+        "mv": 0.0,
+        "pnlPct": 0.229,
+        "cost": 56.331,
+        "cur": 61.7,
+        "code": "000636"
+      },
+      {
+        "name": "景旺电子",
+        "shares": 0,
+        "mv": 0.0,
+        "pnlPct": 1.644,
+        "cost": 94.97,
+        "cur": 96.0,
+        "code": "603228"
+      }
+    ],
+    "note": "含资产分析页（当日+2.99%）与持仓页。风华高科、景旺电子持仓为0，显示历史盈亏。仓位按总市值/总资产推算。",
+    "valid": true,
+    "trades": []
+  },
+  {
+    "date": "2026-08-11",
+    "day": 12,
+    "total": 551038.04,
+    "dayPnl": -0.29,
+    "pos": 37.0,
+    "floatPnl": 18238.38,
+    "cash": 346974.04,
+    "holdings": [
+      {
+        "name": "国瓷材料",
+        "shares": 2800,
+        "mv": 204064.0,
+        "pnlPct": 4.992,
+        "cost": 69.415,
+        "cur": 72.88,
+        "code": "300285"
+      },
+      {
+        "name": "云南锗业",
+        "shares": 0,
+        "mv": 0.0,
+        "pnlPct": 3.846,
+        "cost": 92.317,
+        "cur": 100.28,
+        "code": "002428"
+      },
+      {
+        "name": "科创半导体ETF华夏",
+        "shares": 0,
+        "mv": 0.0,
+        "pnlPct": 0.285,
+        "cost": 1.034,
+        "cur": 1.018,
+        "code": "588170"
+      }
+    ],
+    "note": "总资产、总市值数字被隐私码遮挡，已按持仓市值加总与可用资金反推。截图显示当日参考盈亏-1,609.20/-0.29%，资产分析页同日为-0.35%。",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "国瓷材料",
+        "code": "300285",
+        "shares": 200,
+        "close": false
+      },
+      {
+        "action": "sell",
+        "name": "云南锗业",
+        "code": "002428",
+        "shares": 1000,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "科创半导体ETF华夏",
+        "code": "588170",
+        "shares": 211600,
+        "close": true
+      }
+    ]
+  },
+  {
+    "date": "2026-08-12",
+    "day": 13,
+    "total": 558354.92,
+    "dayPnl": 1.34,
+    "pos": 99.8,
+    "floatPnl": 17019.66,
+    "cash": 1314.92,
+    "holdings": [
+      {
+        "name": "国瓷材料",
+        "shares": 2800,
+        "mv": 207200.0,
+        "pnlPct": 6.606,
+        "cost": 69.415,
+        "cur": 74.0,
+        "code": "300285"
+      },
+      {
+        "name": "东山精密",
+        "shares": 1000,
+        "mv": 200190.0,
+        "pnlPct": 1.091,
+        "cost": 198.03,
+        "cur": 200.19,
+        "code": "002384"
+      },
+      {
+        "name": "行云科技",
+        "shares": 4100,
+        "mv": 149650.0,
+        "pnlPct": 1.369,
+        "cost": 36.007,
+        "cur": 36.5,
+        "code": "300209"
+      }
+    ],
+    "note": "总资产、总市值数字被隐私码遮挡，已按持仓市值加总与可用资金反推。",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "东山精密",
+        "code": "002384",
+        "shares": 1000,
+        "open": true,
+        "close": false
+      },
+      {
+        "action": "buy",
+        "name": "行云科技",
+        "code": "300209",
+        "shares": 4100,
+        "open": true,
+        "close": false
+      }
+    ]
+  },
+  {
+    "date": "2026-08-13",
+    "day": 14,
+    "total": 564895.65,
+    "dayPnl": 1.25,
+    "pos": 25.0,
+    "floatPnl": 23560.39,
+    "cash": 423535.65,
+    "holdings": [
+      {
+        "name": "利欧股份",
+        "shares": 15000,
+        "mv": 83400.0,
+        "pnlPct": -2.304,
+        "cost": 5.691,
+        "cur": 5.56,
+        "code": "002131"
+      },
+      {
+        "name": "恒尚节能",
+        "shares": 2000,
+        "mv": 57960.0,
+        "pnlPct": -10.019,
+        "cost": 32.207,
+        "cur": 28.98,
+        "code": "603137"
+      },
+      {
+        "name": "国瓷材料",
+        "shares": 0,
+        "mv": 0.0,
+        "pnlPct": 4.535,
+        "cost": 64.282,
+        "cur": 70.66,
+        "code": "300285"
+      },
+      {
+        "name": "东山精密",
+        "shares": 0,
+        "mv": 0.0,
+        "pnlPct": 5.183,
+        "cost": 198.03,
+        "cur": 202.11,
+        "code": "002384"
+      },
+      {
+        "name": "行云科技",
+        "shares": 0,
+        "mv": 0.0,
+        "pnlPct": 7.903,
+        "cost": 36.007,
+        "cur": 35.35,
+        "code": "300209"
+      }
+    ],
+    "note": "总资产、总市值数字被隐私码遮挡，已按持仓市值加总与可用资金反推。国瓷材料、东山精密、行云科技持仓为0，显示历史盈亏。",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "利欧股份",
+        "code": "002131",
+        "shares": 15000,
+        "open": true,
+        "close": false
+      },
+      {
+        "action": "buy",
+        "name": "恒尚节能",
+        "code": "603137",
+        "shares": 2000,
+        "open": true,
+        "close": false
+      },
+      {
+        "action": "sell",
+        "name": "国瓷材料",
+        "code": "300285",
+        "shares": 2800,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "东山精密",
+        "code": "002384",
+        "shares": 1000,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "行云科技",
+        "code": "300209",
+        "shares": 4100,
+        "close": true
+      }
+    ]
+  },
+  {
+    "date": "2026-08-14",
+    "day": 15,
+    "total": 558520.54,
+    "dayPnl": -1.11,
+    "pos": 0.0,
+    "floatPnl": -14795.7,
+    "cash": 558520.54,
+    "holdings": [
+      {
+        "name": "恒尚节能",
+        "shares": 0,
+        "mv": 0.0,
+        "pnlPct": -14.706,
+        "cost": 32.207,
+        "cur": 26.08,
+        "code": "603137"
+      },
+      {
+        "name": "利欧股份",
+        "shares": 0,
+        "mv": 0.0,
+        "pnlPct": -6.236,
+        "cost": 5.691,
+        "cur": 5.33,
+        "code": "002131"
+      }
+    ],
+    "note": "含持仓页（仓位0%，已全部清仓）与资产分析页（当日-1.11%）。",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "恒尚节能",
+        "code": "603137",
+        "shares": 2000,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "利欧股份",
+        "code": "002131",
+        "shares": 15000,
+        "close": true
+      }
+    ]
+  },
+  {
+    "date": "2026-08-17",
+    "day": 16,
+    "total": 559501.52,
+    "dayPnl": 0.18,
+    "pos": 24.3,
+    "holdings": [
+      {
+        "name": "万邦医药",
+        "code": "301520",
+        "shares": 1600,
+        "mv": 136096.0,
+        "pnlPct": 0.726,
+        "cost": 84.447,
+        "cur": 85.06
+      }
+    ],
+    "note": "持仓截图(平安证券)，继续持仓万邦医药",
+    "valid": true,
+    "trades": []
+  },
+  {
+    "date": "2026-08-18",
+    "day": 17,
+    "total": 556933.05,
+    "dayPnl": -0.43,
+    "pos": 79.8,
+    "holdings": [
+      {
+        "name": "哈药股份",
+        "code": "600664",
+        "shares": 12500,
+        "mv": 114000.0,
+        "pnlPct": 0.53,
+        "cost": 9.072,
+        "cur": 9.12
+      },
+      {
+        "name": "京东方A",
+        "code": "000725",
+        "shares": 17500,
+        "mv": 113225.0,
+        "pnlPct": 1.709,
+        "cost": 6.361,
+        "cur": 6.47
+      },
+      {
+        "name": "药明康德",
+        "code": "603259",
+        "shares": 600,
+        "avail": 0,
+        "mv": 100308.0,
+        "pnlPct": 1.116,
+        "cost": 165.335,
+        "cur": 167.18
+      },
+      {
+        "name": "士兰微",
+        "code": "600460",
+        "shares": 1900,
+        "avail": 0,
+        "mv": 66272.0,
+        "pnlPct": 0.209,
+        "cost": 34.807,
+        "cur": 34.88
+      },
+      {
+        "name": "新洁能",
+        "code": "605111",
+        "shares": 800,
+        "mv": 50000.0,
+        "pnlPct": -0.257,
+        "cost": 63.663,
+        "cur": 63.5
+      },
+      {
+        "name": "万邦医药",
+        "code": "301520",
+        "shares": 0,
+        "mv": 0.0,
+        "pnlPct": -3.853,
+        "cost": 84.447,
+        "cur": 73.86
+      }
+    ],
+    "note": "持仓截图(平安证券)。清仓万邦医药，新买入哈药股份、京东方A、药明康德、士兰微、新洁能",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "万邦医药",
+        "code": "301520",
+        "shares": 1600,
+        "close": true
+      },
+      {
+        "action": "buy",
+        "name": "哈药股份",
+        "code": "600664",
+        "shares": 12500,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "京东方A",
+        "code": "000725",
+        "shares": 17500,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "药明康德",
+        "code": "603259",
+        "shares": 600,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "士兰微",
+        "code": "600460",
+        "shares": 1900,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "新洁能",
+        "code": "605111",
+        "shares": 800,
+        "open": true
+      }
+    ]
+  },
+  {
+    "date": "2026-08-19",
+    "day": 18,
+    "total": 550710.9,
+    "dayPnl": -1.05,
+    "pos": 35.9,
+    "holdings": [
+      {
+        "name": "药明康德",
+        "code": "603259",
+        "shares": 600,
+        "avail": 0,
+        "mv": 98400.0,
+        "pnlPct": -0.658,
+        "cost": 165.086,
+        "cur": 164.0
+      },
+      {
+        "name": "士兰微",
+        "code": "600460",
+        "shares": 1900,
+        "avail": 0,
+        "mv": 65531.0,
+        "pnlPct": 4.388,
+        "cost": 33.04,
+        "cur": 34.49
+      },
+      {
+        "name": "风华高科",
+        "code": "000636",
+        "shares": 600,
+        "avail": 0,
+        "mv": 33666.0,
+        "pnlPct": -3.311,
+        "cost": 58.032,
+        "cur": 56.11
+      }
+    ],
+    "note": "持仓截图(平安证券)。清仓哈药股份、京东方A、新洁能，买入风华高科，继续持有药明康德、士兰微",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "哈药股份",
+        "code": "600664",
+        "shares": 12500,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "新洁能",
+        "code": "605111",
+        "shares": 800,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "京东方A",
+        "code": "000725",
+        "shares": 17500,
+        "close": true
+      },
+      {
+        "action": "buy",
+        "name": "风华高科",
+        "code": "000636",
+        "shares": 600,
+        "open": true
+      }
+    ]
+  },
+  {
+    "date": "2026-08-20",
+    "day": 19,
+    "total": 550445.05,
+    "dayPnl": -0.02,
+    "pos": 20.9,
+    "floatPnl": 684.56,
+    "cash": 435358.05,
+    "holdings": [
+      {
+        "name": "士兰微",
+        "code": "600460",
+        "shares": 1900,
+        "avail": 0,
+        "mv": 61997.0,
+        "pnlPct": -0.125,
+        "cost": 32.671,
+        "cur": 32.63
+      },
+      {
+        "name": "风华高科",
+        "code": "000636",
+        "shares": 1000,
+        "avail": 0,
+        "mv": 53090.0,
+        "pnlPct": -3.547,
+        "cost": 55.042,
+        "cur": 53.09
+      },
+      {
+        "name": "药明康德",
+        "code": "603259",
+        "shares": 0,
+        "mv": 0.0,
+        "pnlPct": 2.736,
+        "cost": 165.086,
+        "cur": 167.9
+      }
+    ],
+    "note": "持仓截图(平安证券 **5362)。当日参考盈亏 -102.00 / -0.02%，总市值 115,087.00，可用资金 435,358.05，仓位 20.9%。药明康德已清仓；风华高科做T（卖600股、买回1000股，净加400股，当日可用0即当天新买未解锁），保留历史盈亏记录。",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "药明康德",
+        "code": "603259",
+        "shares": 600,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "风华高科",
+        "code": "000636",
+        "shares": 600,
+        "close": false
+      },
+      {
+        "action": "buy",
+        "name": "风华高科",
+        "code": "000636",
+        "shares": 1000,
+        "open": false,
+        "close": false
+      }
+    ]
+  },
+  {
+    "date": "2026-08-21",
+    "day": 20,
+    "total": 558219.05,
+    "dayPnl": 1.41,
+    "pos": 22.0,
+    "floatPnl": 5744.17,
+    "holdings": [
+      {
+        "name": "士兰微",
+        "code": "600460",
+        "shares": 1900,
+        "avail": 1900,
+        "mv": 68191.0,
+        "pnlPct": 9.854,
+        "cost": 32.671,
+        "cur": 35.89
+      },
+      {
+        "name": "风华高科",
+        "code": "000636",
+        "shares": 1000,
+        "avail": 1000,
+        "mv": 54670.0,
+        "pnlPct": -0.677,
+        "cost": 55.042,
+        "cur": 54.67
+      }
+    ],
+    "note": "持仓截图(平安证券 **5362)。当日参考盈亏 +7,774.00 / +1.41%，总市值 122,861.00，可用资金 435,358.05，仓位 22.0%。风华高科可用=持仓=1000股，当日未操作。",
+    "valid": true,
+    "trades": []
+  },
+  {
+    "date": "2026-08-24",
+    "day": 21,
+    "total": 558041.94,
+    "dayPnl": -0.01,
+    "pos": 14.0,
+    "floatPnl": 5567.06,
+    "cash": 479641.94,
+    "holdings": [
+      {
+        "name": "创新药ETF国泰",
+        "code": "517110",
+        "shares": 100000,
+        "avail": 0,
+        "mv": 78400.0,
+        "pnlPct": -0.021,
+        "cost": 0.784,
+        "cur": 0.784
+      },
+      {
+        "name": "士兰微",
+        "code": "600460",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": 12.448,
+        "cost": 32.671,
+        "cur": 35.56
+      },
+      {
+        "name": "风华高科",
+        "code": "000636",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": -4.732,
+        "cost": 55.042,
+        "cur": 51.91
+      }
+    ],
+    "note": "持仓截图(平安证券 **5362)。当日参考盈亏 -74.00 / -0.01%，总市值 78,400.00，可用资金 479,641.94，仓位 14.0%。清仓士兰微、风华高科，买入创新药ETF国泰100000股；创新药ETF当日可用0（T+1新买未解锁）。",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "士兰微",
+        "code": "600460",
+        "shares": 1900,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "风华高科",
+        "code": "000636",
+        "shares": 1000,
+        "close": true
+      },
+      {
+        "action": "buy",
+        "name": "创新药ETF国泰",
+        "code": "517110",
+        "shares": 100000,
+        "open": true
+      }
+    ]
+  },
+  {
+    "date": "2026-08-25",
+    "day": 22,
+    "total": 561225.9,
+    "dayPnl": 0.58,
+    "pos": 40.0,
+    "floatPnl": 3167.5,
+    "cash": 336905.9,
+    "holdings": [
+      {
+        "name": "中石科技",
+        "code": "300684",
+        "shares": 1100,
+        "avail": 0,
+        "mv": 94611.0,
+        "pnlPct": 2.129,
+        "cost": 84.217,
+        "cur": 86.01
+      },
+      {
+        "name": "宝鼎科技",
+        "code": "002552",
+        "shares": 1300,
+        "avail": 0,
+        "mv": 72280.0,
+        "pnlPct": 0.196,
+        "cost": 55.491,
+        "cur": 55.6
+      },
+      {
+        "name": "中钨高新",
+        "code": "000657",
+        "shares": 900,
+        "avail": 0,
+        "mv": 57429.0,
+        "pnlPct": 0.326,
+        "cost": 63.603,
+        "cur": 63.81
+      },
+      {
+        "name": "创新药ETF国泰",
+        "code": "517110",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": 1.105,
+        "cost": 0.784,
+        "cur": 0.804
+      }
+    ],
+    "note": "持仓截图(平安证券 **5362)。当日参考盈亏 +3,245.00 / +0.58%，总市值 224,320.00，可用资金 336,905.90，仓位 40.0%。清仓创新药ETF国泰，新买入中石科技、宝鼎科技、中钨高新；三只新股当日可用0（T+1未解锁）。",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "创新药ETF国泰",
+        "code": "517110",
+        "shares": 100000,
+        "close": true
+      },
+      {
+        "action": "buy",
+        "name": "中石科技",
+        "code": "300684",
+        "shares": 1100,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "宝鼎科技",
+        "code": "002552",
+        "shares": 1300,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "中钨高新",
+        "code": "000657",
+        "shares": 900,
+        "open": true
+      }
+    ]
+  },
+  {
+    "date": "2026-08-26",
+    "day": 23,
+    "total": 548900.73,
+    "dayPnl": -2.17,
+    "pos": 45.2,
+    "floatPnl": -12174.0,
+    "cash": 300581.73,
+    "holdings": [
+      {
+        "name": "英维克",
+        "code": "002837",
+        "shares": 2000,
+        "avail": 0,
+        "mv": 124140.0,
+        "pnlPct": 0.433,
+        "cost": 61.802,
+        "cur": 62.07
+      },
+      {
+        "name": "宝鼎科技",
+        "code": "002552",
+        "shares": 1300,
+        "avail": 0,
+        "mv": 67470.0,
+        "pnlPct": -12.683,
+        "cost": 59.439,
+        "cur": 51.9
+      },
+      {
+        "name": "中钨高新",
+        "code": "000657",
+        "shares": 900,
+        "avail": 900,
+        "mv": 56709.0,
+        "pnlPct": -0.932,
+        "cost": 63.603,
+        "cur": 63.01
+      },
+      {
+        "name": "中石科技",
+        "code": "300684",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": -0.244,
+        "cost": 84.217,
+        "cur": 87.4
+      }
+    ],
+    "note": "持仓截图(平安证券 **5362)。当日参考盈亏 -12,174.00 / -2.17%，总市值 248,319.00，可用资金 300,581.73，仓位 45.2%。清仓中石科技1100股（亏226.26），新买入英维克2000股；宝鼎科技做反T——卖出1300股后于更高价买回1300股（全量T，avail归0印证），成本55.491→59.439，做T亏损约5132元；中钨高新未动、T+1已解锁。",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "中石科技",
+        "code": "300684",
+        "shares": 1100,
+        "close": true
+      },
+      {
+        "action": "buy",
+        "name": "英维克",
+        "code": "002837",
+        "shares": 2000,
+        "open": true
+      },
+      {
+        "action": "sell",
+        "name": "宝鼎科技",
+        "code": "002552",
+        "shares": 1300,
+        "close": false
+      },
+      {
+        "action": "buy",
+        "name": "宝鼎科技",
+        "code": "002552",
+        "shares": 1300,
+        "open": false
+      }
+    ]
+  },
+  {
+    "date": "2026-08-27",
+    "day": 24,
+    "total": 567709.05,
+    "dayPnl": 3.44,
+    "pos": 47.2,
+    "floatPnl": 9010.02,
+    "cash": 299851.05,
+    "holdings": [
+      {
+        "name": "英维克",
+        "code": "002837",
+        "shares": 2000,
+        "avail": 2000,
+        "mv": 131940.0,
+        "pnlPct": 6.743,
+        "cost": 61.802,
+        "cur": 65.97
+      },
+      {
+        "name": "利通电子",
+        "code": "605189",
+        "shares": 600,
+        "avail": 0,
+        "mv": 75132.0,
+        "pnlPct": 0.315,
+        "cost": 124.826,
+        "cur": 125.22
+      },
+      {
+        "name": "中钨高新",
+        "code": "000657",
+        "shares": 900,
+        "avail": 900,
+        "mv": 60786.0,
+        "pnlPct": 6.19,
+        "cost": 63.603,
+        "cur": 67.54
+      },
+      {
+        "name": "宝鼎科技",
+        "code": "002552",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": -4.304,
+        "cost": 59.439,
+        "cur": 56.0
+      }
+    ],
+    "note": "持仓截图(平安证券 **5362)。当日参考盈亏 +18,876.00 / +3.44%，总市值 267,858.00，可用资金 299,851.05，仓位 47.2%。清仓宝鼎科技1300股（清仓累计浮亏 −3,105.08），新买入利通电子600股（成本124.826，T+1锁仓）；英维克 2000股可用=持仓=2000，T+1解锁且未做T，按新规则「只看持仓/可用」判定为没动；中钨高新 900股 可用=900，未动。三只持仓齐涨：英维克+6.74%、中钨高新+6.19%、利通电子+0.32%，组合当日大幅回升。",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "宝鼎科技",
+        "code": "002552",
+        "shares": 1300,
+        "close": true
+      },
+      {
+        "action": "buy",
+        "name": "利通电子",
+        "code": "605189",
+        "shares": 600,
+        "open": true
+      }
+    ]
+  },
+  {
+    "date": "2026-08-28",
+    "day": 25,
+    "total": 560540.73,
+    "dayPnl": -1.24,
+    "pos": 35.8,
+    "floatPnl": 4946.78,
+    "cash": 359610.73,
+    "holdings": [
+      {
+        "name": "英维克",
+        "code": "002837",
+        "shares": 2000,
+        "avail": 2000,
+        "mv": 128960.0,
+        "pnlPct": 4.333,
+        "cost": 61.802,
+        "cur": 64.48
+      },
+      {
+        "name": "利通电子",
+        "code": "605189",
+        "shares": 600,
+        "avail": 0,
+        "mv": 71970.0,
+        "pnlPct": -4.29,
+        "cost": 125.327,
+        "cur": 119.95
+      },
+      {
+        "name": "中钨高新",
+        "code": "000657",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": 4.922,
+        "cost": 63.603,
+        "cur": 66.76
+      }
+    ],
+    "note": "持仓截图(平安证券 **5362)。当日参考盈亏 -7,060.00 / -1.24%，总市值 200,930.00，可用资金 359,610.73，仓位 35.8%。按新规则「只看持仓/可用」判定：中钨高新昨日持有900股、今日持仓/可用均为0 → 清仓；利通电子昨日持有600股、今日600/0（持仓不变但可用为0）→ 做T；英维克2000/2000与昨日一致 → 未动。清仓中钨高新900股（浮盈2,817.48 / +4.92%）；利通电子做T（成本124.826→125.327，估算做T亏损约300.60元）。",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "中钨高新",
+        "code": "000657",
+        "shares": 900,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "利通电子",
+        "code": "605189",
+        "shares": 600,
+        "open": false
+      },
+      {
+        "action": "buy",
+        "name": "利通电子",
+        "code": "605189",
+        "shares": 600,
+        "open": false
+      }
+    ]
+  },
+  {
+    "date": "2026-08-31",
+    "day": 26,
+    "total": 569498.09,
+    "dayPnl": 1.64,
+    "pos": 58.7,
+    "floatPnl": 11086.66,
+    "cash": 235093.09,
+    "holdings": [
+      {
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 1500,
+        "avail": 0,
+        "mv": 113625.0,
+        "pnlPct": 2.622,
+        "cost": 73.815,
+        "cur": 75.75
+      },
+      {
+        "name": "中石科技",
+        "code": "300684",
+        "shares": 1200,
+        "avail": 0,
+        "mv": 113400.0,
+        "pnlPct": 1.375,
+        "cost": 93.219,
+        "cur": 94.5
+      },
+      {
+        "name": "生益科技",
+        "code": "600183",
+        "shares": 700,
+        "avail": 0,
+        "mv": 107380.0,
+        "pnlPct": 0.031,
+        "cost": 153.352,
+        "cur": 153.4
+      }
+    ],
+    "note": "平安证券 **5362 持仓截图。总资产569,498.09，当日参考盈亏+9,169.00/+1.64%，总市值334,405.00，可用资金235,093.09，仓位约58.7%，浮动盈亏+11,086.66。持仓明细：清仓英维克2000股(+8.787%)、利通电子600股(-5.672%)；新买入金安国纪1500股、中石科技1200股、生益科技700股。三只新股当日avail=0系T+1未解锁，因8/28未持有，按「只看持仓/可用」硬规则判定为开仓而非做T。",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "英维克",
+        "code": "002837",
+        "shares": 2000,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "利通电子",
+        "code": "605189",
+        "shares": 600,
+        "close": true
+      },
+      {
+        "action": "buy",
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 1500,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "中石科技",
+        "code": "300684",
+        "shares": 1200,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "生益科技",
+        "code": "600183",
+        "shares": 700,
+        "open": true
+      }
+    ]
+  },
+  {
+    "date": "2026-09-01",
+    "day": 27,
+    "total": 2060827.48,
+    "dayPnl": -0.4,
+    "pos": 26.9,
+    "floatPnl": -4196.65,
+    "cash": 1507423.48,
+    "holdings": [
+      {
+        "name": "一鸣食品",
+        "code": "605179",
+        "shares": 6000,
+        "avail": 0,
+        "mv": 208020.0,
+        "pnlPct": 6.655,
+        "cost": 32.507,
+        "cur": 34.67
+      },
+      {
+        "name": "生益科技",
+        "code": "600183",
+        "shares": 1200,
+        "avail": 0,
+        "mv": 173304.0,
+        "pnlPct": -3.882,
+        "cost": 150.253,
+        "cur": 144.42
+      },
+      {
+        "name": "中国巨石",
+        "code": "600176",
+        "shares": 4000,
+        "avail": 0,
+        "mv": 172080.0,
+        "pnlPct": -3.128,
+        "cost": 44.409,
+        "cur": 43.02
+      }
+    ],
+    "note": "平安证券 **5362 持仓截图(15:18)。总资产2,060,827.48，当日参考盈亏-8,331.00/-0.40%，总市值553,404.00，可用资金1,507,423.48，仓位26.9%，浮动盈亏-4,196.65。持仓明细：一鸣食品6000股(+6.655%，14:28封板涨停新开仓)、生益科技1200股(做T+加仓500股：卖700/买1200，成本153.352→150.253)、中国巨石4000股(新开仓-3.128%)；清仓金安国纪1500股(-2.121%)、中石科技1200股(-2.030%)。注：8/31 平安**5362 总资产569,498.09，9/1 跃至2,060,827.48（可用资金增加约127万），期间疑似有大额资金入金或转托管。",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 1500,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "中石科技",
+        "code": "300684",
+        "shares": 1200,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "生益科技",
+        "code": "600183",
+        "shares": 700,
+        "close": false
+      },
+      {
+        "action": "buy",
+        "name": "生益科技",
+        "code": "600183",
+        "shares": 1200,
+        "open": false
+      },
+      {
+        "action": "buy",
+        "name": "一鸣食品",
+        "code": "605179",
+        "shares": 6000,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "中国巨石",
+        "code": "600176",
+        "shares": 4000,
+        "open": true
+      }
+    ]
+  },
+  {
+    "date": "2026-09-02",
+    "day": 28,
+    "total": 2045119.48,
+    "dayPnl": -0.76,
+    "pos": 26.3,
+    "floatPnl": -15285.46,
+    "cash": 1507423.48,
+    "holdings": [
+      {
+        "name": "一鸣食品",
+        "code": "605179",
+        "shares": 6000,
+        "avail": 6000,
+        "mv": 187200.0,
+        "pnlPct": -4.02,
+        "cost": 32.507,
+        "cur": 31.2
+      },
+      {
+        "name": "中国巨石",
+        "code": "600176",
+        "shares": 4000,
+        "avail": 4000,
+        "mv": 176520.0,
+        "pnlPct": -0.629,
+        "cost": 44.409,
+        "cur": 44.13
+      },
+      {
+        "name": "生益科技",
+        "code": "600183",
+        "shares": 1200,
+        "avail": 1200,
+        "mv": 173976.0,
+        "pnlPct": -3.509,
+        "cost": 150.253,
+        "cur": 144.98
+      }
+    ],
+    "note": "平安证券 **5362 持仓截图(15:58)。总资产2,045,119.48，当日参考盈亏-15,708.00/-0.76%，总市值537,696.00，可用资金1,507,423.48（与9/1持平），仓位26.3%，浮动盈亏-15,285.46。持仓明细（今日三只均「可用=持仓」→ 按做T硬规则不算做T，成本与9/1完全一致亦证实未交易）：一鸣食品(605179) 6000股(-4.020%，成本32.507/现价31.200)、中国巨石(600176) 4000股(-0.629%，成本44.409/现价44.130)、生益科技(600183) 1200股(-3.509%，成本150.253/现价144.980)。当日净亏全部来自持仓静态涨跌：一鸣贡献-20,820（最大拖累：从9/1收盘+12,979/+6.66% 跌至9/2 -7,840/-4.02%，单日回撤2万+，与9/1 14:28封板次日溢价回吐一致）、中国巨石+4,440、生益科技+672，合计-15,708，与截图当日参考盈亏完全吻合。无新开仓、无清仓、无做T。总资产较9/1回落约15,708，纯市场波动。",
+    "valid": true,
+    "trades": []
+  },
+  {
+    "date": "2026-09-03",
+    "day": 29,
+    "total": 2028180.71,
+    "dayPnl": -0.81,
+    "pos": 51.0,
+    "floatPnl": -32224.23,
+    "cash": 993282.71,
+    "holdings": [
+      {
+        "name": "远东股份",
+        "code": "601869",
+        "shares": 30000,
+        "avail": 0,
+        "mv": 631500.0,
+        "pnlPct": 3.929,
+        "cost": 20.254,
+        "cur": 21.05
+      },
+      {
+        "name": "锦龙股份",
+        "code": "000712",
+        "shares": 18600,
+        "avail": 0,
+        "mv": 234918.0,
+        "pnlPct": -4.842,
+        "cost": 13.273,
+        "cur": 12.63
+      },
+      {
+        "name": "一鸣食品",
+        "code": "605179",
+        "shares": 6000,
+        "avail": 6000,
+        "mv": 168480.0,
+        "pnlPct": -13.618,
+        "cost": 32.507,
+        "cur": 28.08
+      },
+      {
+        "name": "生益科技",
+        "code": "600183",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": -5.302,
+        "cost": 150.253,
+        "cur": 143.19
+      },
+      {
+        "name": "中国巨石",
+        "code": "600176",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": -4.525,
+        "cost": 44.409,
+        "cur": 42.63
+      }
+    ],
+    "note": "",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "生益科技",
+        "code": "600183",
+        "shares": 1200,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "中国巨石",
+        "code": "600176",
+        "shares": 4000,
+        "close": true
+      },
+      {
+        "action": "buy",
+        "name": "远东股份",
+        "code": "601869",
+        "shares": 30000,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "锦龙股份",
+        "code": "000712",
+        "shares": 18600,
+        "open": true
+      }
+    ]
+  },
+  {
+    "date": "2026-09-04",
+    "day": 30,
+    "total": 2041480.94,
+    "dayPnl": 0.69,
+    "pos": 10.4,
+    "floatPnl": -1341.66,
+    "cash": 1829480.94,
+    "holdings": [
+      {
+        "name": "远东股份",
+        "code": "601869",
+        "shares": 10000,
+        "avail": 10000,
+        "mv": 212000.0,
+        "pnlPct": 18.481,
+        "cost": 17.893,
+        "cur": 21.2
+      },
+      {
+        "name": "一鸣食品",
+        "code": "605179",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": -11.62,
+        "cost": 32.507,
+        "cur": 28.68
+      },
+      {
+        "name": "锦龙股份",
+        "code": "000712",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": -4.758,
+        "cost": 13.273,
+        "cur": 12.35
+      }
+    ],
+    "note": "平安证券**5362 持仓截图(15:33)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "一鸣食品",
+        "code": "605179",
+        "shares": 6000,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "锦龙股份",
+        "code": "000712",
+        "shares": 18600,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "远东股份",
+        "code": "601869",
+        "shares": 20000,
+        "close": false
+      }
+    ]
+  },
+  {
+    "date": "2026-09-07",
+    "day": 31,
+    "total": 2034934.96,
+    "dayPnl": -0.31,
+    "pos": 0,
+    "floatPnl": 26521.85,
+    "cash": 1829480.94,
+    "holdings": [
+      {
+        "name": "远东股份",
+        "code": "600869",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": 4.365,
+        "cost": 17.893,
+        "cur": 20.88
+      }
+    ],
+    "note": "平安证券**5362 持仓截图(15:37)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "远东股份",
+        "code": "600869",
+        "shares": 10000,
+        "close": true
+      }
+    ]
+  },
+  {
+    "date": "2026-09-08",
+    "day": 32,
+    "total": 2005679.2,
+    "dayPnl": -1.43,
+    "pos": 61.8,
+    "floatPnl": -29255.76,
+    "cash": 765921.2,
+    "holdings": [
+      {
+        "name": "行云科技",
+        "code": "300209",
+        "shares": 11100,
+        "avail": 0,
+        "mv": 394494.0,
+        "pnlPct": -3.022,
+        "cost": 36.647,
+        "cur": 35.54
+      },
+      {
+        "name": "利通电子",
+        "code": "603629",
+        "shares": 3600,
+        "avail": 0,
+        "mv": 392364.0,
+        "pnlPct": -2.114,
+        "cost": 111.343,
+        "cur": 108.99
+      },
+      {
+        "name": "神农种业",
+        "code": "300189",
+        "shares": 30000,
+        "avail": 0,
+        "mv": 230400.0,
+        "pnlPct": -2.185,
+        "cost": 7.852,
+        "cur": 7.68
+      },
+      {
+        "name": "楚天龙",
+        "code": "003040",
+        "shares": 10000,
+        "avail": 0,
+        "mv": 222500.0,
+        "pnlPct": -1.481,
+        "cost": 22.585,
+        "cur": 22.25
+      }
+    ],
+    "note": "平安证券**5362 持仓截图(15:37)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "行云科技",
+        "code": "300209",
+        "shares": 11100,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "利通电子",
+        "code": "603629",
+        "shares": 3600,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "神农种业",
+        "code": "300189",
+        "shares": 30000,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "楚天龙",
+        "code": "003040",
+        "shares": 10000,
+        "open": true
+      }
+    ]
+  },
+  {
+    "date": "2026-09-09",
+    "day": 33,
+    "total": 2013409.41,
+    "dayPnl": 0.43,
+    "pos": 40.2,
+    "floatPnl": -21525.55,
+    "cash": 1204273.41,
+    "holdings": [
+      {
+        "name": "杭电股份",
+        "code": "603618",
+        "shares": 10000,
+        "avail": 0,
+        "mv": 415800.0,
+        "pnlPct": 1.147,
+        "cost": 41.109,
+        "cur": 41.58
+      },
+      {
+        "name": "利通电子",
+        "code": "603629",
+        "shares": 3600,
+        "avail": 1800,
+        "mv": 393336.0,
+        "pnlPct": -0.118,
+        "cost": 109.39,
+        "cur": 109.26
+      },
+      {
+        "name": "行云科技",
+        "code": "300209",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": -0.829,
+        "cost": 37.086,
+        "cur": 37.69
+      },
+      {
+        "name": "楚天龙",
+        "code": "003040",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": -6.506,
+        "cost": 22.585,
+        "cur": 21.0
+      },
+      {
+        "name": "神农种业",
+        "code": "300189",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": -3.272,
+        "cost": 7.852,
+        "cur": 7.78
+      }
+    ],
+    "note": "平安证券**5362 持仓截图(15:07)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "杭电股份",
+        "code": "603618",
+        "shares": 10000,
+        "open": true
+      },
+      {
+        "action": "sell",
+        "name": "行云科技",
+        "code": "300209",
+        "shares": 11100,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "楚天龙",
+        "code": "003040",
+        "shares": 10000,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "神农种业",
+        "code": "300189",
+        "shares": 30000,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "利通电子",
+        "code": "603629",
+        "shares": 1800,
+        "t": true
+      },
+      {
+        "action": "buy",
+        "name": "利通电子",
+        "code": "603629",
+        "shares": 1800,
+        "t": true
+      }
+    ]
+  },
+  {
+    "date": "2026-09-10",
+    "day": 34,
+    "total": 1989787.07,
+    "dayPnl": -1.13,
+    "pos": 70.0,
+    "floatPnl": -19375.19,
+    "cash": 597763.07,
+    "holdings": [
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 5600,
+        "avail": 0,
+        "mv": 616056.0,
+        "pnlPct": 0.234,
+        "cost": 109.753,
+        "cur": 110.01
+      },
+      {
+        "name": "杭电股份",
+        "code": "603618",
+        "shares": 10000,
+        "avail": 0,
+        "mv": 393000.0,
+        "pnlPct": -3.222,
+        "cost": 40.609,
+        "cur": 39.3
+      },
+      {
+        "name": "利通电子",
+        "code": "603629",
+        "shares": 3600,
+        "avail": 0,
+        "mv": 382968.0,
+        "pnlPct": -1.978,
+        "cost": 108.526,
+        "cur": 106.38
+      }
+    ],
+    "note": "做T: 杭电+5000 利通+1555 (合计+6555) | 平安证券**5362 持仓截图(15:28)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 5600,
+        "open": true
+      },
+      {
+        "action": "sell",
+        "name": "杭电股份",
+        "code": "603618",
+        "shares": 10000,
+        "t": true,
+        "pnl": 5000.0
+      },
+      {
+        "action": "buy",
+        "name": "杭电股份",
+        "code": "603618",
+        "shares": 10000,
+        "t": true
+      },
+      {
+        "action": "sell",
+        "name": "利通电子",
+        "code": "603629",
+        "shares": 1800,
+        "t": true,
+        "pnl": 1555.2
+      },
+      {
+        "action": "buy",
+        "name": "利通电子",
+        "code": "603629",
+        "shares": 1800,
+        "t": true
+      }
+    ],
+    "tPnl": 6555.2
+  },
+  {
+    "date": "2026-09-11",
+    "day": 35,
+    "total": 1994428.67,
+    "dayPnl": 0.27,
+    "pos": 30.4,
+    "floatPnl": -14733.59,
+    "cash": 1388578.67,
+    "holdings": [
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 3600,
+        "avail": 3600,
+        "mv": 402300.0,
+        "pnlPct": 2.18,
+        "cost": 109.366,
+        "cur": 111.75
+      },
+      {
+        "name": "杭电股份",
+        "code": "603618",
+        "shares": 5000,
+        "avail": 0,
+        "mv": 203550.0,
+        "pnlPct": 0.216,
+        "cost": 40.622,
+        "cur": 40.71,
+        "tpnl": 700.0
+      },
+      {
+        "name": "利通电子",
+        "code": "603629",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": -5.927,
+        "cost": 108.526,
+        "cur": 105.28
+      }
+    ],
+    "note": "做T: 杭电+700 (合计+700) | 平安证券**5362 持仓截图(15:00)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 2000
+      },
+      {
+        "action": "sell",
+        "name": "利通电子",
+        "code": "603629",
+        "shares": 3600,
+        "close": true
+      },
+      {
+        "action": "buy",
+        "name": "杭电股份",
+        "code": "603618",
+        "shares": 5000,
+        "price": 39.3,
+        "t": true
+      },
+      {
+        "action": "sell",
+        "name": "杭电股份",
+        "code": "603618",
+        "shares": 5000,
+        "price": 39.68,
+        "t": true
+      },
+      {
+        "action": "sell",
+        "name": "杭电股份",
+        "code": "603618",
+        "shares": 5000,
+        "price": 40.47,
+        "t": true
+      }
+    ],
+    "tPnl": 700.0
+  },
+  {
+    "date": "2026-09-14",
+    "day": 36,
+    "total": 1988353.09,
+    "dayPnl": -0.3,
+    "pos": 71.1,
+    "floatPnl": 2946.5,
+    "cash": 575536.09,
+    "holdings": [
+      {
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 5000,
+        "avail": 0,
+        "mv": 412500,
+        "pnlPct": 0.59,
+        "cost": 82.016,
+        "cur": 82.5
+      },
+      {
+        "name": "德福科技",
+        "code": "301511",
+        "shares": 3700,
+        "avail": 0,
+        "mv": 403411,
+        "pnlPct": 0.112,
+        "cost": 108.908,
+        "cur": 109.03
+      },
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 3600,
+        "avail": 3600,
+        "mv": 389556,
+        "pnlPct": -1.057,
+        "cost": 109.366,
+        "cur": 108.21
+      },
+      {
+        "name": "杭电股份",
+        "code": "603618",
+        "shares": 5000,
+        "avail": 5000,
+        "mv": 207350,
+        "pnlPct": 2.087,
+        "cost": 40.622,
+        "cur": 41.47
+      }
+    ],
+    "note": "平安证券**5362 持仓截图(15:00)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 5000,
+        "price": 82.016,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "德福科技",
+        "code": "301511",
+        "shares": 3700,
+        "price": 108.908,
+        "open": true
+      }
+    ]
+  },
+  {
+    "date": "2026-09-15",
+    "day": 37,
+    "total": 1997894.55,
+    "dayPnl": 0.53,
+    "pos": 29.6,
+    "floatPnl": 12487.96,
+    "cash": 1405890.55,
+    "holdings": [
+      {
+        "name": "太极实业",
+        "code": "600667",
+        "shares": 11000,
+        "avail": 0,
+        "mv": 208010.0,
+        "pnlPct": -1.94,
+        "cost": 19.284,
+        "cur": 18.91
+      },
+      {
+        "name": "江丰电子",
+        "code": "300666",
+        "shares": 800,
+        "avail": 0,
+        "mv": 195768.0,
+        "pnlPct": 0.271,
+        "cost": 244.049,
+        "cur": 244.71
+      },
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 1800,
+        "avail": 1800,
+        "mv": 188226.0,
+        "pnlPct": -8.461,
+        "cost": 114.235,
+        "cur": 104.57
+      },
+      {
+        "name": "杭电股份",
+        "code": "603618",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": 1.056,
+        "cost": 40.622,
+        "cur": 41.04
+      },
+      {
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": 1.342,
+        "cost": 80.541,
+        "cur": 83.99
+      },
+      {
+        "name": "德福科技",
+        "code": "301511",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": 5.864,
+        "cost": 99.062,
+        "cur": 112.1
+      }
+    ],
+    "note": "平安证券**5362 持仓截图(15:03)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "太极实业",
+        "code": "600667",
+        "shares": 11000,
+        "price": 19.284,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "江丰电子",
+        "code": "300666",
+        "shares": 800,
+        "price": 244.049,
+        "open": true
+      },
+      {
+        "action": "sell",
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 1800
+      },
+      {
+        "action": "sell",
+        "name": "杭电股份",
+        "code": "603618",
+        "shares": 5000,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 5000,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "德福科技",
+        "code": "301511",
+        "shares": 3700,
+        "close": true
+      }
+    ]
+  },
+  {
+    "date": "2026-09-16",
+    "day": 38,
+    "total": 2018875.05,
+    "dayPnl": 1.07,
+    "pos": 21.6,
+    "floatPnl": -2.71,
+    "cash": 1582071.05,
+    "holdings": [
+      {
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 2600,
+        "avail": 0,
+        "mv": 214292.0,
+        "pnlPct": 0.923,
+        "cost": 81.666,
+        "cur": 82.42
+      },
+      {
+        "name": "太极实业",
+        "code": "600667",
+        "shares": 6000,
+        "avail": 6000,
+        "mv": 121380.0,
+        "pnlPct": 5.968,
+        "cost": 19.091,
+        "cur": 20.23
+      },
+      {
+        "name": "江丰电子",
+        "code": "300666",
+        "shares": 400,
+        "avail": 400,
+        "mv": 101132.0,
+        "pnlPct": 7.116,
+        "cost": 236.034,
+        "cur": 252.83
+      },
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": -2.525,
+        "cost": 114.235,
+        "cur": 106.41
+      }
+    ],
+    "note": "平安证券**5362 持仓截图(15:46)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 2600,
+        "price": 81.666,
+        "open": true
+      },
+      {
+        "action": "sell",
+        "name": "太极实业",
+        "code": "600667",
+        "shares": 5000
+      },
+      {
+        "action": "sell",
+        "name": "江丰电子",
+        "code": "300666",
+        "shares": 400
+      },
+      {
+        "action": "sell",
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 1800,
+        "close": true
+      }
+    ]
+  },
+  {
+    "date": "2026-09-17",
+    "day": 39,
+    "total": 1976145.65,
+    "dayPnl": -2.11,
+    "pos": 70.6,
+    "floatPnl": -27215.41,
+    "cash": 580384.65,
+    "holdings": [
+      {
+        "name": "有研新材",
+        "code": "600206",
+        "shares": 15500,
+        "avail": 0,
+        "mv": 783525.0,
+        "pnlPct": -3.451,
+        "cost": 52.357,
+        "cur": 50.55
+      },
+      {
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 4900,
+        "avail": 2600,
+        "mv": 389060.0,
+        "pnlPct": -3.336,
+        "cost": 82.141,
+        "cur": 79.4
+      },
+      {
+        "name": "太极实业",
+        "code": "600667",
+        "shares": 6000,
+        "avail": 6000,
+        "mv": 123420.0,
+        "pnlPct": 7.749,
+        "cost": 19.091,
+        "cur": 20.57
+      },
+      {
+        "name": "江丰电子",
+        "code": "300666",
+        "shares": 400,
+        "avail": 400,
+        "mv": 99756.0,
+        "pnlPct": 5.658,
+        "cost": 236.034,
+        "cur": 249.39
+      }
+    ],
+    "note": "平安证券**5362 持仓截图(15:00)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "有研新材",
+        "code": "600206",
+        "shares": 15500,
+        "price": 52.357,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 2300,
+        "price": 82.141
+      }
+    ]
+  },
+  {
+    "date": "2026-09-18",
+    "day": 40,
+    "total": 2001025.05,
+    "dayPnl": 1.3,
+    "pos": 39.2,
+    "floatPnl": -2336.01,
+    "cash": 1216885.05,
+    "holdings": [
+      {
+        "name": "光智科技",
+        "code": "300489",
+        "shares": 1800,
+        "avail": 0,
+        "mv": 404316.0,
+        "pnlPct": 0.746,
+        "cost": 222.956,
+        "cur": 224.62
+      },
+      {
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 2400,
+        "avail": 2400,
+        "mv": 194064.0,
+        "pnlPct": -3.99,
+        "cost": 84.22,
+        "cur": 80.86
+      },
+      {
+        "name": "有研新材",
+        "code": "600206",
+        "shares": 3600,
+        "avail": 3600,
+        "mv": 185760.0,
+        "pnlPct": -7.485,
+        "cost": 55.775,
+        "cur": 51.6
+      },
+      {
+        "name": "太极实业",
+        "code": "600667",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": 4.228,
+        "cost": 19.091,
+        "cur": 20.46
+      },
+      {
+        "name": "江丰电子",
+        "code": "300666",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": 4.504,
+        "cost": 236.034,
+        "cur": 260.44
+      }
+    ],
+    "note": "平安证券**5362 持仓截图(15:03)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "光智科技",
+        "code": "300489",
+        "shares": 1800,
+        "price": 222.956,
+        "open": true
+      },
+      {
+        "action": "sell",
+        "name": "有研新材",
+        "code": "600206",
+        "shares": 11900
+      },
+      {
+        "action": "sell",
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 2500
+      },
+      {
+        "action": "sell",
+        "name": "太极实业",
+        "code": "600667",
+        "shares": 6000,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "江丰电子",
+        "code": "300666",
+        "shares": 400,
+        "close": true
+      }
+    ]
+  },
+  {
+    "date": "2026-09-21",
+    "day": 41,
+    "total": 2007513.37,
+    "dayPnl": 0.35,
+    "pos": 0,
+    "floatPnl": -13610.08,
+    "cash": 2007513.37,
+    "holdings": [
+      {
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": -1.781,
+        "cost": 84.22,
+        "cur": 81.38
+      },
+      {
+        "name": "有研新材",
+        "code": "600206",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": -1.855,
+        "cost": 55.775,
+        "cur": 51.32
+      },
+      {
+        "name": "光智科技",
+        "code": "300489",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": 2.146,
+        "cost": 222.956,
+        "cur": 238.81
+      }
+    ],
+    "note": "平安证券**5362 持仓截图(15:10)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 2400,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "有研新材",
+        "code": "600206",
+        "shares": 3600,
+        "close": true
+      },
+      {
+        "action": "sell",
+        "name": "光智科技",
+        "code": "300489",
+        "shares": 1800,
+        "close": true
+      }
+    ]
+  },
+  {
+    "date": "2026-09-22",
+    "day": 42,
+    "total": 2007188.6,
+    "dayPnl": -0.01,
+    "pos": 14.6,
+    "floatPnl": -324.77,
+    "cash": 1713212.6,
+    "holdings": [
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 1800,
+        "avail": 0,
+        "mv": 191016.0,
+        "pnlPct": -0.331,
+        "cost": 106.472,
+        "cur": 106.12,
+        "open": true
+      },
+      {
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 11000,
+        "avail": 0,
+        "mv": 102960.0,
+        "pnlPct": 0.301,
+        "cost": 9.332,
+        "cur": 9.36,
+        "open": true
+      }
+    ],
+    "note": "平安证券**5362 持仓截图(15:03)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 1800,
+        "price": 106.472,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 11000,
+        "price": 9.332,
+        "open": true
+      }
+    ]
+  },
+  {
+    "date": "2026-09-23",
+    "day": 43,
+    "total": 2005637.43,
+    "dayPnl": -0.07,
+    "pos": 24.3,
+    "floatPnl": -1875.94,
+    "cash": 1517567.43,
+    "holdings": [
+      {
+        "name": "胜宏科技",
+        "code": "300476",
+        "shares": 800,
+        "avail": 0,
+        "mv": 195440.0,
+        "pnlPct": -0.63,
+        "cost": 245.849,
+        "cur": 244.3,
+        "open": true
+      },
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 1800,
+        "avail": 900,
+        "mv": 193410.0,
+        "pnlPct": 1.466,
+        "cost": 105.898,
+        "cur": 107.45
+      },
+      {
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 11000,
+        "avail": 11000,
+        "mv": 99220.0,
+        "pnlPct": -3.342,
+        "cost": 9.332,
+        "cur": 9.02
+      }
+    ],
+    "note": "做T: 景旺电子 | 平安证券**5362 持仓截图(15:02)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "胜宏科技",
+        "code": "300476",
+        "shares": 800,
+        "price": 245.849,
+        "open": true
+      },
+      {
+        "action": "sell",
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 900,
+        "t": true
+      },
+      {
+        "action": "buy",
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 900,
+        "t": true
+      }
+    ]
+  },
+  {
+    "date": "2026-09-24",
+    "day": 44,
+    "total": 1988586.09,
+    "dayPnl": -0.84,
+    "pos": 24.3,
+    "floatPnl": -18927.28,
+    "cash": 1505306.09,
+    "holdings": [
+      {
+        "name": "中成股份",
+        "code": "000151",
+        "shares": 20000,
+        "avail": 0,
+        "mv": 200200.0,
+        "pnlPct": -0.911,
+        "cost": 10.102,
+        "cur": 10.01,
+        "open": true
+      },
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 1800,
+        "avail": 1800,
+        "mv": 186390.0,
+        "pnlPct": -2.217,
+        "cost": 105.898,
+        "cur": 103.55
+      },
+      {
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 11000,
+        "avail": 11000,
+        "mv": 96690.0,
+        "pnlPct": -5.807,
+        "cost": 9.332,
+        "cur": 8.79
+      },
+      {
+        "name": "胜宏科技",
+        "code": "300476",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0,
+        "pnlPct": -3.508,
+        "cost": 245.849,
+        "cur": 232.69
+      }
+    ],
+    "note": "平安证券**5362 持仓截图(15:07)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "中成股份",
+        "code": "000151",
+        "shares": 20000,
+        "price": 10.102,
+        "open": true
+      },
+      {
+        "action": "sell",
+        "name": "胜宏科技",
+        "code": "300476",
+        "shares": 800,
+        "close": true
+      }
+    ]
+  },
+  {
+    "date": "2026-09-28",
+    "day": 45,
+    "total": 1961881.06,
+    "dayPnl": -1.33,
+    "pos": 40.2,
+    "floatPnl": -38732.04,
+    "cash": 1173504.06,
+    "holdings": [
+      {
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 2600,
+        "avail": 0,
+        "mv": 206180.0,
+        "pnlPct": -1.204,
+        "cost": 80.266,
+        "cur": 79.3,
+        "open": true
+      },
+      {
+        "name": "中成股份",
+        "code": "000151",
+        "shares": 20000,
+        "avail": 20000,
+        "mv": 202800.0,
+        "pnlPct": 0.376,
+        "cost": 10.102,
+        "cur": 10.14
+      },
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 2000,
+        "avail": 0,
+        "mv": 190000.0,
+        "pnlPct": -12.69,
+        "cost": 108.808,
+        "cur": 95.0
+      },
+      {
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 22100,
+        "avail": 11000,
+        "mv": 189397.0,
+        "pnlPct": -4.712,
+        "cost": 8.994,
+        "cur": 8.57
+      }
+    ],
+    "note": "做T: 景旺电子 | 平安证券**5362 持仓截图(15:39)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 2600,
+        "price": 80.266,
+        "open": true
+      },
+      {
+        "action": "sell",
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 1800,
+        "t": true
+      },
+      {
+        "action": "buy",
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 2000,
+        "price": 108.808,
+        "t": true
+      },
+      {
+        "action": "buy",
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 11100
+      }
+    ]
+  },
+  {
+    "date": "2026-09-29",
+    "day": 46,
+    "total": 1984086.73,
+    "dayPnl": 1.13,
+    "pos": 51.3,
+    "floatPnl": -16526.37,
+    "cash": 967100.73,
+    "holdings": [
+      {
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 2600,
+        "avail": 2600,
+        "mv": 215878.0,
+        "pnlPct": 3.443,
+        "cost": 80.266,
+        "cur": 83.03
+      },
+      {
+        "name": "科创半导体ETF华夏",
+        "code": "588170",
+        "shares": 220000,
+        "avail": 0,
+        "mv": 207020.0,
+        "pnlPct": 0.299,
+        "cost": 0.938,
+        "cur": 0.941,
+        "open": true
+      },
+      {
+        "name": "中成股份",
+        "code": "000151",
+        "shares": 20000,
+        "avail": 20000,
+        "mv": 201200.0,
+        "pnlPct": -0.416,
+        "cost": 10.102,
+        "cur": 10.06
+      },
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 2000,
+        "avail": 2000,
+        "mv": 201060.0,
+        "pnlPct": -7.608,
+        "cost": 108.808,
+        "cur": 100.53
+      },
+      {
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 22100,
+        "avail": 22100,
+        "mv": 191828.0,
+        "pnlPct": -3.488,
+        "cost": 8.994,
+        "cur": 8.68
+      }
+    ],
+    "note": "平安证券**5362 持仓截图(15:00)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "科创半导体ETF华夏",
+        "code": "588170",
+        "shares": 220000,
+        "price": 0.938,
+        "open": true
+      }
+    ]
+  },
+  {
+    "date": "2026-09-30",
+    "day": 47,
+    "total": 1971749.73,
+    "dayPnl": -0.62,
+    "pos": 51.0,
+    "floatPnl": -28863.37,
+    "cash": 967100.73,
+    "holdings": [
+      {
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 2600,
+        "avail": 2600,
+        "mv": 206570.0,
+        "pnlPct": -1.017,
+        "cost": 80.266,
+        "cur": 79.45
+      },
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 2000,
+        "avail": 2000,
+        "mv": 202420.0,
+        "pnlPct": -6.983,
+        "cost": 108.808,
+        "cur": 101.21
+      },
+      {
+        "name": "中成股份",
+        "code": "000151",
+        "shares": 20000,
+        "avail": 20000,
+        "mv": 201200.0,
+        "pnlPct": -0.416,
+        "cost": 10.102,
+        "cur": 10.06
+      },
+      {
+        "name": "科创半导体ETF华夏",
+        "code": "588170",
+        "shares": 220000,
+        "avail": 220000,
+        "mv": 200200.0,
+        "pnlPct": -3.005,
+        "cost": 0.938,
+        "cur": 0.91
+      },
+      {
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 22100,
+        "avail": 22100,
+        "mv": 194259.0,
+        "pnlPct": -2.265,
+        "cost": 8.994,
+        "cur": 8.79
+      }
+    ],
+    "note": "平安证券**5362 持仓截图(15:10)",
+    "valid": true,
+    "trades": []
+  },
+  {
+    "date": "2026-10-08",
+    "day": 48,
+    "total": 1966861.6,
+    "dayPnl": -0.23,
+    "pos": 60.7,
+    "floatPnl": -33751.5,
+    "cash": 772512.6,
+    "holdings": [
+      {
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 2600,
+        "avail": 1300,
+        "mv": 207038.0,
+        "pnlPct": -0.521,
+        "cost": 80.047,
+        "cur": 79.63
+      },
+      {
+        "name": "中成股份",
+        "code": "000151",
+        "shares": 20000,
+        "avail": 10000,
+        "mv": 203600.0,
+        "pnlPct": 1.227,
+        "cost": 10.057,
+        "cur": 10.18
+      },
+      {
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 22100,
+        "avail": 11000,
+        "mv": 198016.0,
+        "pnlPct": 0.083,
+        "cost": 8.953,
+        "cur": 8.96
+      },
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 2000,
+        "avail": 1000,
+        "mv": 195780.0,
+        "pnlPct": -9.702,
+        "cost": 108.408,
+        "cur": 97.89
+      },
+      {
+        "name": "科创半导体ETF华夏",
+        "code": "588170",
+        "shares": 220000,
+        "avail": 120000,
+        "mv": 192280.0,
+        "pnlPct": -6.541,
+        "cost": 0.935,
+        "cur": 0.874
+      },
+      {
+        "name": "东材科技",
+        "code": "601208",
+        "shares": 2000,
+        "avail": 0,
+        "mv": 101840.0,
+        "pnlPct": 0.018,
+        "cost": 50.911,
+        "cur": 50.92
+      },
+      {
+        "name": "吉鑫科技",
+        "code": "601218",
+        "shares": 16100,
+        "avail": 0,
+        "mv": 95795.0,
+        "pnlPct": -0.854,
+        "cost": 6.001,
+        "cur": 5.95
+      }
+    ],
+    "note": "做T: 金安国纪/中成股份/西陇科学/景旺电子/科创半导体ETF华夏 | 平安证券**5362 持仓截图(15:11)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 1300,
+        "t": true
+      },
+      {
+        "action": "buy",
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 1300,
+        "t": true
+      },
+      {
+        "action": "sell",
+        "name": "中成股份",
+        "code": "000151",
+        "shares": 10000,
+        "t": true
+      },
+      {
+        "action": "buy",
+        "name": "中成股份",
+        "code": "000151",
+        "shares": 10000,
+        "t": true
+      },
+      {
+        "action": "sell",
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 11100,
+        "t": true
+      },
+      {
+        "action": "buy",
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 11100,
+        "t": true
+      },
+      {
+        "action": "sell",
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 1000,
+        "t": true
+      },
+      {
+        "action": "buy",
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 1000,
+        "t": true
+      },
+      {
+        "action": "sell",
+        "name": "科创半导体ETF华夏",
+        "code": "588170",
+        "shares": 100000,
+        "t": true
+      },
+      {
+        "action": "buy",
+        "name": "科创半导体ETF华夏",
+        "code": "588170",
+        "shares": 100000,
+        "t": true
+      },
+      {
+        "action": "buy",
+        "name": "东材科技",
+        "code": "601208",
+        "shares": 2000,
+        "price": 50.911,
+        "open": true
+      },
+      {
+        "action": "buy",
+        "name": "吉鑫科技",
+        "code": "601218",
+        "shares": 16100,
+        "price": 6.001,
+        "open": true
+      }
+    ]
+  },
+  {
+    "date": "2026-10-09",
+    "day": 49,
+    "total": 1936301.24,
+    "dayPnl": -1.55,
+    "pos": 75.1,
+    "floatPnl": -64311.86,
+    "cash": 482074.24,
+    "note": "平安证券**5362 持仓截图(15:03)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "buy",
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 2500
+      },
+      {
+        "action": "buy",
+        "name": "吉鑫科技",
+        "code": "601218",
+        "shares": 16000
+      },
+      {
+        "action": "buy",
+        "name": "有研新材",
+        "code": "600206",
+        "shares": 2500,
+        "open": true
+      },
+      {
+        "action": "sell",
+        "name": "东材科技",
+        "code": "601208",
+        "shares": 2000
+      }
+    ],
+    "holdings": [
+      {
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 5100,
+        "avail": 2600,
+        "mv": 365517.0,
+        "pnlPct": -5.632,
+        "cost": 75.948,
+        "cur": 71.67
+      },
+      {
+        "name": "中成股份",
+        "code": "000151",
+        "shares": 20000,
+        "avail": 20000,
+        "mv": 204800.0,
+        "pnlPct": 1.824,
+        "cost": 10.057,
+        "cur": 10.24
+      },
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 2000,
+        "avail": 2000,
+        "mv": 193960.0,
+        "pnlPct": -10.541,
+        "cost": 108.408,
+        "cur": 96.98
+      },
+      {
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 22100,
+        "avail": 22100,
+        "mv": 193375.0,
+        "pnlPct": -2.263,
+        "cost": 8.953,
+        "cur": 8.75
+      },
+      {
+        "name": "科创半导体ETF华夏",
+        "code": "588170",
+        "shares": 220000,
+        "avail": 220000,
+        "mv": 190520.0,
+        "pnlPct": -7.397,
+        "cost": 0.935,
+        "cur": 0.866
+      },
+      {
+        "name": "吉鑫科技",
+        "code": "601218",
+        "shares": 32100,
+        "avail": 16100,
+        "mv": 186180.0,
+        "pnlPct": 0.573,
+        "cost": 5.767,
+        "cur": 5.8
+      },
+      {
+        "name": "有研新材",
+        "code": "600206",
+        "shares": 2500,
+        "avail": 0,
+        "mv": 119875.0,
+        "pnlPct": 0.23,
+        "cost": 47.84,
+        "cur": 47.95,
+        "open": true
+      },
+      {
+        "name": "东材科技",
+        "code": "601208",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0,
+        "pnlPct": -4.862,
+        "cost": 50.911,
+        "cur": 48.47
+      }
+    ]
+  },
+  {
+    "date": "2026-10-12",
+    "day": 50,
+    "total": 1894241.24,
+    "dayPnl": -2.17,
+    "pos": 74.5,
+    "floatPnl": -101421.65,
+    "cash": 482074.24,
+    "note": "平安证券**5362 持仓截图(15:01)",
+    "valid": true,
+    "trades": [],
+    "holdings": [
+      {
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 5100,
+        "avail": 5100,
+        "mv": 328950.0,
+        "pnlPct": -15.073,
+        "cost": 75.948,
+        "cur": 64.5
+      },
+      {
+        "name": "中成股份",
+        "code": "000151",
+        "shares": 20000,
+        "avail": 20000,
+        "mv": 202800.0,
+        "pnlPct": 0.829,
+        "cost": 10.057,
+        "cur": 10.14
+      },
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 2000,
+        "avail": 2000,
+        "mv": 192180.0,
+        "pnlPct": -11.362,
+        "cost": 108.408,
+        "cur": 96.09
+      },
+      {
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 22100,
+        "avail": 22100,
+        "mv": 190723.0,
+        "pnlPct": -3.603,
+        "cost": 8.953,
+        "cur": 8.63
+      },
+      {
+        "name": "科创半导体ETF华夏",
+        "code": "588170",
+        "shares": 220000,
+        "avail": 220000,
+        "mv": 190300.0,
+        "pnlPct": -7.504,
+        "cost": 0.935,
+        "cur": 0.865
+      },
+      {
+        "name": "吉鑫科技",
+        "code": "601218",
+        "shares": 32100,
+        "avail": 32100,
+        "mv": 187464.0,
+        "pnlPct": 1.267,
+        "cost": 5.767,
+        "cur": 5.84
+      },
+      {
+        "name": "有研新材",
+        "code": "600206",
+        "shares": 2500,
+        "avail": 2500,
+        "mv": 119750.0,
+        "pnlPct": 0.125,
+        "cost": 47.84,
+        "cur": 47.9
+      }
+    ]
+  },
+  {
+    "date": "2026-10-13",
+    "day": 51,
+    "total": 1900444.24,
+    "dayPnl": 0.33,
+    "pos": 74.6,
+    "floatPnl": -95218.65,
+    "cash": 482074.24,
+    "note": "平安证券**5362 持仓截图(15:00)",
+    "valid": true,
+    "trades": [],
+    "holdings": [
+      {
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 5100,
+        "avail": 5100,
+        "mv": 342618.0,
+        "pnlPct": -11.544,
+        "cost": 75.948,
+        "cur": 67.18
+      },
+      {
+        "name": "中成股份",
+        "code": "000151",
+        "shares": 20000,
+        "avail": 20000,
+        "mv": 203200.0,
+        "pnlPct": 1.028,
+        "cost": 10.057,
+        "cur": 10.16
+      },
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 2000,
+        "avail": 2000,
+        "mv": 197020.0,
+        "pnlPct": -9.13,
+        "cost": 108.408,
+        "cur": 98.51
+      },
+      {
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 22100,
+        "avail": 22100,
+        "mv": 193596.0,
+        "pnlPct": -2.151,
+        "cost": 8.953,
+        "cur": 8.76
+      },
+      {
+        "name": "科创半导体ETF华夏",
+        "code": "588170",
+        "shares": 220000,
+        "avail": 220000,
+        "mv": 193160.0,
+        "pnlPct": -6.114,
+        "cost": 0.935,
+        "cur": 0.878
+      },
+      {
+        "name": "吉鑫科技",
+        "code": "601218",
+        "shares": 32100,
+        "avail": 32100,
+        "mv": 178476.0,
+        "pnlPct": -3.588,
+        "cost": 5.767,
+        "cur": 5.56
+      },
+      {
+        "name": "有研新材",
+        "code": "600206",
+        "shares": 2500,
+        "avail": 2500,
+        "mv": 110300.0,
+        "pnlPct": -7.776,
+        "cost": 47.84,
+        "cur": 44.12
+      }
+    ]
+  },
+  {
+    "date": "2026-10-14",
+    "day": 52,
+    "total": 1851546.24,
+    "dayPnl": -2.57,
+    "pos": 74.0,
+    "floatPnl": -144116.65,
+    "cash": 482074.24,
+    "note": "平安证券**5362 持仓截图(15:04)",
+    "valid": true,
+    "trades": [],
+    "holdings": [
+      {
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 5100,
+        "avail": 5100,
+        "mv": 345780.0,
+        "pnlPct": -10.728,
+        "cost": 75.948,
+        "cur": 67.8
+      },
+      {
+        "name": "中成股份",
+        "code": "000151",
+        "shares": 20000,
+        "avail": 20000,
+        "mv": 198000.0,
+        "pnlPct": -1.557,
+        "cost": 10.057,
+        "cur": 9.9
+      },
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 2000,
+        "avail": 2000,
+        "mv": 189320.0,
+        "pnlPct": -12.681,
+        "cost": 108.408,
+        "cur": 94.66
+      },
+      {
+        "name": "科创半导体ETF华夏",
+        "code": "588170",
+        "shares": 220000,
+        "avail": 220000,
+        "mv": 184800.0,
+        "pnlPct": -10.177,
+        "cost": 0.935,
+        "cur": 0.84
+      },
+      {
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 22100,
+        "avail": 22100,
+        "mv": 184093.0,
+        "pnlPct": -6.954,
+        "cost": 8.953,
+        "cur": 8.33
+      },
+      {
+        "name": "吉鑫科技",
+        "code": "601218",
+        "shares": 32100,
+        "avail": 32100,
+        "mv": 168204.0,
+        "pnlPct": -9.137,
+        "cost": 5.767,
+        "cur": 5.24
+      },
+      {
+        "name": "有研新材",
+        "code": "600206",
+        "shares": 2500,
+        "avail": 2500,
+        "mv": 99275.0,
+        "pnlPct": -16.994,
+        "cost": 47.84,
+        "cur": 39.71
+      }
+    ]
+  },
+  {
+    "date": "2026-10-15",
+    "day": 53,
+    "total": 1845325.24,
+    "dayPnl": -0.34,
+    "pos": 73.9,
+    "floatPnl": -150337.65,
+    "cash": 482074.24,
+    "note": "平安证券**5362 持仓截图(15:00)",
+    "valid": true,
+    "trades": [],
+    "holdings": [
+      {
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 5100,
+        "avail": 5100,
+        "mv": 362559.0,
+        "pnlPct": -6.396,
+        "cost": 75.948,
+        "cur": 71.09
+      },
+      {
+        "name": "中成股份",
+        "code": "000151",
+        "shares": 20000,
+        "avail": 20000,
+        "mv": 193800.0,
+        "pnlPct": -3.645,
+        "cost": 10.057,
+        "cur": 9.69
+      },
+      {
+        "name": "科创半导体ETF华夏",
+        "code": "588170",
+        "shares": 220000,
+        "avail": 220000,
+        "mv": 184360.0,
+        "pnlPct": -10.391,
+        "cost": 0.935,
+        "cur": 0.838
+      },
+      {
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 22100,
+        "avail": 22100,
+        "mv": 180778.0,
+        "pnlPct": -8.63,
+        "cost": 8.953,
+        "cur": 8.18
+      },
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 2000,
+        "avail": 2000,
+        "mv": 180420.0,
+        "pnlPct": -16.786,
+        "cost": 108.408,
+        "cur": 90.21
+      },
+      {
+        "name": "吉鑫科技",
+        "code": "601218",
+        "shares": 32100,
+        "avail": 32100,
+        "mv": 161784.0,
+        "pnlPct": -12.605,
+        "cost": 5.767,
+        "cur": 5.04
+      },
+      {
+        "name": "有研新材",
+        "code": "600206",
+        "shares": 2500,
+        "avail": 2500,
+        "mv": 99550.0,
+        "pnlPct": -16.764,
+        "cost": 47.84,
+        "cur": 39.82
+      }
+    ]
+  },
+  {
+    "date": "2026-10-16",
+    "day": 54,
+    "total": 1822456.67,
+    "dayPnl": -1.23,
+    "pos": 64.1,
+    "floatPnl": -173206.22,
+    "cash": 654203.67,
+    "note": "平安证券**5362 持仓截图(15:01)",
+    "valid": true,
+    "trades": [
+      {
+        "action": "sell",
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 2500
+      }
+    ],
+    "holdings": [
+      {
+        "name": "中成股份",
+        "code": "000151",
+        "shares": 20000,
+        "avail": 20000,
+        "mv": 196800.0,
+        "pnlPct": -2.154,
+        "cost": 10.057,
+        "cur": 9.84
+      },
+      {
+        "name": "科创半导体ETF华夏",
+        "code": "588170",
+        "shares": 220000,
+        "avail": 220000,
+        "mv": 183920.0,
+        "pnlPct": -10.605,
+        "cost": 0.935,
+        "cur": 0.836
+      },
+      {
+        "name": "景旺电子",
+        "code": "603228",
+        "shares": 2000,
+        "avail": 2000,
+        "mv": 181000.0,
+        "pnlPct": -16.519,
+        "cost": 108.408,
+        "cur": 90.5
+      },
+      {
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 22100,
+        "avail": 22100,
+        "mv": 177021.0,
+        "pnlPct": -10.529,
+        "cost": 8.953,
+        "cur": 8.01
+      },
+      {
+        "name": "金安国纪",
+        "code": "002636",
+        "shares": 2600,
+        "avail": 2600,
+        "mv": 169780.0,
+        "pnlPct": -21.107,
+        "cost": 82.77,
+        "cur": 65.3
+      },
+      {
+        "name": "吉鑫科技",
+        "code": "601218",
+        "shares": 32100,
+        "avail": 32100,
+        "mv": 165957.0,
+        "pnlPct": -10.351,
+        "cost": 5.767,
+        "cur": 5.17
+      },
+      {
+        "name": "有研新材",
+        "code": "600206",
+        "shares": 2500,
+        "avail": 2500,
+        "mv": 93775.0,
+        "pnlPct": -21.593,
+        "cost": 47.84,
+        "cur": 37.51
+      }
+    ]
+  }
 ];
