@@ -316,5 +316,11 @@
     "weekday": "星期四",
     "title": "2026-10-22 星期四",
     "file": "assets/reviews/2026-10-22.html"
+  },
+  {
+    "date": "2026-10-23",
+    "weekday": "星期五",
+    "title": "2026-10-23 每日复盘",
+    "file": "assets/reviews/2026-10-23.html"
   }
 ]
