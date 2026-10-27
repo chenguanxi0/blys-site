@@ -4414,5 +4414,117 @@ const DAILY_LOG = [
         "cur": 54.4
       }
     ]
+  },
+  {
+    "date": "2026-10-27",
+    "day": 61,
+    "total": 1652331.12,
+    "dayPnl": -2.24,
+    "pos": 4.4,
+    "floatPnl": -202088.37,
+    "cash": 1580241.12,
+    "note": "平安证券**5362 持仓截图(16:10)",
+    "valid": true,
+    "holdings": [
+      {
+        "name": "行云科技",
+        "code": "300209",
+        "shares": 3000,
+        "avail": 0,
+        "mv": 72090.0,
+        "pnlPct": -8.301,
+        "cost": 26.205,
+        "cur": 24.03
+      },
+      {
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": -20.432,
+        "cost": 8.953,
+        "cur": 7.11
+      },
+      {
+        "name": "中成股份",
+        "code": "000151",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": -10.818,
+        "cost": 10.057,
+        "cur": 8.96
+      },
+      {
+        "name": "科创半导体ETF华夏",
+        "code": "588170",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": -30.197,
+        "cost": 0.935,
+        "cur": 0.651
+      },
+      {
+        "name": "吉鑫科技",
+        "code": "601218",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": -21.678,
+        "cost": 5.767,
+        "cur": 4.53
+      },
+      {
+        "name": "有研新材",
+        "code": "600206",
+        "shares": 0,
+        "avail": 0,
+        "mv": 0.0,
+        "pnlPct": -25.617,
+        "cost": 47.84,
+        "cur": 35.69
+      }
+    ],
+    "trades": [
+      {
+        "action": "sell",
+        "name": "西陇科学",
+        "code": "002584",
+        "shares": 22100
+      },
+      {
+        "action": "sell",
+        "name": "中成股份",
+        "code": "000151",
+        "shares": 20000
+      },
+      {
+        "action": "sell",
+        "name": "科创半导体ETF华夏",
+        "code": "588170",
+        "shares": 220000
+      },
+      {
+        "action": "sell",
+        "name": "吉鑫科技",
+        "code": "601218",
+        "shares": 32100
+      },
+      {
+        "action": "sell",
+        "name": "有研新材",
+        "code": "600206",
+        "shares": 2500
+      },
+      {
+        "action": "buy",
+        "name": "行云科技",
+        "code": "300209",
+        "shares": 3000,
+        "open": true
+      }
+    ]
   }
 ];
