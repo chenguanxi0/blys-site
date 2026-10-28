@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026-10-28 每日复盘</title>
+<style>
+:root{--up:#d9363e;--down:#009900;--ink:#1f2328;--muted:#6b7280;--line:#e5e7eb;--bg:#f7f8fa;--accent:#1e3a8a;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--ink);}
+.rpt{max-width:980px;margin:0 auto;padding:0 0 60px;background:#fff;box-shadow:0 0 24px rgba(0,0,0,.05);}
+.rpt-cover{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:44px 40px;}
+.rpt-cover-line{margin:0 0 12px;line-height:1.75;}
+.rpt-cover-line:first-child{font-size:26px;font-weight:700;letter-spacing:1px;}
+.rpt-cover-line:nth-child(2){font-size:16px;opacity:.96}
+.rpt-cover-line:nth-child(3){font-size:12.5px;opacity:.75;margin-top:16px}
+.rpt-chapter{padding:26px 40px;border-bottom:1px solid var(--line);}
+.rpt-h2{font-size:20px;margin:6px 0 16px;padding-left:12px;border-left:5px solid var(--accent);color:var(--accent);}
+.rpt-h3{font-size:15px;margin:18px 0 10px;color:#111;}
+.rpt-chapter p{line-height:1.85;font-size:14.5px;margin:0 0 12px;color:#2d333b;}
+.rpt-tbl-wrap{overflow-x:auto;margin:8px 0 16px;}
+.rpt-tbl{width:100%;border-collapse:collapse;font-size:12.8px;}
+.rpt-tbl th,.rpt-tbl td{border:1px solid var(--line);padding:6px 8px;text-align:center;}
+.rpt-tbl th{background:#eef2ff;color:#1e3a8a;font-weight:600;white-space:nowrap;}
+.rpt-tbl tbody tr.alt{background:#fafbfc;}
+.up{color:var(--up);font-weight:600}
+.down{color:var(--down);font-weight:600}
+.rpt-ladder td{text-align:left;}
+.tag{display:inline-block;padding:1px 7px;border-radius:10px;background:#eef2ff;color:#1e3a8a;font-size:12px;}
+.disclaimer{font-size:12.5px;color:var(--muted);line-height:1.8;}
+.note{font-size:12.5px;color:var(--muted);margin:6px 0 14px;}
+</style>
+</head>
+<body>
+<article class="rpt" id="rptRoot">
+<div class="rpt-cover">
+<p class="rpt-cover-line">2026-10-28  星期三</p>
+<p class="rpt-cover-line">沪指涨0.91%报3681.47点 创业板指涨3.40% | 两市成交1.63万亿元（放量1675亿） | 超4100股上涨 涨停72家</p>
+<p class="rpt-cover-line">本报告基于公开市场数据与资讯自动生成，仅供参考，不构成投资建议。</p>
+</div>
+
+<section class="rpt-chapter"><h2 class="rpt-h2">一  核心指数概览</h2>
+<p>10月28日A股在周二（10/27）极端普跌后迎来一整天的修复性反弹，三大指数全线高开、单边推升、收盘逼近全天最高：上证指数涨0.91%报3681.47点，深证成指涨2.02%报11473.18点，创业板指涨3.40%报2634.76点，为当日最强宽基指数。全市场上涨4156家、下跌1239家，涨跌比约3.35:1，与前一交易日仅606家上涨的冰点状态形成鲜明反差。沪深两市成交16284.87亿元（沪市7510.19亿+深市8774.68亿），较上一交易日放量1675.29亿元，量能同步回升，说明缩量阴跌中缺席的买方正在回归。</p>
+<div class="rpt-tbl-wrap"><table class="rpt-tbl"><thead><tr>
+<th>指数</th><th>代码</th><th>收盘</th><th>涨跌点</th><th>涨跌幅</th><th>成交额</th>
+</tr></thead><tbody>
+<tr><td>上证指数</td><td>000001</td><td>3681.47</td><td>+33.17</td><td class="up">+0.91%</td><td>7510亿</td></tr>
+<tr class="alt"><td>深证成指</td><td>399001</td><td>11473.18</td><td>+227.45</td><td class="up">+2.02%</td><td>8775亿</td></tr>
+<tr><td>创业板指</td><td>399006</td><td>2634.76</td><td>+86.61</td><td class="up">+3.40%</td><td>4540亿</td></tr>
+<tr class="alt"><td>科创50</td><td>000688</td><td>1282.93</td><td>+30.65</td><td class="up">+2.45%</td><td>757亿</td></tr>
+<tr><td>沪深300</td><td>000300</td><td>4083.87</td><td>+34.32</td><td class="up">+0.85%</td><td>4193亿</td></tr>
+<tr class="alt"><td>中证1000</td><td>000852</td><td>6575.61</td><td>+148.44</td><td class="up">+2.31%</td><td>3216亿</td></tr>
+<tr><td>北证50</td><td>899050</td><td>946.83</td><td>+15.19</td><td class="up">+1.63%</td><td>139亿</td></tr>
+</tbody></table></div>
+<p>风格上呈现极致的“深强沪弱、小盘大于蓝筹”：创业板指（+3.40%）与沪深300（+0.85%）剪刀差达2.55个百分点，中证1000（+2.31%）、中证500（+1.99%）明显强于上证50边缘品种；上证指数因银行、白酒、证券等权重拖累，涨幅仅0.91%。市值下沉梯度清晰——中证2000盘中一度涨2.76%，越下沉、越轻、越弹。今日三大指数均高开且收盘价贴近全天最高（上证收3681.47 vs 最高3684.49；创业板收2634.76 vs 最高2647.63），日内单边推升，未出现前期惯有的尾盘跳水。</p>
+</section>
+
+<section class="rpt-chapter"><h2 class="rpt-h2">二  盘面运行复盘</h2>
+<p><b>市场特征：</b>这是一次“冰点后的隔日反转”。周二全市场88%个股下跌、创业板指单日-3.41%、科创50-4.81%，今日则74%个股上涨、创业板指+3.40%、科创50+2.45%。涨幅分布印证“普涨但不疯狂”：涨0~2%区间1970家、涨2%~5%区间1515家占大头，涨停仅72家，属修复型反弹的典型形态，而非逼空。量能虽同步回补（+1675亿），但融资余额已连续13日下降，反弹由主动买盘而非杠杆回补驱动，底色仍是存量博弈下的超跌反包。</p>
+<p><b>结构特征——“高低切”而非全面牛：</b>资金从银行、白酒、电力等防御性红利资产流出，全面涌入超跌的半导体、通信设备、元件等成长方向。上证仅涨0.91%而创业板涨3.40%，说明这是纯粹的风险偏好修复。领涨的是前期被杀最狠的品种：10月15日、22日、27日三个交易日，中证2000分别下跌3.30%、3.37%、3.17%，中证1000同步下跌3.28%、2.98%、3.07%，20个交易日内中证2000回撤12.09%——跌得多、弹得快，是判断反弹性质最重要的证据。</p>
+<p><b>广度与情绪：</b>上涨4156家、下跌1239家，赚钱效应大幅回暖；涨停72家、跌停6家，封板率51%、炸板69家。昨日涨停股今日平均+2.33%、连板股+2.04%、红盘率68%，三项均为正，说明打板资金仍能获利，短期情绪具备延续基础，但封板率仅51%也说明封板质量并不算高，部分个股盘中炸板或冲高回落。市场热度指数自冰点区快速回摆，短线接力情绪由极冷修复至中性偏暖。</p>
+<p><b>技术面：</b>反弹大多只够摸回MA5附近（创业板MA5偏离约-0.14%、上证-0.19%），MA20/MA60仍压头顶——创业板指20日跌幅仍约-22.5%、60日约-20.8%，上方套牢盘密集。单日中阳尚不足以确认趋势反转，需两日放量走强确认。</p>
+</section>
+
+<section class="rpt-chapter"><h2 class="rpt-h2">三  板块涨跌明细</h2>
+<p>当日申万一级行业绝大多数收涨，仅食品饮料、非银金融、银行等防御方向收跌；成长方向全面修复。以下为收盘领涨/领跌板块（口径：申万二级行业与通达信概念混合，行业指数与概念指数口径不同，数值不可直接横向比较）。</p>
+<h3 class="rpt-h3">领涨板块 Top10（收盘涨幅居前）</h3>
+<div class="rpt-tbl-wrap"><table class="rpt-tbl"><thead><tr>
+<th>板块</th><th>涨幅</th><th>代表个股 / 驱动</th>
+</tr></thead><tbody>
+<tr><td>空心杯电机（概念）</td><td class="up">+10.67%</td><td>机器人执行器产业链，宁波东力、光洋股份领涨</td></tr>
+<tr class="alt"><td>肿瘤疫苗（概念）</td><td class="up">+7.35%</td><td>创新药情绪回暖，近岸蛋白涨停带动CRO</td></tr>
+<tr><td>模拟芯片（概念）</td><td class="up">+6.46%</td><td>必易微涨停，富瀚微、圣邦方向活跃</td></tr>
+<tr class="alt"><td>非金属材料Ⅱ（行业）</td><td class="up">+6.17%</td><td>索通发展涨停，当日行业涨幅第一</td></tr>
+<tr><td>通信设备（行业）</td><td class="up">+6.01%</td><td>中际旭创+10.28%、新易盛+8.08%、长盈通涨幅靠前</td></tr>
+<tr class="alt"><td>靶材（概念）</td><td class="up">+5.98%</td><td>半导体材料方向修复</td></tr>
+<tr><td>电子鼻（概念）</td><td class="up">+5.74%</td><td>机器人传感方向活跃</td></tr>
+<tr class="alt"><td>机器人执行器（概念）</td><td class="up">+5.63%</td><td>襄阳轴承5连板，减速器、丝杠方向集体走强</td></tr>
+<tr><td>自动化设备（行业）</td><td class="up">+5.38%</td><td>博杰股份、凯迪股份涨停</td></tr>
+<tr class="alt"><td>塑料（行业）</td><td class="up">+5.30%</td><td>斯迪克涨停（MLCC离型膜/折叠屏OCA）</td></tr>
+</tbody></table></div>
+<h3 class="rpt-h3">领跌板块 Top10（收盘跌幅居前）</h3>
+<div class="rpt-tbl-wrap"><table class="rpt-tbl"><thead><tr>
+<th>板块</th><th>跌幅</th><th>代表个股 / 回调原因</th>
+</tr></thead><tbody>
+<tr><td>白酒Ⅱ（行业）</td><td class="down">-2.33%</td><td>五粮液-3.95%、贵州茅台-1.85%、金徽酒跌超6%、皇台酒业/金种子酒跌超4%，防御权重被抛弃</td></tr>
+<tr class="alt"><td>涂料（行业）</td><td class="down">-2.00%</td><td>周期化工局部走弱</td></tr>
+<tr><td>期货（行业）</td><td class="down">-1.80%</td><td>瑞达期货跌停，非银金融承压</td></tr>
+<tr class="alt"><td>医美耗材（行业）</td><td class="down">-1.64%</td><td>医药消费方向分化</td></tr>
+<tr><td>证券Ⅱ（行业）</td><td class="down">-0.87%</td><td>华鑫股份复牌跌停（-10.00%），国泰海通跌超2%</td></tr>
+<tr class="alt"><td>银行（行业）</td><td class="down">-0.58%</td><td>工商银行-0.70%，红利防御资金流出，与前日护盘形成跷跷板</td></tr>
+<tr><td>电信运营商（行业）</td><td class="down">跌</td><td>中国移动等权重走弱，防御端资金撤离</td></tr>
+<tr class="alt"><td>海运 / 航运港口（行业）</td><td class="down">跌</td><td>中谷物流等前期强势股回吐</td></tr>
+<tr><td>保险（行业）</td><td class="down">跌</td><td>非银金融整体承压</td></tr>
+<tr class="alt"><td>青蒿素 / 猪肉 / 大豆 / 养鸡（概念）</td><td class="down">跌</td><td>农业与医药防御概念领跌</td></tr>
+</tbody></table></div>
+<p class="note">注：领跌榜中“跌”者为收评明确列示跌幅居前但未披露精确数值的方向；具体排名以各数据源收盘口径为准。</p>
+</section>
+
+<section class="rpt-chapter"><h2 class="rpt-h2">四  市场热点解析</h2>
+<p><b>1. PCB/覆铜板——业绩兑现度最高、资金共识最强的方向。</b>杰普特涨超13%、斯迪克涨超12%，金安国纪、富佳股份、光洋股份10CM涨停，世运电路、一博科技、东材科技等集体跟涨。核心催化来自前一交易日盘后密集披露的三季报：南亚新材Q3净利9.90亿（同比+1295.94%）、金安国纪Q3净利11.58亿（同比+1030.57%）、沪电股份Q3净利26.99亿（同比+160.77%）。在经历近两个月“远期叙事杀估值”之后，PCB产业链用实打实的利润增速回应了市场对AI硬件景气持续性的质疑，资金从“定价远期”切换回“定价当期业绩”的迹象清晰。</p>
+<p><b>2. 人形机器人/减速器——产业催化续强、独立性最足的主线。</b>襄阳轴承5连板（人气王），光洋股份3连板，万向钱潮4天3板，宁波东力、五洲新春、浙江荣泰、安培龙等涨停，福莱新材走出8天5板并创历史新高，宇树科技盘中涨超12%（收盘近10%）。催化来自产业端持续发酵：上海印发《加快发展新一代智能制造行动方案》，提出到2028年推动8000台人形机器人进工厂、工业机器人密度达600台/万人；字节跳动Seed Model团队更新机器人相关岗位，覆盖本体设计、灵巧手、减速机控制等数十个方向。国金证券指出物理AI具备“逻辑顺、筹码轻、催化密、板块容量大”特征，有望承接资金切换。</p>
+<p><b>3. 半导体/存储/CPO——昨日最惨、今日最强修复。</b>隔夜SK海力士Q3营收首破100万亿韩元（同比+328%）、营业利润同比激增逾7倍，并指引存储供不应求持续至2030年，韩国KOSPI大涨6.63%；费城半导体指数隔夜+3.6%。A股映射：中际旭创+10.28%（成交235.73亿，全场成交额第一）、新易盛+8.08%、兆易创新+7.77%、长鑫科技+3.16%、寒武纪+4.93%、工业富联+5.92%、中芯国际+2.00%。但A股AI硬件“跟涨不跟强”，CPO概念盘中冲高回落，反映前期筹码压力尚未完全消化。</p>
+<p><b>4. AI漫剧/AI应用——脉冲题材。</b>文字媒体板块盘中涨超8%，文投控股2连板、掌阅科技涨停、实丰文化涨停（AI玩具+IP潮玩），掌阅科技、中文在线方向活跃，属事件驱动的次级热点。</p>
+<p><b>5. 商业航天/工业母机——主题外溢。</b>航天装备Ⅱ+4.40%、Ⅲ+5.52%，铖昌科技涨停（卫星通信+相控阵T/R芯片），上海沪工涨停（商业航天+焊接机器人）；工业母机受上海《行动方案》催化，杰克科技、中重科技涨停，属机器人主线外溢的次级热点。</p>
+<p><b>6. 白酒/银行/证券杀跌——高低切的另一端。</b>白酒Ⅱ-2.33%，五粮液-3.95%、贵州茅台-1.85%、金徽酒跌超6%；证券板块华鑫股份复牌跌停；银行-0.58%，工商银行-0.70%。防御权重成为今日资金主要卖出方，与科技主线形成鲜明“跷跷板”。</p>
+</section>
+
+<section class="rpt-chapter"><h2 class="rpt-h2">五  涨跌停情绪面</h2>
+<p><b>涨停统计：</b>当日全市场共 <b>72</b> 只个股涨停，封板率51%、炸板69家（另有统计口径为73只，差异源于ST/时点）。最高连板5板，连板股总数8只，较前一交易日（41只涨停）明显扩张，赚钱效应延续。行业分布：汽车零部11家居首、通用设备8家、专用设备5家、元件3家、半导体3家、化学制品3家。封单王为金安国纪（3.27亿元）。</p>
+<p><b>跌停统计：</b>当日全市场共 <b>6</b> 只个股跌停，集中在白酒（无）、证券（华鑫股份）、汽车零部件高位股（多伦科技、正裕工业）、半导体材料（华瓷股份）、期货（瑞达期货）等方向，整体亏钱效应温和。</p>
+<p><b>连板梯队：</b>空间高度5板（襄阳轴承，机器人轴承+“羊”字辈），3板2只，2板5只，首板64只，梯队在“空间龙头独苗+首板铺面”的结构下略有厚度。⚠️ 特别说明：前日4连板的多伦科技（603528）今日跌停（-9.95%），未晋级5板，正确未计入连板梯队。</p>
+<h3 class="rpt-h3">连板天梯</h3>
+<div class="rpt-tbl-wrap"><table class="rpt-tbl rpt-ladder"><thead><tr>
+<th>连板高度</th><th colspan="6">个股简称（代码）</th>
+</tr></thead><tbody>
+<tr><td><b>5连板</b></td><td>襄阳轴承(000678)</td><td></td><td></td><td></td><td></td><td></td></tr>
+<tr class="alt"><td><b>3连板</b></td><td>青岛食品(001219)</td><td>光洋股份(002708)</td><td></td><td></td><td></td><td></td></tr>
+<tr><td><b>2连板</b></td><td>东贝集团(601956)</td><td>文投控股(600715)</td><td>江顺科技(001400)</td><td>茂业商业(600828)</td><td>凯众股份(603037)</td><td></td></tr>
+</tbody></table></div>
+<p><b>按连板高度列示涨停个股（连板梯队8只 + 已核实首板52只，共列示60只；全市场涨停72家，首板合计64只，余12只数据源未完整展开）：</b></p>
+<div class="rpt-tbl-wrap"><table class="rpt-tbl"><thead><tr><th>名称</th><th>代码</th><th>连板</th><th>所属板块</th><th>涨停原因</th></tr></thead><tbody>
+<tr class="alt"><td>襄阳轴承</td><td>000678</td><td><span class="tag">5板</span></td><td>汽车零部</td><td>机器人轴承+汽车轴承+“羊”字辈</td></tr>
+<tr><td>青岛食品</td><td>001219</td><td>3板</td><td>休闲食品</td><td>股权转让+三季报增长+饼干食品</td></tr>
+<tr class="alt"><td>光洋股份</td><td>002708</td><td>3板</td><td>汽车零部</td><td>人形机器人+PCB+汽车零部件+“羊”字辈</td></tr>
+<tr><td>东贝集团</td><td>601956</td><td>2板</td><td>家电零部</td><td>机器人电机+制冷压缩机+商用制冷</td></tr>
+<tr class="alt"><td>文投控股</td><td>600715</td><td>2板</td><td>游戏Ⅱ</td><td>AI漫剧+游戏运营+影院运营</td></tr>
+<tr><td>江顺科技</td><td>001400</td><td>2板</td><td>专用设备</td><td>三季报增长+3D打印+铝挤压模具+液冷</td></tr>
+<tr class="alt"><td>茂业商业</td><td>600828</td><td>2板</td><td>一般零售</td><td>百货零售+全渠道运营+自有物业</td></tr>
+<tr><td>凯众股份</td><td>603037</td><td>2板</td><td>汽车零部</td><td>机器人零部件+汽车减震+拟收购拓盛</td></tr>
+<tr class="alt"><td>金安国纪</td><td>002636</td><td>首板</td><td>元件</td><td>覆铜板+三季报高增+产能扩张（封单3.27亿）</td></tr>
+<tr><td>万向钱潮</td><td>000559</td><td>首板</td><td>汽车零部</td><td>人形机器人+精密减速器+汽车零部件</td></tr>
+<tr class="alt"><td>五洲新春</td><td>603667</td><td>首板</td><td>通用设备</td><td>三季报业绩+机器人丝杠+轴承主业</td></tr>
+<tr><td>方正科技</td><td>600601</td><td>首板</td><td>元件</td><td>PCB+业绩高增+AI扩产（净利+327%）</td></tr>
+<tr class="alt"><td>富瀚微</td><td>300613</td><td>首板</td><td>半导体</td><td>三季报高增+视觉芯片+端侧AI+供货机器人</td></tr>
+<tr><td>实丰文化</td><td>002862</td><td>首板</td><td>文娱用品</td><td>AI玩具+IP潮玩+玩具出海</td></tr>
+<tr class="alt"><td>光华科技</td><td>002741</td><td>首板</td><td>电子化学</td><td>PCB化学品+硫化锂+业绩增长</td></tr>
+<tr><td>宁波东力</td><td>002164</td><td>首板</td><td>通用设备</td><td>三季报增长+精密减速器+齿轮传动+机器人</td></tr>
+<tr class="alt"><td>掌阅科技</td><td>603533</td><td>首板</td><td>数字媒体</td><td>AI短剧+短剧出海+数字阅读</td></tr>
+<tr><td>建设工业</td><td>002265</td><td>首板</td><td>汽车零部</td><td>机器人装备+三季报增长+兵装重组</td></tr>
+<tr class="alt"><td>博杰股份</td><td>002975</td><td>首板</td><td>自动化设</td><td>机器人测试+磷化铟+MLCC设备+液冷测试</td></tr>
+<tr><td>铖昌科技</td><td>001270</td><td>首板</td><td>军工电子</td><td>卫星通信+相控阵T/R芯片+订单交付</td></tr>
+<tr class="alt"><td>百洋股份</td><td>002696</td><td>首板</td><td>饲料</td><td>水产加工+鱼粉鱼油+“羊”字辈</td></tr>
+<tr><td>豪恩汽电</td><td>301488</td><td>首板</td><td>汽车零部</td><td>机器人域控+机器人感知+智能驾驶</td></tr>
+<tr class="alt"><td>联明股份</td><td>603006</td><td>首板</td><td>汽车零部</td><td>三季报增长+新能源水冷板+供应链服务</td></tr>
+<tr><td>宏柏新材</td><td>605366</td><td>首板</td><td>化学制品</td><td>光纤级四氯化硅+功能性硅烷+电子级材料</td></tr>
+<tr class="alt"><td>世运电路</td><td>603920</td><td>首板</td><td>元件</td><td>机器人PCB+算力PCB+调价落地</td></tr>
+<tr><td>宇晶股份</td><td>002943</td><td>首板</td><td>通用设备</td><td>机器人+切磨抛设备+碳化硅设备</td></tr>
+<tr class="alt"><td>澳洋健康</td><td>002172</td><td>首板</td><td>医疗服务</td><td>脑机接口+医疗服务+国资控股+“羊”字辈</td></tr>
+<tr><td>科森科技</td><td>603626</td><td>首板</td><td>消费电子</td><td>机器人结构件+消费电子结构件+三季报扭亏</td></tr>
+<tr class="alt"><td>松霖科技</td><td>603992</td><td>首板</td><td>家居用品</td><td>服务机器人+智能厨卫+业绩预增</td></tr>
+<tr><td>山东矿机</td><td>002526</td><td>首板</td><td>专用设备</td><td>煤炭机械+焊接机器人+第三季度业绩增长</td></tr>
+<tr class="alt"><td>恒工精密</td><td>301261</td><td>首板</td><td>通用设备</td><td>三季报增长+人形机器人+减速器零部件</td></tr>
+<tr><td>菲林格尔</td><td>603226</td><td>首板</td><td>家居用品</td><td>PCB设备+英伟达+木地板</td></tr>
+<tr class="alt"><td>长城科技</td><td>603897</td><td>首板</td><td>电网设备</td><td>三季报增长+机器人应用+电磁线</td></tr>
+<tr><td>盈方微</td><td>000670</td><td>首板</td><td>其他电子</td><td>三季度增长+存储芯片+元器件分销</td></tr>
+<tr class="alt"><td>联德股份</td><td>605060</td><td>首板</td><td>通用设备</td><td>三季报增长+数据中心温控+燃气轮机</td></tr>
+<tr><td>莱美药业</td><td>300006</td><td>首板</td><td>化学制药</td><td>纳米炭铁+三季报减亏+卡纳琳</td></tr>
+<tr class="alt"><td>斯迪克</td><td>300806</td><td>首板</td><td>塑料</td><td>MLCC离型膜+折叠屏OCA+功能性材料</td></tr>
+<tr><td>金海通</td><td>603061</td><td>首板</td><td>半导体</td><td>半导体测试分选机+三季报增长</td></tr>
+<tr class="alt"><td>飞科电器</td><td>603868</td><td>首板</td><td>小家电</td><td>三季报增长+个护电器</td></tr>
+<tr><td>东方嘉盛</td><td>002889</td><td>首板</td><td>物流</td><td>半导体供应链+光刻机保税寄售维修+机器人概念</td></tr>
+<tr class="alt"><td>大丰实业</td><td>603081</td><td>首板</td><td>专用设备</td><td>具身智能+文体旅集成+舞台机械</td></tr>
+<tr><td>凯迪股份</td><td>605288</td><td>首板</td><td>自动化设</td><td>具身机器人送样+线性驱动+汽车零部件</td></tr>
+<tr class="alt"><td>近岸蛋白</td><td>688137</td><td>首板</td><td>生物制品</td><td>mRNA原料酶+智能蛋白设计+重组抗体</td></tr>
+<tr><td>富佳股份</td><td>603219</td><td>首板</td><td>小家电</td><td>三季报增长+粮仓机器人+清洁家电</td></tr>
+<tr class="alt"><td>福莱蒽特</td><td>605566</td><td>首板</td><td>化学制品</td><td>三季报增长+机器人传感+服务器采购+分散染料</td></tr>
+<tr><td>百普赛斯</td><td>301080</td><td>首板</td><td>生物制品</td><td>重组蛋白+三季报增长+回购提价</td></tr>
+<tr class="alt"><td>上海沪工</td><td>603131</td><td>首板</td><td>通用设备</td><td>三季报扭亏+焊接机器人+商业航天</td></tr>
+<tr><td>索通发展</td><td>603612</td><td>首板</td><td>非金属材</td><td>三季报增长+预焙阳极+炭材料项目</td></tr>
+<tr class="alt"><td>卧龙新能</td><td>600173</td><td>首板</td><td>房地产开</td><td>储能并网+海外储能+氢能</td></tr>
+<tr><td>必易微</td><td>688045</td><td>首板</td><td>半导体</td><td>模拟芯片+数字电源+机器人传感</td></tr>
+<tr class="alt"><td>徕木股份</td><td>603633</td><td>首板</td><td>消费电子</td><td>人形机器人+汽车连接器</td></tr>
+<tr><td>长缆科技</td><td>002879</td><td>首板</td><td>电网设备</td><td>管道机器人+浸没液冷+电缆附件+三季报</td></tr>
+<tr class="alt"><td>中欣氟材</td><td>002915</td><td>首板</td><td>化学制品</td><td>PEEK材料+新能源材料+氟化工+萤石</td></tr>
+<tr><td>东南电子</td><td>301359</td><td>首板</td><td>其他电子</td><td>三季报增长+微动开关+募投变更</td></tr>
+<tr class="alt"><td>友升股份</td><td>603418</td><td>首板</td><td>汽车零部</td><td>机器人业务+汽车轻量化+特斯拉客户</td></tr>
+<tr><td>振邦智能</td><td>003028</td><td>首板</td><td>家电零部</td><td>三季报+人形机器人+智能控制器</td></tr>
+<tr class="alt"><td>五方光电</td><td>002962</td><td>首板</td><td>光学光电</td><td>三季报增长+TGV光学+红外截止滤光片</td></tr>
+<tr><td>杰克科技</td><td>603337</td><td>首板</td><td>专用设备</td><td>人形机器人+数字成套+工业缝纫机</td></tr>
+<tr class="alt"><td>西子洁能</td><td>002534</td><td>首板</td><td>其他电源</td><td>订单增长+燃机余热锅炉+算力储能</td></tr>
+<tr><td>中重科技</td><td>603135</td><td>首板</td><td>专用设备</td><td>工业机器人+冶金装备+海外项目</td></tr>
+</tbody></table></div>
+<h3 class="rpt-h3">跌停股表（共6家，列示5家）</h3>
+<div class="rpt-tbl-wrap"><table class="rpt-tbl"><thead><tr><th>名称</th><th>代码</th><th>跌幅</th><th>所属板块 / 备注</th></tr></thead><tbody>
+<tr><td>正裕工业</td><td>—</td><td class="down">-10.03%</td><td>汽车零部件高位股</td></tr>
+<tr class="alt"><td>华瓷股份</td><td>—</td><td class="down">-10.01%</td><td>半导体材料方向</td></tr>
+<tr><td>华鑫股份</td><td>600621</td><td class="down">-10.00%</td><td>证券，复牌跌停（股权转让至国盛集团）</td></tr>
+<tr class="alt"><td>瑞达期货</td><td>—</td><td class="down">-9.98%</td><td>期货，非银金融承压</td></tr>
+<tr><td>多伦科技</td><td>603528</td><td class="down">-9.95%</td><td>4连板后跌停，公告澄清机器人业务占比极小</td></tr>
+</tbody></table></div>
+<p class="note">注：跌停共6家，另一只未在收盘数据源单独列示；上述5只跌幅均经中新经纬收盘口径核实。</p>
+</section>
+
+<section class="rpt-chapter"><h2 class="rpt-h2">六  人气热榜 Top10（综合焦点）</h2>
+<div class="rpt-tbl-wrap"><table class="rpt-tbl"><thead><tr><th>#</th><th>个股</th><th>代码</th><th>当日表现</th><th>焦点</th></tr></thead><tbody>
+<tr><td>1</td><td>襄阳轴承</td><td>000678</td><td class="up">+9.99% 5连板</td><td>机器人轴承空间龙头，封单2.92亿，5日累涨超60%</td></tr>
+<tr class="alt"><td>2</td><td>中际旭创</td><td>300308</td><td class="up">+10.28%</td><td>CPO龙头，成交235.73亿居全市场第一</td></tr>
+<tr><td>3</td><td>金安国纪</td><td>002636</td><td class="up">+10.01%</td><td>PCB业绩王，Q3净利+1030%，封单3.27亿</td></tr>
+<tr class="alt"><td>4</td><td>长鑫科技</td><td>—</td><td class="up">+3.16%</td><td>存储链第一权重，成交161.86亿，已纳入上证指数</td></tr>
+<tr><td>5</td><td>新易盛</td><td>300502</td><td class="up">+8.08%</td><td>光模块，成交150.9亿</td></tr>
+<tr class="alt"><td>6</td><td>兆易创新</td><td>603986</td><td class="up">+7.77%</td><td>存储芯片，成交122.78亿</td></tr>
+<tr><td>7</td><td>宇树科技</td><td>—</td><td class="up">涨超12%</td><td>人形机器人弹性之王，盘中一度涨超15%、换手28%</td></tr>
+<tr class="alt"><td>8</td><td>多伦科技</td><td>603528</td><td class="down">-9.95% 跌停</td><td>前日4连板“最强变最弱”，公告澄清机器人业务</td></tr>
+<tr><td>9</td><td>华鑫股份</td><td>600621</td><td class="down">-10.00% 跌停</td><td>复牌跌停，控股股东拟变更为上海国盛集团</td></tr>
+<tr class="alt"><td>10</td><td>五粮液</td><td>000858</td><td class="down">-3.95%</td><td>白酒龙头杀跌，防御权重成资金卖出方</td></tr>
+</tbody></table></div>
+<p class="note">换手率前五个股：世纪恒通（50.73%）、果麦文化（49.55%）、通则康威（42.20%）、洛轴股份（41.58%）、慈文传媒（39.46%）。</p>
+</section>
+
+<section class="rpt-chapter"><h2 class="rpt-h2">七  成交额前列 Top5（权威排行）</h2>
+<div class="rpt-tbl-wrap"><table class="rpt-tbl"><thead><tr><th>#</th><th>个股</th><th>代码</th><th>成交额</th><th>涨跌幅</th></tr></thead><tbody>
+<tr><td>1</td><td>中际旭创</td><td>300308</td><td>235.73亿</td><td class="up">+10.28%</td></tr>
+<tr class="alt"><td>2</td><td>长鑫科技</td><td>—</td><td>161.86亿</td><td class="up">+3.16%</td></tr>
+<tr><td>3</td><td>新易盛</td><td>300502</td><td>150.90亿</td><td class="up">+8.08%</td></tr>
+<tr class="alt"><td>4</td><td>兆易创新</td><td>603986</td><td>122.78亿</td><td class="up">+7.77%</td></tr>
+<tr><td>5</td><td>宁德时代</td><td>300750</td><td>102.43亿</td><td class="down">-1.66%</td></tr>
+</tbody></table></div>
+<p class="note">前五名经新浪财经与金十数据双源逐字核对一致；第6-10名收盘数据源未完整披露，故此处仅列权威前五。</p>
+</section>
+
+<section class="rpt-chapter"><h2 class="rpt-h2">八  跌幅居前个股</h2>
+<p>当日跌幅居前个股以跌停股与防御权重（白酒、证券）为主，亏钱效应整体温和。以下列示跌幅居前个股（Top榜完整20只数据源未完整披露，此处列示经核实的前列个股）。</p>
+<div class="rpt-tbl-wrap"><table class="rpt-tbl"><thead><tr><th>#</th><th>个股</th><th>代码</th><th>跌幅</th><th>所属方向</th></tr></thead><tbody>
+<tr><td>1</td><td>正裕工业</td><td>—</td><td class="down">-10.03%</td><td>汽车零部件（跌停）</td></tr>
+<tr class="alt"><td>2</td><td>华瓷股份</td><td>—</td><td class="down">-10.01%</td><td>半导体材料（跌停）</td></tr>
+<tr><td>3</td><td>华鑫股份</td><td>600621</td><td class="down">-10.00%</td><td>证券（复牌跌停）</td></tr>
+<tr class="alt"><td>4</td><td>瑞达期货</td><td>—</td><td class="down">-9.98%</td><td>期货（跌停）</td></tr>
+<tr><td>5</td><td>多伦科技</td><td>603528</td><td class="down">-9.95%</td><td>机器人高位股（跌停）</td></tr>
+<tr class="alt"><td>6</td><td>金徽酒</td><td>603919</td><td class="down">跌超6%</td><td>白酒</td></tr>
+<tr><td>7</td><td>皇台酒业</td><td>000995</td><td class="down">跌超4%</td><td>白酒</td></tr>
+<tr class="alt"><td>8</td><td>金种子酒</td><td>600199</td><td class="down">跌超4%</td><td>白酒</td></tr>
+<tr><td>9</td><td>五粮液</td><td>000858</td><td class="down">-3.95%</td><td>白酒</td></tr>
+<tr class="alt"><td>10</td><td>国泰海通</td><td>—</td><td class="down">跌超2%</td><td>证券</td></tr>
+<tr><td>11</td><td>贵州茅台</td><td>600519</td><td class="down">-1.85%</td><td>白酒</td></tr>
+<tr class="alt"><td>12</td><td>宁德时代</td><td>300750</td><td class="down">-1.66%</td><td>锂电权重</td></tr>
+<tr><td>13</td><td>工商银行</td><td>601398</td><td class="down">-0.70%</td><td>银行</td></tr>
+</tbody></table></div>
+</section>
+
+<section class="rpt-chapter"><h2 class="rpt-h2">九  资金面分析</h2>
+<p><b>主力资金：</b>两市主力资金净流入约230.30亿元（万得全A口径），较上一交易日净流入增量+701.44亿元；超大单（机构）净流入251.98亿元。今日三大板块资金大幅回流，但5日维度仍为净流出：通信设备+75.78亿（5日-140.12亿）、半导体+68.11亿（5日-94.32亿）、元件+50.00亿（5日-170.38亿）——今天流入的钱大部分是在填前几天砸出的坑，属超跌反抽的资金特征，尚非新增资金系统性入场。</p>
+<div class="rpt-tbl-wrap"><table class="rpt-tbl"><thead><tr><th>主力净流入 TOP</th><th>净流入(亿)</th><th>机构净流入(亿)</th><th>主力净流出 TOP</th><th>净流出(亿)</th></tr></thead><tbody>
+<tr><td>电子</td><td class="up">+149.86</td><td>+122.45</td><td>电力设备</td><td class="down">-18.88</td></tr>
+<tr class="alt"><td>通信</td><td class="up">+80.20</td><td>+62.84</td><td>电池</td><td class="down">-14.40</td></tr>
+<tr><td>通信设备</td><td class="up">+78.53</td><td>+58.54</td><td>证券Ⅱ</td><td class="down">-13.98</td></tr>
+<tr class="alt"><td>半导体</td><td class="up">+68.91</td><td>+57.91</td><td>非银金融</td><td class="down">-13.62</td></tr>
+<tr><td>元件</td><td class="up">+50.31</td><td>+38.92</td><td>锂电池</td><td class="down">-13.00</td></tr>
+<tr class="alt"><td>印制电路板</td><td class="up">+47.02</td><td>+36.35</td><td>软件开发</td><td class="down">-11.80</td></tr>
+<tr><td>机械设备</td><td class="up">+36.81</td><td>+36.28</td><td>计算机</td><td class="down">-10.24</td></tr>
+<tr class="alt"><td>汽车</td><td class="up">+26.59</td><td>+27.94</td><td>食品饮料</td><td class="down">-8.43</td></tr>
+</tbody></table></div>
+<p><b>两融与流动性：</b>两市融资余额约23731.96亿元，10/27减少160.63亿元，已连续13日下降；今日反弹由增量主动买盘而非杠杆回补驱动。北向资金自2024年8月起暂停披露逐日净买卖，参考价值有限。央行公开市场今日开展1510亿元7天期逆回购（利率1.40%）+10000亿元隔夜逆回购，单日净投放1510亿元，资金面维持平稳。</p>
+<p><b>量能：</b>沪深两市成交16284.87亿元，较上一交易日放量1675.29亿元（+11.47%），量能回到1.6万亿上方；但相对前期1.97万亿高点仍偏低，属修复性放量而非增量猛攻。</p>
+</section>
+
+<section class="rpt-chapter"><h2 class="rpt-h2">十  外部市场及宏观</h2>
+<p><b>美股（10/27收盘）：</b>道指+0.03%报52377.57点，纳指+1.18%报26477.81点，标普500+0.60%报7722.60点，费城半导体指数大涨3.6%（30只成分股全线上涨，存储与设备股领涨）。SK海力士Q3财报大幅超预期，存储链全面走强。</p>
+<p><b>亚太：</b>韩国KOSPI大涨6.63%报6012.44点（存储暴动，三星/SK海力士领涨），日经225涨约1.1%~1.7%，恒生指数涨0.22%报23092.26点。日韩股市同步走强，亚太情绪偏暖。</p>
+<p><b>大宗与汇率：</b>WTI原油10/27收99.90美元（跌破100），10/28 NYMEX回升至101.67美元（+1.77%）；布伦特约113.88美元；现货黄金约4060美元/盎司，COMEX黄金约4042-4073美元。人民币对美元中间价6.7165，升值6个基点。</p>
+<p><b>国内宏观：</b>①9月规模以上工业企业利润同比+14.4%（1-9月+15.5%，连续两位数增长），电子行业利润同比+1倍、高技术制造业+52%；②新型政策性金融工具8000亿元加速投放，国开行完成3650亿元、进出口银行完成投放，合计4850亿元补充项目资本金；③上海印发《加快发展新一代智能制造行动方案》，到2028年推动8000台人形机器人进工厂；④五中全会（10/26-29）进入尾声，市场关注“十五五”规划方向；⑤10月28日A股708.48亿元限售股解禁（本周解禁高峰，占全周七成以上）；⑥美联储10月议息会议（10/28-29）大概率维持利率不变，北京时间10/29凌晨公布决议，12月加息预期仍是中期变量。</p>
+</section>
+
+<section class="rpt-chapter"><h2 class="rpt-h2">十一  机构策略观点</h2>
+<p><b>摩根士丹利：</b>半导体板块调整已进入尾声，预计这轮调整将在11月中旬结束；但基于技术分析与白银市场对比，仍可能较当前再跌10%-15%，费城半导体指数或下探9500点附近。</p>
+<p><b>野村：</b>机器人正重演大语言模型的发展路径，其“ChatGPT时刻”或较市场预期更早到来，12月至1月的模型发布或成首个催化剂。</p>
+<p><b>国金证券：</b>物理AI具备“逻辑顺、筹码轻、催化密、板块容量大”特征，在科技板块轮动背景下有望承接资金切换；但需资金进行低位切换才能保证板块持续性。</p>
+<p><b>华西证券：</b>当前点位不宜悲观，缩量环境下大概率蓄势触底反弹；内部信心不足是本轮调整主因，属情绪与交易盘主导的过度调整。</p>
+<p><b>中信证券：</b>四季度工业企业利润增速有望回升，企业盈利周期有望上行，建议关注A股板块估值分化。</p>
+<p><b>星石投资：</b>头部公司盈利稳健但遭杀估值，以茅指数、宁组合为代表的传统龙头估值已回落至2019年以来较低水平，随情绪修复，错杀优质龙头有望迎来重估。</p>
+<p><b>机构共识：</b>创业板指自6月高点回撤约40%，PE约30倍（近十年20%分位以下），深证成指估值降至近十年45%分位，本轮调整在幅度与估值两个维度均已进入历史级超调区间，配置价值显现；但“超调”只压缩了下行空间，不自动构成上涨理由，修复的可持续性仍需量能与主线承接验证。</p>
+</section>
+
+<section class="rpt-chapter"><h2 class="rpt-h2">十二  明日关注要点</h2>
+<p><b>1. 量能能否维持在1.6万亿以上：</b>今日1.63万亿的放量中阳确认了3600点附近短期情绪底的有效性，但若仅单日脉冲后再度萎缩，反弹或演变为短期脉冲。</p>
+<p><b>2. PCB与机器人两条主线能否延续承接：</b>PCB以三季报净利润数倍增长的硬核业绩领涨，机器人以产业催化维持独立性；需观察五中全会落地后资金是否从“业绩验证”切换至“兑现离场”。</p>
+<p><b>3. 美联储议息决议落地：</b>北京时间10/29凌晨公布10月决议，大概率按兵不动（加息概率约10%）；决议后早盘资金是否回吐、美债利率是否重新上行，是成长股估值修复持续性的关键。</p>
+<p><b>4. 科创50/创业板能否连续第二日放量走强：</b>单日反抽不足为凭，两日确认才有效；观察通信设备、半导体板块主力净流入能否连续为正。</p>
+<p><b>5. 上证3700点压力位：</b>今日盘中最高3684.49点，3700点仍是短期压力，未有效站稳前不宜“上头”。</p>
+<p><b>6. 三季报尾声业绩分化：</b>披露进入尾声，业绩不及预期个股存在补跌风险；同时关注708亿解禁对半导体材料、工业软件等方向的结构性供给冲击。</p>
+<p><b>7. 连板高度与题材持续性：</b>最高仅5板、连板总数8只偏薄，高位接力情绪刚从冰点爬出，纯情绪炒作波动与回撤风险较大。</p>
+</section>
+
+<section class="rpt-chapter"><h2 class="rpt-h2">十三  免责声明</h2>
+<p class="disclaimer">本报告由程序基于公开市场数据与公开资讯自动整理生成，数据来源包括新浪财经、腾讯新闻、网易、证券时报、同花顺、金十数据、格隆汇、中新经纬、东方财富及通达信涨停复盘等公开渠道，并经多源交叉核对。报告中所有指数点位、涨跌幅、成交额、涨跌家数、涨停/跌停及连板数据均以2026年10月28日收盘口径为准；因不同数据源统计口径（如申万行业 vs 通达信行业、是否含ST/北交所、统计时点）存在差异，个别数值可能存在细微出入，已在文中标注口径。本报告仅供市场复盘与学习研究参考，不构成任何投资建议、买卖要约或收益承诺。文中提及的板块、题材与个股仅用于说明市场结构，不代表推荐任何标的。股市有风险，投资需谨慎，投资者应独立判断、自主决策，据此操作风险自担。</p>
+</section>
+
+</article>
+</body>
+</html>

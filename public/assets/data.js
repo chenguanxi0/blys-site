@@ -4526,5 +4526,29 @@ const DAILY_LOG = [
         "open": true
       }
     ]
+  },
+  {
+    "date": "2026-10-28",
+    "day": 62,
+    "total": 1655211.12,
+    "dayPnl": 0.17,
+    "pos": 4.5,
+    "floatPnl": -3645.72,
+    "cash": 1580241.12,
+    "note": "平安证券**5362 持仓截图(15:12)",
+    "valid": true,
+    "holdings": [
+      {
+        "name": "行云科技",
+        "code": "300209",
+        "shares": 3000,
+        "avail": 3000,
+        "mv": 74970.0,
+        "pnlPct": -4.637,
+        "cost": 26.205,
+        "cur": 24.99
+      }
+    ],
+    "trades": []
   }
 ];
