@@ -4551,4 +4551,51 @@ const DAILY_LOG = [
     ],
     "trades": []
   }
+,
+  {
+    "date": "2026-11-05",
+    "day": 63,
+    "total": 1675800.95,
+    "dayPnl": 1.67,
+    "pos": 35.8,
+    "floatPnl": 16944.11,
+    "cash": 1075731.75,
+    "note": "平安证券**5362 持仓截图(15:05)",
+    "valid": true,
+    "holdings": [
+      {
+        "name": "科创半导体ETF华夏",
+        "code": "588170",
+        "shares": 481400,
+        "avail": 0,
+        "mv": 350459.2,
+        "pnlPct": 5.104,
+        "cost": 0.693,
+        "cur": 0.728,
+        "open": true
+      },
+      {
+        "name": "行云科技",
+        "code": "300209",
+        "shares": 6500,
+        "avail": 6500,
+        "mv": 157300.0,
+        "pnlPct": 1.072,
+        "cost": 23.943,
+        "cur": 24.2
+      },
+      {
+        "name": "万邦医药",
+        "code": "301520",
+        "shares": 1500,
+        "avail": 1500,
+        "mv": 92310.0,
+        "pnlPct": -1.854,
+        "cost": 62.703,
+        "cur": 61.54,
+        "open": true
+      }
+    ],
+    "trades": []
+  }
 ];
