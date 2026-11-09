@@ -218,7 +218,7 @@
   {
     "date": "2026-09-22",
     "weekday": "星期二",
-    "title": "2026-09-22 每日复盘",
+    "title": "2026-09-22 星期二",
     "file": "assets/reviews/2026-09-22.html"
   },
   {
@@ -236,67 +236,67 @@
   {
     "date": "2026-09-28",
     "weekday": "星期一",
-    "title": "2026-09-28 每日复盘",
+    "title": "2026-09-28 星期一",
     "file": "assets/reviews/2026-09-28.html"
   },
   {
     "date": "2026-09-29",
     "weekday": "星期二",
-    "title": "2026-09-29 每日复盘",
+    "title": "2026-09-29 星期二",
     "file": "assets/reviews/2026-09-29.html"
   },
   {
     "date": "2026-09-30",
     "weekday": "星期三",
-    "title": "2026-09-30 每日复盘",
+    "title": "2026-09-30 星期三",
     "file": "assets/reviews/2026-09-30.html"
   },
   {
     "date": "2026-10-08",
     "weekday": "星期四",
-    "title": "2026-10-08 每日复盘",
+    "title": "2026-10-08 星期四",
     "file": "assets/reviews/2026-10-08.html"
   },
   {
     "date": "2026-10-09",
     "weekday": "星期五",
-    "title": "2026-10-09 每日复盘",
+    "title": "2026-10-09 星期五",
     "file": "assets/reviews/2026-10-09.html"
   },
   {
     "date": "2026-10-12",
     "weekday": "星期一",
-    "title": "2026-10-12 每日复盘",
+    "title": "2026-10-12 星期一",
     "file": "assets/reviews/2026-10-12.html"
   },
   {
     "date": "2026-10-13",
     "weekday": "星期二",
-    "title": "2026-10-13 每日复盘",
+    "title": "2026-10-13 星期二",
     "file": "assets/reviews/2026-10-13.html"
   },
   {
     "date": "2026-10-14",
     "weekday": "星期三",
-    "title": "2026-10-14 每日复盘",
+    "title": "2026-10-14 星期三",
     "file": "assets/reviews/2026-10-14.html"
   },
   {
     "date": "2026-10-15",
     "weekday": "星期四",
-    "title": "2026-10-15 每日复盘",
+    "title": "2026-10-15 星期四",
     "file": "assets/reviews/2026-10-15.html"
   },
   {
     "date": "2026-10-16",
     "weekday": "星期五",
-    "title": "2026-10-16 每日复盘",
+    "title": "2026-10-16 星期五",
     "file": "assets/reviews/2026-10-16.html"
   },
   {
     "date": "2026-10-19",
     "weekday": "星期一",
-    "title": "2026-10-19 每日复盘",
+    "title": "2026-10-19 星期一",
     "file": "assets/reviews/2026-10-19.html"
   },
   {
@@ -320,7 +320,7 @@
   {
     "date": "2026-10-23",
     "weekday": "星期五",
-    "title": "2026-10-23 每日复盘",
+    "title": "2026-10-23 星期五",
     "file": "assets/reviews/2026-10-23.html"
   },
   {
@@ -338,13 +338,13 @@
   {
     "date": "2026-10-28",
     "weekday": "星期三",
-    "title": "2026-10-28 每日复盘",
+    "title": "2026-10-28 星期三",
     "file": "assets/reviews/2026-10-28.html"
   },
   {
     "date": "2026-10-29",
     "weekday": "星期四",
-    "title": "2026-10-29 每日复盘",
+    "title": "2026-10-29 星期四",
     "file": "assets/reviews/2026-10-29.html"
   },
   {
@@ -368,13 +368,19 @@
   {
     "date": "2026-11-05",
     "weekday": "星期四",
-    "title": "2026-11-05 每日复盘",
+    "title": "2026-11-05 星期四",
     "file": "assets/reviews/2026-11-05.html"
   },
   {
     "date": "2026-11-06",
     "weekday": "星期五",
-    "title": "2026-11-06 每日复盘",
+    "title": "2026-11-06 星期五",
     "file": "assets/reviews/2026-11-06.html"
+  },
+  {
+    "date": "2026-11-09",
+    "weekday": "星期一",
+    "title": "2026-11-09 星期一",
+    "file": "assets/reviews/2026-11-09.html"
   }
 ]
