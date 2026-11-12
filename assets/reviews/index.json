@@ -394,5 +394,11 @@
     "weekday": "星期三",
     "title": "2026-11-11 星期三",
     "file": "assets/reviews/2026-11-11.html"
+  },
+  {
+    "date": "2026-11-12",
+    "weekday": "星期四",
+    "title": "2026-11-12 星期四",
+    "file": "assets/reviews/2026-11-12.html"
   }
 ]
